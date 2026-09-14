@@ -56,10 +56,12 @@ These are unresolved in the requirements. The design states the assumption it wa
 
 ## Architecture
 
-### Container View
+### Container View: Core Application Flow
+
+This diagram illustrates the primary request lifecycle, data storage, and asynchronous background processing.
 
 ```mermaid
-graph TB
+flowchart LR
     subgraph Client
         SPA["React 18 + TS + Vite SPA<br/>Mantine, TanStack Query, i18next"]
     end
@@ -88,77 +90,115 @@ graph TB
         SMTP["SMTP provider<br/>(swappable; Postal self-host option)"]
     end
 
-    subgraph Observability
-        OTEL["OpenTelemetry Collector"]
-        PROM["Prometheus + Grafana"]
-        LOKI["Loki"]
-        TEMPO["Tempo"]
-        GT["GlitchTip"]
-    end
-
     SPA --> ING --> API
+
     API --> PG
     API --> VK
     API --> MINIO
     API --> BAO
     API -. "enqueue" .-> VK
+
     WORKER --> VK
     WORKER --> PG
     WORKER --> MINIO
     WORKER --> CLAM
     WORKER --> SMTP
-    API --> OTEL
-    WORKER --> OTEL
-    OTEL --> PROM
-    OTEL --> LOKI
-    OTEL --> TEMPO
-    API --> GT
 ```
 
 The API process never talks to ClamAV or SMTP directly. Malware scanning and mail delivery are both asynchronous by design: uploads must return within the 3-second budget (Performance constraint) and mail must be atomic with the DB write that triggered it (transactional outbox).
 
-### Module Boundaries
+### Container View: Observability Pipeline
+
+Telemetry leaves the application through a single collector, so the API and worker processes carry no vendor-specific exporter configuration.
 
 ```mermaid
-graph LR
-    subgraph app["app/"]
-        direction TB
-        subgraph modules["Domain modules"]
-            IDENT["identity/<br/>R1, R2, R3"]
-            PROF["profiles/<br/>R4, R4A"]
-            CVS["cvs/<br/>R5"]
-            JOBS["jobs/<br/>R6, R4A contactability"]
-            APPS["applications/<br/>R7"]
-            REV["reviews/<br/>R9"]
-            AUD["audit/<br/>R8"]
-            REP["reporting/<br/>R28, R29"]
-        end
-        subgraph platform["platform/ (shared infrastructure, no domain logic)"]
-            DB["db (SQLAlchemy, UoW)"]
-            SEC["security (JWT, guards, crypto)"]
-            STORE["storage (ObjectStore)"]
-            MAIL["mail (outbox)"]
-            JOBQ["jobs (ARQ)"]
-            I18N["i18n (Babel)"]
-            TAX["taxonomy (skills)"]
-        end
+flowchart TB
+    subgraph App["Application"]
+        API["FastAPI (Gunicorn + Uvicorn workers)"]
+        WORKER["ARQ workers"]
     end
 
-    IDENT --> AUD
-    PROF --> AUD
-    CVS --> AUD
-    JOBS --> AUD
-    APPS --> AUD
-    REV --> AUD
-    PROF --> TAX
-    JOBS --> TAX
+    subgraph Observability["Observability Stack"]
+        OTEL["OpenTelemetry Collector"]
+        PROM["Prometheus<br/>(Metrics)"]
+        LOKI["Loki<br/>(Logs)"]
+        TEMPO["Tempo<br/>(Traces)"]
+        GT["GlitchTip<br/>(Error Tracking)"]
+        GRAF["Grafana<br/>(Dashboards)"]
+    end
+
+    API -->|Traces, Metrics, Logs| OTEL
+    WORKER -->|Traces, Metrics, Logs| OTEL
+    API -->|Exceptions| GT
+
+    OTEL --> PROM
+    OTEL --> LOKI
+    OTEL --> TEMPO
+
+    PROM --> GRAF
+    LOKI --> GRAF
+    TEMPO --> GRAF
+```
+
+### Module Boundaries
+
+#### Domain Module Dependencies
+
+This diagram illustrates the core business logic dependencies. Notice how `audit` acts as a universal sink for domain events.
+
+```mermaid
+flowchart TD
+    subgraph Domain["Domain Modules (app/modules/)"]
+        IDENT["identity<br/>(R1, R2, R3)"]
+        PROF["profiles<br/>(R4, R4A)"]
+        CVS["cvs<br/>(R5)"]
+        JOBS["jobs<br/>(R6, R4A contactability)"]
+        APPS["applications<br/>(R7)"]
+        REV["reviews<br/>(R9)"]
+        AUD["audit<br/>(R8)"]
+        REP["reporting<br/>(R28, R29)"]
+    end
+
+    %% Core business relations
     APPS --> CVS
     APPS --> JOBS
     JOBS --> PROF
+
+    %% Reporting reads from multiple domains
     REP --> IDENT
     REP --> APPS
     REP --> CVS
-    modules --> platform
+
+    %% Audit streaming (collapsed for cleaner layout)
+    IDENT & PROF & CVS & JOBS & APPS & REV -.->|"append events"| AUD
+```
+
+#### Platform and Shared Infrastructure
+
+The platform layer provides shared utilities and infrastructure. Domain modules may depend on the platform, but the platform must never depend on domain logic.
+
+```mermaid
+flowchart LR
+    subgraph Domain["Domain Layer"]
+        MODS["All Domain Modules"]
+        PROF_JOBS["profiles / jobs"]
+    end
+
+    subgraph Platform["Platform Layer (app/platform/)"]
+        DB["db<br/>(SQLAlchemy, UoW)"]
+        SEC["security<br/>(JWT, guards, crypto)"]
+        STORE["storage<br/>(ObjectStore)"]
+        MAIL["mail<br/>(outbox)"]
+        JOBQ["jobs<br/>(ARQ)"]
+        I18N["i18n<br/>(Babel)"]
+        TAX["taxonomy<br/>(skills)"]
+    end
+
+    %% General platform dependency
+    MODS ==>|"Strict one-way import"| Platform
+
+    %% Specific taxonomy dependencies
+    PROF_JOBS -->|"read skills"| TAX
 ```
 
 Rules enforced by Semgrep OSS custom rules in CI:
