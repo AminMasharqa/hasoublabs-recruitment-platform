@@ -312,9 +312,13 @@ Public interface:
 
 ```python
 class ProfilesApi(Protocol):
-    async def get_completeness(self, account_id: UUID) -> Completeness: ...      # R4 AC6
-    async def contactable_seniors_for_jd(self, jd: JdContactabilityInput) -> list[SeniorContactDTO]: ...  # R4A AC13
-    async def candidate_public_card(self, account_id: UUID) -> ApplicantCardDTO: ...  # name only (R3 AC5)
+    async def get_completeness(self, account_id: UUID) -> Completeness: ...  # R4 AC6
+    async def contactable_seniors_for_jd(
+        self, jd: JdContactabilityInput
+    ) -> list[SeniorContactDTO]: ...  # R4A AC13
+    async def candidate_public_card(
+        self, account_id: UUID
+    ) -> ApplicantCardDTO: ...  # name only (R3 AC5)
 ```
 
 - **CandidateProfileService** — field constraints live in Pydantic v2 schemas (character limits, 0–20 education entries, 0–20 experience entries, 1–20 skills, ≤10 languages, ≤1000-char summary, ≤200-char LinkedIn URL) with matching CHECK constraints in Postgres so the invariant holds even for a direct SQL writer (R4 AC1). Cross-field rules (end date ≥ start date, R4 AC14) are validated with Pydantic model validators. Email is validated to RFC 5322 addr-spec via `email-validator`; phone to E.164 via `phonenumbers` (R4 AC11). LinkedIn URL must be well-formed HTTPS (R4 AC13).
@@ -348,8 +352,10 @@ Public interface:
 
 ```python
 class CvsApi(Protocol):
-    async def has_any_version(self, candidate_id: UUID) -> bool: ...                       # R4 AC7
-    async def resolve_active_version(self, candidate_id: UUID, variant_id: UUID | None) -> CvVersionRef: ...  # R7 AC4
+    async def has_any_version(self, candidate_id: UUID) -> bool: ...  # R4 AC7
+    async def resolve_active_version(
+        self, candidate_id: UUID, variant_id: UUID | None
+    ) -> CvVersionRef: ...  # R7 AC4
     async def open_download_stream(self, version_id: UUID, requester: Principal) -> CvStream: ...
 ```
 
@@ -428,15 +434,22 @@ Permissions derive solely from the account's role set plus, for dual-role accoun
 
 ```python
 # platform/security/guards.py
-def require(*, roles: frozenset[Role], context: Role | None = None,
-            statuses: frozenset[AccountStatus] = APPROVED_ONLY) -> Callable:
+def require(
+    *,
+    roles: frozenset[Role],
+    context: Role | None = None,
+    statuses: frozenset[AccountStatus] = APPROVED_ONLY,
+) -> Callable:
     async def _guard(principal: Principal = Depends(current_principal)) -> Principal:
-        ok = (principal.status in statuses
-              and bool(principal.roles & roles)
-              and (context is None or principal.active_context is context))
+        ok = (
+            principal.status in statuses
+            and bool(principal.roles & roles)
+            and (context is None or principal.active_context is context)
+        )
         if not ok:
-            raise AuthorizationDenied()   # never leaks whether the target exists
+            raise AuthorizationDenied()  # never leaks whether the target exists
         return principal
+
     return _guard
 ```
 
