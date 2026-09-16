@@ -1,0 +1,208 @@
+[project]
+name = "hasoublabs-recruitment-platform"
+version = "0.1.0"
+description = "HasoubLabs Recruitment Platform - modular monolith backend"
+requires-python = ">=3.12"
+dependencies = [
+    # Web framework
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+    "gunicorn==23.0.0",
+
+    # Database
+    "sqlalchemy[asyncio]==2.0.36",
+    "asyncpg==0.30.0",
+    "alembic==1.14.0",
+
+    # Validation
+    "pydantic[email]==2.10.3",
+    "pydantic-settings==2.6.1",
+
+    # Security
+    "argon2-cffi==23.1.0",
+    "passlib[argon2]==1.7.4",
+    "pyotp==2.9.0",
+    "qrcode[pil]==8.0",
+    "authlib==1.3.2",
+    "python-jose[cryptography]==3.3.0",
+    "cryptography==44.0.0",
+
+    # HTTP client
+    "httpx==0.28.1",
+
+    # Background jobs
+    "arq==0.26.1",
+    "apscheduler==3.10.4",
+
+    # Cache / session store
+    "redis==5.2.1",
+
+    # Storage
+    "minio==7.2.12",
+    "boto3==1.35.92",
+
+    # Email
+    "aiosmtplib==3.0.2",
+
+    # File processing
+    "python-magic==0.4.27",
+    "pikepdf==9.4.2",
+    "pypdf==5.1.0",
+
+    # Phone / contact validation
+    "phonenumbers==8.13.52",
+    "email-validator==2.2.0",
+
+    # i18n
+    "babel==2.16.0",
+
+    # Search / fuzzy matching
+    "rapidfuzz==3.10.1",
+
+    # Reporting
+    "xlsxwriter==3.2.0",
+
+    # Observability
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
+    "opentelemetry-exporter-otlp>=1.25.0",
+
+    # Utilities
+    "python-multipart==0.0.19",
+    "python-dotenv==1.0.1",
+    "orjson==3.10.12",
+    "structlog==24.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.24.0",
+    "pytest-cov==6.0.0",
+    "pytest-timeout==2.3.1",
+    "hypothesis==6.122.3",
+    "factory-boy==3.3.1",
+    "faker==33.1.0",
+    "httpx==0.28.1",
+    "anyio[trio]==4.7.0",
+    "testcontainers[postgres,minio]==4.9.0",
+]
+lint = [
+    "ruff==0.8.4",
+    "mypy==1.13.0",
+    "types-passlib==1.7.7.20240819",
+    "types-python-jose==3.3.4.20240106",
+    "types-babel==2.11.0.15",
+]
+# semgrep is installed in a SEPARATE isolated venv by CI (semgrep has an
+# irreconcilable OTel pin conflict with the runtime stack).
+# Run locally with:  uvx semgrep --config semgrep/ app/
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# ── Ruff ──────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit (security)
+    "N",   # pep8-naming
+]
+ignore = [
+    "S101",   # Use of assert (fine in tests)
+    "B008",   # Do not perform function calls in default arguments (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "ANN"]
+"alembic/**" = ["ANN", "N999"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+force-sort-within-sections = true
+
+# ── mypy ──────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/"]
+
+[[tool.mypy.overrides]]
+module = [
+    "arq.*",
+    "apscheduler.*",
+    "minio.*",
+    "magic.*",
+    "pikepdf.*",
+    "xlsxwriter.*",
+    "opentelemetry.*",
+    "trafilatura.*",
+    "pyclamd.*",
+]
+ignore_missing_imports = true
+
+# ── pytest ────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+timeout = 60
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-q",
+]
+markers = [
+    "unit: pure unit tests, no I/O",
+    "integration: tests requiring real infrastructure",
+    "e2e: full end-to-end tests",
+    "property: property-based tests using Hypothesis",
+    "security: security-critical tests (RBAC, timing, encryption)",
+    "slow: tests with higher latency (>5s)",
+]
+
+# ── coverage ──────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/main.py", "alembic/*"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@(abc\\.)?abstractmethod",
+    "raise NotImplementedError",
+]
+
+# Per-package coverage floors
+[tool.coverage.report.module_thresholds]
+"app.platform.security" = 90
+"app.modules.identity" = 85
+"app.modules.audit" = 85

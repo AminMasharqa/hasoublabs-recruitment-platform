@@ -1,0 +1,36 @@
+rules:
+  # ─── Rule 4: Every APIRouter operation must declare an auth dependency ───────
+  # Semgrep cannot fully resolve `Depends(...)` at parse time, so we flag any
+  # route decorator that has no `dependencies=[...]` keyword argument AND whose
+  # path is not in the public allowlist. The runtime boot assertion in main.py
+  # is the authoritative check; this rule is the early-warning complement.
+  - id: router-operation-missing-auth-dependency
+    patterns:
+      - pattern: |
+          @$ROUTER.$METHOD($PATH)
+          async def $HANDLER(...):
+              ...
+      - pattern-not: |
+          @$ROUTER.$METHOD($PATH, dependencies=[...])
+          async def $HANDLER(...):
+              ...
+      - pattern-not: |
+          @$ROUTER.$METHOD($PATH, ...)
+          async def $HANDLER(
+              ...,
+              $PRINCIPAL: Principal = Depends(...),
+              ...
+          ):
+              ...
+    message: |
+      Route handler `$HANDLER` at path `$PATH` appears to have no
+      authorization dependency. Every non-public route must declare either:
+        - `dependencies=[Depends(require(...))]` on the decorator, or
+        - a `principal: Principal = Depends(require(...))` parameter.
+      If this route is intentionally public, add it to PUBLIC_ROUTE_PATHS
+      in `app/platform/security/guards.py` and document the reason.
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "app/modules/**/router.py"

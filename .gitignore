@@ -1,231 +1,76 @@
-# ---------------------------------------------------------------------------
-# HasoubLabs Recruitment Platform
-# Python 3.12 / FastAPI modular monolith + React 18 / TypeScript / Vite SPA
-# See .kiro/specs/hasoublab-recruitment-platform/design.md for the full stack
-# ---------------------------------------------------------------------------
-
-# === Secrets and credentials =============================================
-# Never commit these. OpenBao holds the real keys; these files are local only.
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-secrets/
-.secrets/
-openbao/data/
-openbao-token
-vault-token
-.vault-token
-
-# === Python ==============================================================
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
+.eggs/
 *.egg
 MANIFEST
 
-# Virtual environments (uv manages deps; the venv itself is never committed)
+# Virtual environments
 .venv/
 venv/
-env/
 ENV/
-.python-version
+env/
+.env
 
-# uv keeps uv.lock TRACKED on purpose: CI installs from the lockfile only
-# (do not add uv.lock here)
+# uv
+.uv/
 
-# === Testing, coverage, property-based testing ===========================
+# Secrets – never commit
+.env
+*.pem
+*.key
+*.p12
+
+# Pytest / coverage
 .pytest_cache/
-.cache/
-htmlcov/
 .coverage
-.coverage.*
 coverage.xml
-*.cover
-nosetests.xml
-junit*.xml
-.tox/
-.nox/
-
-# Hypothesis: the example DB is machine-local. Keep the shrunk-failure
-# corpus out of git; the nightly deep run regenerates it.
+htmlcov/
 .hypothesis/
 
-# Schemathesis / Locust artifacts
-.schemathesis/
-locust-report*.html
-locust_stats*.csv
-
-# === Type checking, linting, security scanning ===========================
+# mypy
 .mypy_cache/
-.dmypy.json
-dmypy.json
+*.pyi
+
+# Ruff
 .ruff_cache/
-.pyre/
-.pytype/
-bandit-report.json
-semgrep-results.json
-trivy-results*.json
-pip-audit-report.json
 
-# === Alembic =============================================================
-# Migration scripts ARE tracked (state reconstruction depends on a known
-# column history, R8 AC6). Only local overrides are ignored.
-alembic.local.ini
-
-# === Local service data volumes (Docker Compose dev stack) ===============
-# PostgreSQL, Valkey, MinIO, ClamAV, Mailpit bind mounts
-.data/
-pgdata/
-postgres-data/
-valkey-data/
-redis-data/
-minio-data/
-clamav-data/
-mailpit-data/
-
-# === Application runtime artifacts =======================================
-# CV uploads live in MinIO, never in the repo. These are local scratch dirs.
-uploads/
-quarantine/
-tmp/
-temp/
-*.log
-logs/
-
-# Server-side Excel exports (R29) are generated on demand
-exports/
-*.xlsx
-!docs/**/*.xlsx
-
-# Bundled reference data is TRACKED (israeli_localities, mobile prefixes).
-# Only locally regenerated caches are ignored.
-.cache/localities/
-
-# === Frontend (React 18 + TypeScript + Vite) =============================
-node_modules/
-frontend/node_modules/
-.pnp
-.pnp.js
-frontend/dist/
-frontend/build/
-frontend/.vite/
-frontend/stats.html
-.eslintcache
-.stylelintcache
-*.tsbuildinfo
-
-# Generated API client and Zod schemas (derived from the FastAPI OpenAPI
-# document via openapi-zod-client/orval, so they are build output)
-frontend/src/api/generated/
-frontend/src/api/schemas.gen.ts
-openapi.json
-openapi.yaml
-
-# Vitest
-frontend/coverage/
-
-# Playwright
-test-results/
-playwright-report/
-playwright/.cache/
-blob-report/
-frontend/test-results/
-frontend/playwright-report/
-
-# npm/yarn/pnpm debug output (lockfiles themselves stay tracked)
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.yarn/cache/
-.yarn/install-state.gz
-
-# === i18n ================================================================
-# Babel .po source catalogs are tracked; compiled .mo files are build output
-*.mo
-
-# === Docker ==============================================================
-# docker-compose.yml is tracked; local overrides are not
-docker-compose.override.yml
-docker-compose.*.local.yml
-.dockerignore.local
-
-# === Infrastructure: OpenTofu / Ansible / k3s ============================
-# State files can contain sensitive values. Never commit them.
-.terraform/
-.tofu/
-*.tfstate
-*.tfstate.*
-*.tfplan
-crash.log
-crash.*.log
-*.tfvars
-*.tfvars.json
-!example.tfvars
-.terraform.lock.hcl.local
-
-# Ansible
-*.retry
-ansible/inventory/local*
-ansible/vault-password*
-
-# Kubernetes / k3s local kubeconfig
-kubeconfig
-kubeconfig.*
-*.kubeconfig
-k3s.yaml
-
-# === Observability =======================================================
-# Local Prometheus/Grafana/Loki/Tempo volumes from the dev stack
-prometheus-data/
-grafana-data/
-loki-data/
-tempo-data/
-
-# === Editors and IDEs ====================================================
-.vscode/*
-!.vscode/settings.json.example
-!.vscode/extensions.json
+# IDEs
+.vscode/
 .idea/
 *.swp
 *.swo
-*~
-*.sublime-project
-*.sublime-workspace
+*.swn
 
-# === OS ==================================================================
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
 Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
 desktop.ini
-$RECYCLE.BIN/
 
-# === Kiro ================================================================
-# Specs and steering are intentionally tracked. Only local session state
-# and hook scratch output is ignored.
-.kiro/**/*.local.md
-.kiro/cache/
+# Logs
+*.log
+logs/
+
+# Alembic auto-generated (keep versions/ but not __pycache__)
+alembic/__pycache__/
+alembic/versions/__pycache__/
+
+# Docker
+.dockerignore
+
+# Locale compiled catalogs (generated by pybabel compile)
+locales/**/*.mo
+
+# Generated OpenAPI / frontend clients
+openapi.json
+frontend/src/api/generated/
+
+# Kiro IDE – machine-specific state, not team assets
+.kiro/sessions/
+.kiro/settings/

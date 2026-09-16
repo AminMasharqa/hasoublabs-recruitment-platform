@@ -1,0 +1,80 @@
+rules:
+  # ─── Rule 1: Platform must not import domain modules ───────────────────────
+  - id: platform-imports-domain
+    patterns:
+      - pattern: |
+          from app.modules.$MODULE import $X
+      - pattern-inside: |
+          # app/platform/...
+    message: |
+      Platform layer (`app/platform/`) must never import from a domain module
+      (`app/modules/`). Dependency must be one-way: domain → platform.
+      Violation: importing from app.modules.$MODULE
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/platform/**/*.py"
+
+  # ─── Rule 2: Domain modules must only import siblings through api.py ────────
+  - id: cross-module-internal-import
+    patterns:
+      - pattern: |
+          from app.modules.$OTHER_MODULE.$INTERNAL import $X
+      - pattern-not: |
+          from app.modules.$OTHER_MODULE.api import $X
+      - pattern-not: |
+          from app.modules.$OTHER_MODULE.schemas import $X
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py`. Importing `$INTERNAL` from `app.modules.$OTHER_MODULE`
+      violates the module-boundary contract.
+      Fix: use `from app.modules.$OTHER_MODULE.api import ...` instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/**/*.py"
+    # Exclude the module importing its own internals
+    paths:
+      exclude:
+        - "app/modules/$OTHER_MODULE/**"
+
+  # ─── Rule 3: No fastapi import outside router.py ────────────────────────────
+  - id: fastapi-outside-router
+    patterns:
+      - pattern: |
+          import fastapi
+      - pattern-not-inside: |
+          # app/modules/.../router.py
+    message: |
+      `import fastapi` (or `from fastapi import ...`) is only allowed in
+      `router.py` files. Domain logic (service.py, repository.py, etc.)
+      must remain transport-agnostic and independently unit-testable.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/**/*.py"
+      exclude:
+        - "app/modules/**/router.py"
+        - "app/main.py"
+
+  - id: fastapi-from-import-outside-router
+    patterns:
+      - pattern: |
+          from fastapi import $X
+      - pattern-not-inside: |
+          # app/modules/.../router.py
+    message: |
+      `from fastapi import ...` is only allowed in `router.py` files.
+      Domain logic (service.py, repository.py, etc.) must remain
+      transport-agnostic.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/**/*.py"
+      exclude:
+        - "app/modules/**/router.py"
+        - "app/main.py"
