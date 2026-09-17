@@ -15,8 +15,8 @@
 | Karim | Existing | Foundation (project skeleton, security, RBAC) + `identity/` |
 | Fadi | Existing | Foundation (storage, taxonomy) + `cvs/` |
 | Amin | Existing | Foundation (middleware/jobs/mail/notifications) + `applications/` |
-| Salma | Existing | Foundation (audit) + `reviews/` + `reporting/` |
-| Khalid | **New member (onboarding)** | Foundation (db, Unit of Work, migrations) → `profiles/` support → `jobs/` |
+| Salma | Existing | Foundation (db, Unit of Work, migrations + audit) + `reviews/` + `reporting/` |
+| Khalid | **New member (onboarding)** | `profiles/` support → `jobs/` |
 
 ## Guiding principles
 
@@ -46,12 +46,13 @@ Core implementation sub-tasks (the non-`*` items in `tasks.md`) counted per owne
 | Karim | Foundation co-lead + identity (12) + RBAC (4) + wiring (22) → ~18 tasks | skeleton (1) + security (3) + RBAC (4) + identity (11,12) → 13 tasks |
 | Fadi  | cvs (14) + profiles (15) → 11 tasks | storage (6) + taxonomy (7) + cvs (14) → 11 tasks |
 | Amin  | applications (18) + reviews (20) → 7 tasks | middleware/jobs/mail (5) + applications (18) → 9 tasks |
-| Salma | reporting (21) only → 3 tasks, **idle Waves A–C** | audit (9) + reviews (20) + reporting (21) → 11 tasks |
-| Khalid| foundation pair + jobs (17) → 5 tasks | db/UoW/migrations (2) + profiles pairing (15) + jobs (17) → ~12 tasks |
+| Salma | reporting (21) only → 3 tasks, **idle Waves A–C** | db/UoW/migrations (2) + audit (9) + reviews (20) + reporting (21) → 14 tasks |
+| Khalid| foundation pair + jobs (17) → 5 tasks | profiles pairing (15) + jobs (17) → ~8 tasks |
 
 Key moves:
-- **Foundation is now split five ways** by platform sub-package. Each person owns different files
-  under `app/platform/`, so this parallelizes cleanly with no directory collisions.
+- **Foundation is split across the team** by platform sub-package. Each person owns different
+  files under `app/platform/`, so this parallelizes cleanly with no directory collisions. Salma
+  owns the db/UoW/migrations foundation (Section 2) plus the audit layer that depends on it.
 - **`audit/` moves to Salma** (was co-owned by Karim/Khalid). It is self-contained and lets Salma
   start delivering in Wave A instead of waiting until the final wave.
 - **`reviews/` moves from Amin to Salma.** Reviews is nearly standalone (identity + audit +
@@ -60,9 +61,14 @@ Key moves:
   registering their own router — it is no longer a single person's workload.
 - **Karim takes the project skeleton (Task 1)** as the anchor for the shared core he owns
   (security, RBAC), then continues into `identity/`.
-- **Khalid takes db, Unit of Work, and migrations (Section 2)** — a bounded, self-contained
-  platform piece and a good onboarding surface — then pairs with Fadi on `profiles/` before
-  owning `jobs/`. He builds Section 2 alongside Karim, who owns the shared enum-types file.
+- **Section 2 (db, Unit of Work, migrations) moves to Salma.** Khalid is not currently available,
+  and Section 2 is the hard blocker for `audit/` (Section 9), which Salma already owns. Because
+  `audit/` sits directly on the `UnitOfWork`, the shared enum types, and the migration harness,
+  giving Section 2 to the same owner removes the cross-developer dependency entirely — Salma now
+  builds the db foundation and the audit layer on top of it without waiting on anyone. Karim
+  pair-reviews (unchanged from the prior plan).
+- **Khalid** pairs with Fadi on `profiles/` before owning `jobs/`. His onboarding surface is now
+  the mentored `profiles/` work rather than Section 2.
 
 ---
 
@@ -71,7 +77,7 @@ Key moves:
 | Module / Area | Requirements | tasks.md sections | Owner |
 | --- | --- | --- | --- |
 | Project skeleton + tooling | 3, 8 (infra) | 1 | **Karim** |
-| Platform: db, Unit of Work, migrations | 8 | 2 | **Khalid** (pair review: Karim) |
+| Platform: db, Unit of Work, migrations | 8 | 2 | **Salma** (pair review: Karim) |
 | Platform: security primitives (hashing, encryption, JWT/MFA) | 2, 3 | 3 | **Karim** |
 | Platform: RBAC guards + constant-time denial | 3 | 4 | **Karim** |
 | Platform: middleware, jobs, mail/outbox, notifications, i18n, pagination | 3, 8 | 5 | **Amin** |
@@ -89,15 +95,21 @@ Key moves:
 
 Rationale for changes from the original owner table:
 - **Foundation split by sub-package.** Karim bootstraps the skeleton (Task 1) and owns the
-  security-critical core (security, RBAC); Khalid owns db, Unit of Work, and migrations
-  (Section 2); Amin owns supporting infra (middleware, jobs, mail, notifications, i18n,
-  pagination); Fadi owns storage + taxonomy; Salma owns audit. Different files, no collisions,
-  everyone productive from day one.
+  security-critical core (security, RBAC); Salma owns db, Unit of Work, and migrations
+  (Section 2) plus the audit layer that sits on top of it; Amin owns supporting infra
+  (middleware, jobs, mail, notifications, i18n, pagination); Fadi owns storage + taxonomy.
+  Different files, no collisions, everyone productive from day one.
 - **`audit/` (R8) → Salma.** Every mutation writes to the audit log, so it is built in the
   foundation wave. Giving it to Salma turns her formerly idle early weeks into delivery.
+- **Section 2 (db/UoW/migrations) → Salma.** Reassigned from Khalid because he is not currently
+  available and Section 2 is the direct blocker for `audit/` (Section 9), which Salma owns.
+  Consolidating both under one owner removes the Khalid → Salma cross-developer dependency: Salma
+  builds the db foundation, the shared enum types, and the migration harness, then builds `audit/`
+  on top without an inter-owner handoff. Karim continues to pair-review.
 - **`profiles/` → Khalid (mentored by Fadi).** Fadi still owns `cvs/` and reviews `profiles/`
   through the `CvsApi` boundary the two share, but Khalid owns the `profiles/` directory. This
-  keeps Khalid close to a mentor through Wave B and balances Fadi's previously double load.
+  keeps Khalid close to a mentor through Wave B. The mentored `profiles/` work is now his
+  onboarding surface (previously Section 2).
 - **`jobs/` → Khalid.** A bounded, mostly self-contained module for Khalid to own solo after the
   mentored `profiles/` work.
 - **`reviews/` (R9) → Salma.** Low coupling; fits between audit (Wave A) and reporting (Wave D)
@@ -117,17 +129,19 @@ Unblocks everyone. Nothing customer-facing lands until this is in. Work in paral
 sub-package:
 - **Karim** — Task 1 (project skeleton and tooling), then Section 3 (security primitives) and
   Section 4 (RBAC guards + constant-time denial path).
-- **Khalid** — Section 2 (db, Unit of Work, migrations). Karim reviews.
+- **Salma** — Section 2 (db, Unit of Work, migrations), then Section 9 (audit: append-only log,
+  hash chain, capture listener, search API) built on top of it. Karim reviews.
 - **Amin** — Section 5 (middleware, jobs, mail/outbox, notifications, i18n, pagination).
 - **Fadi** — Section 6 (object storage adapter), Section 7 (skill taxonomy + reference data).
-- **Salma** — Section 9 (audit: append-only log, hash chain, capture listener, search API).
 - Section 8 — **checkpoint** (platform layer).
 - Section 10 — **checkpoint** (audit foundation).
 
 Sequencing note: Karim lands Task 1 first so everyone has a package skeleton to build into, then
-moves to security/RBAC. Khalid's Section 2 depends on the skeleton, so he starts once Task 1 is
-merged and pairs with Karim (who owns the shared enum-types file in Task 2.2) through it — a
-strong onboarding path into the shared core before he takes domain work.
+moves to security/RBAC. Salma's Section 2 depends on the skeleton, so she starts once Task 1 is
+merged and pairs with Karim (who reviews the shared enum-types file in Task 2.2) through it. Salma
+then continues straight into `audit/` (Section 9), which sits directly on the Section 2
+`UnitOfWork`, enum types, and migration harness — so the two are built by the same owner with no
+cross-developer handoff.
 
 ### Wave B — Core domains in parallel (starts after Wave A merges)
 - **Karim → `identity/`** — Sections 11, 12 (+ Section 13 checkpoint).
@@ -157,9 +171,11 @@ strong onboarding path into the shared core before he takes domain work.
 
 Blocking edges after this assignment:
 
-- **Foundation → everyone.** Mitigated by splitting it five ways and finishing it in Wave A. The
-  chain is Task 1 (Karim: skeleton) → Section 2 (Khalid: db/UoW) → security + RBAC (Karim);
-  storage, taxonomy, supporting infra, and audit run alongside it.
+- **Foundation → everyone.** Mitigated by splitting it across the team and finishing it in Wave A.
+  The chain is Task 1 (Karim: skeleton) → Section 2 (Salma: db/UoW) → security + RBAC (Karim);
+  storage, taxonomy, and supporting infra run alongside it. Because Salma owns both Section 2 and
+  `audit/` (Section 9), the former db/UoW → audit cross-developer edge is now internal to one
+  owner and no longer a blocking handoff.
 - **Fadi (`CvsApi`) → Khalid (`profiles/` CV existence check).** Read-only; mitigated by Fadi
   publishing the `CvsApi` stub before Wave B implementation. Also mitigated by the mentoring pair
   (Fadi reviews `profiles/`), so the two coordinate directly.
@@ -183,13 +199,13 @@ few shared files (see below).
    - Khalid publishes `ProfilesApi` and `JobsApi` signatures (typed stubs).
    Consumers (Amin especially) code against these contracts, not implementations.
 2. **Shared enum types (Task 2.2)** are a hotspot — all native PostgreSQL ENUMs live in one place.
-   Khalid owns this file as part of Section 2 (with Karim pairing/reviewing); others request
+   Salma owns this file as part of Section 2 (with Karim pairing/reviewing); others request
    additions via a small PR rather than editing directly.
 3. **App wiring (Task 22.1)** — `main.py` / router registration is the other hotspot. Karim owns
    the wiring file; each module owner adds their router through a minimal, isolated change.
 4. **Migrations** — one Alembic head at a time. Coordinate migration generation so two owners
    don't create divergent heads; rebase before generating. During Wave A, the foundation owners
-   (Karim, Amin, Fadi, Salma) sequence their migrations through Khalid's db harness (Section 2).
+   (Karim, Amin, Fadi) sequence their migrations through Salma's db harness (Section 2).
 5. **Stay in your directory.** All other work is inside `app/platform/<sub-package>/` (Wave A) or
    `app/modules/<owner-module>/` (later waves), which is collision-free by construction.
 
@@ -211,12 +227,14 @@ they encode security- and integrity-critical invariants:
 - Is Karim comfortable owning the skeleton (Task 1) plus the security-critical core (security,
   RBAC) plus `identity/`? This is the critical chain; if it's too much, Section 4 (RBAC) can move
   to Amin once his Section 5 infra lands.
-- Section 2 (db, Unit of Work, migrations) is now Khalid's onboarding piece, gated behind Karim's
-  Task 1 skeleton and paired/reviewed by Karim. Confirm this is a good first-task fit, or keep it
-  with Karim and give Khalid a different Wave-A slice.
-- Khalid owns `profiles/`, `jobs/`, and the project skeleton. That is a full load for a new member
-  — the `profiles/` mentoring pair with Fadi is the safeguard. Confirm Fadi has review bandwidth,
-  or move `profiles/` to Fadi and give Khalid only `jobs/` + skeleton.
-- Salma now owns `audit/` (Wave A), `reviews/` (Wave C), and `reporting/` (Wave D). This keeps her
-  continuously busy but spans the whole timeline. Confirm the audit hash-chain work (security
-  critical) is a good fit, or pair her with Karim on Section 9.
+- Section 2 (db, Unit of Work, migrations) has moved to Salma because Khalid is not currently
+  available and Section 2 blocks Salma's `audit/` work. Karim still pair-reviews. Confirm this
+  consolidation is acceptable, or reassign Section 2 once Khalid returns.
+- Khalid owns `profiles/` and `jobs/`. The `profiles/` mentoring pair with Fadi is the safeguard
+  for a new member. Confirm Fadi has review bandwidth, or move `profiles/` to Fadi and give Khalid
+  only `jobs/`.
+- Salma now owns Section 2 (db/UoW/migrations), `audit/` (Wave A), `reviews/` (Wave C), and
+  `reporting/` (Wave D). This is a heavier load spanning the whole timeline and includes two
+  security-/integrity-critical pieces (the Section 2 foundation and the audit hash chain). Confirm
+  this is sustainable, or pair her with Karim on Sections 2 and 9, or hand Section 2 back to Khalid
+  when he is available.
