@@ -141,6 +141,8 @@ ignore = [
 # PreconditionUnmet, …) so code and specification read the same; no Error suffix.
 "app/platform/errors/base.py" = ["N818"]
 "app/modules/*/errors.py" = ["N818"]
+# ORJSONResponse is both a return-type annotation and instantiated at runtime
+"app/platform/security/guards.py" = ["TC002"]
 
 # SQLAlchemy and Pydantic evaluate annotations at runtime, so type-only imports
 # used in `Mapped[...]` / model fields must stay outside `TYPE_CHECKING`.
