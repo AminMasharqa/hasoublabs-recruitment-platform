@@ -17,28 +17,53 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import the metadata from the ORM base – will be populated as models are added.
-# Each module's models.py adds its tables to this metadata.
+# Import the aggregated metadata. ``app.platform.db.metadata`` imports every ORM
+# model module, so ``Base.metadata`` is fully populated before autogenerate diffs
+# it. Importing ``Base.metadata`` directly would see an empty schema (no model
+# modules imported) and generate a migration that drops every table.
 try:
-    from app.platform.db.base import Base  # noqa: PLC0415
-
-    target_metadata = Base.metadata
+    from app.platform.db.metadata import target_metadata  # noqa: PLC0415
 except ImportError:
     target_metadata = None  # type: ignore[assignment]
 
 
 def get_url() -> str:
-    """Return the DB URL from app settings, overriding alembic.ini."""
-    from app.config import get_settings  # noqa: PLC0415
+    """Return the async DB URL for migrations.
 
-    url = str(get_settings().database_url)
-    # Alembic needs the sync driver for migrations; asyncpg → psycopg2 swap
-    return url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    Precedence:
+    1. An explicit ``sqlalchemy.url`` set on the Alembic config (e.g. by an
+       integration-test fixture pointing at a Testcontainers database). This lets
+       tests migrate the exact database they then connect to, instead of whatever
+       ``.env`` names.
+    2. Otherwise, the application settings' ``database_url`` (normal dev/prod use).
+
+    Migrations run on the same ``asyncpg`` driver as the runtime (see
+    ``run_async_migrations``), so no separate sync driver (psycopg2) is required.
+    A bare ``postgresql://`` URL is normalised to ``postgresql+asyncpg://`` so the
+    async engine is selected regardless of how the URL was written.
+    """
+    override = config.get_main_option("sqlalchemy.url")
+    if override:
+        url = override
+    else:
+        from app.config import get_settings  # noqa: PLC0415
+
+        url = str(get_settings().database_url)
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode (no live DB connection needed)."""
-    url = get_url()
+    """Run migrations in 'offline' mode (no live DB connection needed).
+
+    Offline mode renders SQL to stdout via ``literal_binds`` and never opens a
+    connection, so the driver is irrelevant — Alembic only needs the dialect. The
+    ``+asyncpg`` suffix is stripped to the plain ``postgresql://`` form so dialect
+    resolution does not attempt to load the async driver during pure SQL
+    rendering.
+    """
+    url = get_url().replace("postgresql+asyncpg://", "postgresql://", 1)
     context.configure(
         url=url,
         target_metadata=target_metadata,

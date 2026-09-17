@@ -1,0 +1,46 @@
+# Keep the Docker build context small and free of secrets/local state.
+# Everything here is excluded from what is sent to the Docker daemon on build.
+
+# Virtual environments and caches
+.venv/
+venv/
+ENV/
+env/
+.uv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# Secrets and local config — never bake into an image
+.env
+*.pem
+*.key
+*.p12
+
+# Version control and IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+
+# Kiro IDE state and specs (not needed at runtime)
+.kiro/
+
+# Docs and local artifacts
+*.md
+!README.md
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# The compose file and this ignore file are not needed inside an image build
+docker-compose.yml
+.dockerignore
