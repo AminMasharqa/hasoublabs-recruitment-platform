@@ -19,7 +19,7 @@ from dataclasses import dataclass
 import functools
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from app.platform.i18n.locales import DEFAULT_LOCALE
 from app.platform.jobs.dead_letter import record_dead_letter_safely
@@ -51,8 +51,8 @@ class RetryPolicy:
 
     def delay_for(self, attempt: int) -> float:
         """Delay before attempt ``attempt + 1`` (``attempt`` is 1-based)."""
-        exponent = max(0, attempt - 1)
-        return min(self.base_delay_seconds * (2**exponent), self.max_delay_seconds)
+        factor = float(2 ** max(0, attempt - 1))
+        return min(self.base_delay_seconds * factor, self.max_delay_seconds)
 
 
 #: Sensible default for I/O-bound jobs talking to SMTP, MinIO or ClamAV.
@@ -188,7 +188,8 @@ def arq_functions() -> list[Function]:
 
     return [
         func(
-            instrument(spec),
+            # ARQ's WorkerCoroutine protocol is stricter than our handler alias.
+            cast("Any", instrument(spec)),
             name=spec.name.value,
             timeout=spec.timeout_seconds,
             keep_result=spec.keep_result_seconds,

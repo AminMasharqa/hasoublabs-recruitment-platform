@@ -36,7 +36,7 @@ from app.platform.i18n.locales import negotiate_locale
 from app.platform.middleware.context import current_actor
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Awaitable, Callable, Iterable
 
     from fastapi import FastAPI, Request
     from redis.asyncio import Redis
@@ -394,7 +394,8 @@ class RateLimitMiddleware:
 
     @staticmethod
     def _header(scope: Scope, name: bytes) -> str | None:
-        for header_name, value in scope.get("headers", ()):
+        headers: Iterable[tuple[bytes, bytes]] = scope.get("headers") or ()
+        for header_name, value in headers:
             if header_name == name:
                 return value.decode("latin-1")
         return None

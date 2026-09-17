@@ -17,7 +17,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 import hashlib
 import logging
-from typing import TYPE_CHECKING, Final, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast, runtime_checkable
 
 if TYPE_CHECKING:
     from datetime import timedelta
@@ -86,7 +86,9 @@ class ArqTaskQueue:
             *args,
             _job_id=job_id,
             _defer_by=delay,
-            **kwargs,
+            # ARQ types its own reserved kwargs, so a generic mapping has to be
+            # widened here; job kwargs are plain JSON-serializable values.
+            **cast("dict[str, Any]", kwargs),
         )
         if enqueued is None:
             _LOG.debug("Job %s already pending (job_id=%s); enqueue skipped", job, job_id)
