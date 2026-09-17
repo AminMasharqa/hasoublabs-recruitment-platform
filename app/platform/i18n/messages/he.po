@@ -1,0 +1,220 @@
+#	HasoubLabs Recruitment Platform — Hebrew (RTL) message catalog.
+#	Keep key-for-key in sync with en.po.
+msgid ""
+msgstr ""
+"Project-Id-Version: hasoublabs-recruitment-platform 0.1.0\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# ── API errors ───────────────────────────────────────────────────────────────
+
+msgid "error.validation_failed"
+msgstr "חלק מהשדות שנשלחו אינם תקינים."
+
+msgid "error.authentication_required"
+msgstr "יש להתחבר כדי להמשיך."
+
+msgid "error.not_authorized"
+msgstr "אין לך הרשאה לבצע פעולה זו."
+
+msgid "error.account_not_approved"
+msgstr "החשבון שלך עדיין לא אושר."
+
+msgid "error.illegal_transition"
+msgstr "השינוי הזה אינו אפשרי מהמצב הנוכחי."
+
+msgid "error.conflicting_state"
+msgstr "יש התנגשות עם נתונים קיימים."
+
+msgid "error.precondition_unmet"
+msgstr "חלק מהתנאים לפעולה הזו עדיין לא מתקיימים."
+
+msgid "error.rate_limited"
+msgstr "יותר מדי בקשות. נסה שוב בעוד רגע."
+
+msgid "error.code_entry_locked"
+msgstr "הזנת הקוד נחסמה. בקש קוד אימות חדש כדי להמשיך."
+
+msgid "error.integrity_violation"
+msgstr "בדיקת שלמות הנתונים נכשלה. מנהל המערכת קיבל התראה."
+
+msgid "error.upstream_unavailable"
+msgstr "שירות נדרש אינו זמין כרגע. נסה שוב."
+
+msgid "error.internal_server_error"
+msgstr "משהו השתבש. נסה שוב."
+
+msgid "error.bad_request"
+msgstr "לא ניתן היה לפרש את הבקשה."
+
+msgid "error.not_found"
+msgstr "המשאב הזה אינו קיים."
+
+msgid "error.method_not_allowed"
+msgstr "השיטה הזו אינה מותרת עבור המשאב הזה."
+
+msgid "error.unsupported_media_type"
+msgstr "סוג התוכן הזה אינו נתמך."
+
+msgid "error.http_error"
+msgstr "לא ניתן היה להשלים את הבקשה."
+
+# ── שגיאות ברמת השדה ─────────────────────────────────────────────────────────
+
+msgid "error.field.invalid"
+msgstr "הערך אינו תקין."
+
+msgid "error.field.required"
+msgstr "זהו שדה חובה."
+
+msgid "error.field.blank"
+msgstr "השדה אינו יכול להיות ריק."
+
+msgid "error.field.too_long"
+msgstr "הערך ארוך מדי."
+
+msgid "error.field.too_short"
+msgstr "הערך קצר מדי."
+
+msgid "error.field.invalid_email"
+msgstr "הזן כתובת אימייל תקינה."
+
+msgid "error.field.invalid_e164"
+msgstr "הזן מספר טלפון תקין בפורמט בין-לאומי."
+
+msgid "error.field.invalid_url"
+msgstr "הזן כתובת HTTPS תקינה."
+
+msgid "error.field.invalid_enum"
+msgstr "בחר אחד מהערכים המותרים."
+
+msgid "error.field.invalid_type"
+msgstr "סוג הערך שגוי."
+
+msgid "error.field.end_before_start"
+msgstr "תאריך הסיום אינו יכול להיות לפני תאריך ההתחלה."
+
+msgid "error.field.out_of_range"
+msgstr "הערך מחוץ לטווח המותר."
+
+msgid "error.field.invalid_cursor"
+msgstr "סמן הדף אינו תקין. התחל מהדף הראשון."
+
+msgid "error.field.mutually_exclusive"
+msgstr "לא ניתן להשתמש בפרמטרים האלה יחד."
+
+# ── דואר אלקטרוני (התראות שלב 1) ─────────────────────────────────────────────
+
+msgid "email.verification_code.subject"
+msgstr "קוד האימות שלך ב-HasoubLabs"
+
+msgid "email.verification_code.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"קוד האימות שלך: {code}\n"
+"\n"
+"הקוד יפוג בתוך {expiry_hours} שעות. אם לא ביקשת אותו, אפשר להתעלם מההודעה."
+
+msgid "email.registration_awaiting_review.subject"
+msgstr "רישום חדש ממתין לבדיקה"
+
+msgid "email.registration_awaiting_review.body"
+msgstr ""
+"{full_name} אימת את כתובת האימייל וממתין לבדיקה בתפקיד {role}.\n"
+"\n"
+"היכנס ללוח הניהול כדי לבדוק את הרישום."
+
+msgid "email.onboarding_meeting_required.subject"
+msgstr "יש לקבוע פגישת היכרות"
+
+msgid "email.onboarding_meeting_required.body"
+msgstr ""
+"{full_name} אושר וממתין לפגישת היכרות.\n"
+"\n"
+"היכנס ללוח הניהול כדי לקבוע אותה."
+
+msgid "email.account_approved.subject"
+msgstr "החשבון שלך ב-HasoubLabs אושר"
+
+msgid "email.account_approved.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"החשבון שלך אושר ויש לך גישה מלאה לפלטפורמה."
+
+msgid "email.account_rejected.subject"
+msgstr "עדכון בנוגע לרישום שלך ב-HasoubLabs"
+
+msgid "email.account_rejected.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"הרישום שלך לא אושר.\n"
+"\n"
+"סיבה: {reason}"
+
+msgid "email.application_submitted.subject"
+msgstr "קיבלנו את המועמדות שלך"
+
+msgid "email.application_submitted.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"המועמדות שלך למשרת {job_title} ב{company} נשלחה בהצלחה."
+
+msgid "email.application_status_changed.subject"
+msgstr "מצב המועמדות שלך השתנה"
+
+msgid "email.application_status_changed.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"מצב המועמדות שלך למשרת {job_title} הוא כעת: {status}"
+
+msgid "email.cv_quarantined.subject"
+msgstr "קובץ קורות החיים שלך לא הועלה לשימוש"
+
+msgid "email.cv_quarantined.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"סריקת האבטחה סימנה את הקובץ {file_name}, לכן הוא הועבר לבידוד ואינו זמין "
+"להגשת מועמדות. אנא העלה קובץ אחר."
+
+msgid "email.cv_integrity_failed.subject"
+msgstr "בדיקת שלמות של קורות חיים נכשלה"
+
+msgid "email.cv_integrity_failed.body"
+msgstr ""
+"שלום {full_name},\n"
+"\n"
+"בדיקת השלמות של הקובץ {file_name} נכשלה. הצוות שלנו קיבל התראה ויטפל בכך."
+
+msgid "email.signature"
+msgstr "צוות הגיוס של HasoubLabs"
+
+# ── כותרות התראות בתוך המערכת ────────────────────────────────────────────────
+
+msgid "notification.verification_code_issued.title"
+msgstr "קוד אימות נשלח"
+
+msgid "notification.registration_awaiting_review.title"
+msgstr "רישום חדש ממתין לבדיקה"
+
+msgid "notification.onboarding_meeting_required.title"
+msgstr "נדרשת פגישת היכרות"
+
+msgid "notification.account_decision_recorded.title"
+msgstr "מצב החשבון שלך השתנה"
+
+msgid "notification.application_submitted.title"
+msgstr "המועמדות נשלחה"
+
+msgid "notification.application_status_changed.title"
+msgstr "מצב המועמדות השתנה"
+
+msgid "notification.cv_integrity_issue.title"
+msgstr "יש בעיה בקובץ קורות חיים"
