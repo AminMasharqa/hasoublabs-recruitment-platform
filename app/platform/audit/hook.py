@@ -1,34 +1,179 @@
-"""No-op ``before_flush`` audit capture hook (MOCK for Section 9).
+"""SQLAlchemy ``before_flush`` audit capture hook (Section 9, Task 9.2).
 
-Replace the listener body in Section 9 with the real capture: inspect the
-session's ``new`` / ``dirty`` / ``deleted`` sets, emit one ``audit_log`` row per
-affected entity with ``before`` / ``after`` JSONB maps of changed columns only,
-apply the sensitive-column redaction map, and extend the hash chain. The public
-surface (``register_audit_capture``) stays identical so the ``UnitOfWork`` call
-site does not change.
+This replaces the Section 9 mock.  The public surface — ``register_audit_capture``
+— is unchanged so ``UnitOfWork`` and any other caller need no edits.
+
+How it works
+------------
+1. The listener fires *inside the caller's transaction* (before_flush), so audit
+   rows share the same ACID boundary as the mutation they describe.  If the
+   transaction rolls back, the audit rows roll back with it; the separate-connection
+   failure entry (written in ``UnitOfWork.__aexit__``) is the one that survives.
+2. For each entity in ``session.new`` / ``session.dirty`` / ``session.deleted``
+   the listener builds ``before`` / ``after`` JSONB maps of the changed columns
+   only (inserts: before=None; deletes: after=None; updates: only changed attrs).
+3. Sensitive columns are replaced with ``"[REDACTED]"`` using the redaction map in
+   ``audit.repository``.
+4. The actor identity UUID comes from ``audit_actor_id_var`` (set by middleware /
+   background-job wrapper).  Falls back to ``SYSTEM_ACTOR_UUID`` if unset.
+5. The hash-chain append uses ``session.connection()`` (sync) to execute raw
+   INSERTs inside the ongoing flush transaction, taking ``pg_advisory_xact_lock``
+   to serialise chain appends.
+
+Captured actions
+----------------
+* ``<entity_type>.created``   — ``session.new``
+* ``<entity_type>.updated``   — ``session.dirty``  (only changed attrs)
+* ``<entity_type>.deleted``   — ``session.deleted``
+
+Excluded from capture
+---------------------
+* ``AuditLogEntry`` itself — capturing audit rows would be infinite recursion.
+* ``AuditActorIdentity`` — identity upserts happen within the same transaction;
+  capturing them would produce noise with no signal.
+* Entities whose ``__tablename__`` is in ``_EXCLUDED_TABLES``.
 """
 
 from __future__ import annotations
 
+import contextlib
+from datetime import UTC, datetime
 import logging
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import event
+import sqlalchemy as sa
+from sqlalchemy import event, inspect, text
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
 _LOG = logging.getLogger(__name__)
 
-#: Guards against double-registration when a session factory is reused.
 _REGISTERED_MARKER = "_hasoub_audit_capture_registered"
 
+#: Tables for which we never emit audit rows (internal platform tables that
+#: would produce noise, plus the audit tables themselves to prevent recursion).
+_EXCLUDED_TABLES: frozenset[str] = frozenset(
+    {
+        "audit_log",
+        "audit_actor_identities",
+        "outbox_emails",
+        "notifications",
+        "job_dead_letters",
+    }
+)
 
-def register_audit_capture(target: Any) -> None:
+
+def _table_name(instance: object) -> str | None:
+    try:
+        mapper = inspect(instance)
+        tbl = getattr(getattr(mapper, "mapper", None), "local_table", None)
+        return str(tbl.name) if tbl is not None else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _get_column_value(instance: object, attr_name: str) -> object:
+    """Return the current in-memory value of a mapped column."""
+    try:
+        return getattr(instance, attr_name)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _coerce(val: object) -> object:
+    """Coerce non-JSON-serialisable scalar types to strings."""
+    if hasattr(val, "isoformat"):  # datetime / date
+        return val.isoformat()
+    if isinstance(val, bytes):
+        return val.hex()
+    return val
+
+def _snapshot(instance: object, table: str) -> dict[str, Any]:
+    """Build a full column snapshot of ``instance``, with sensitive fields redacted."""
+    from app.modules.audit.repository import (  # noqa: PLC0415
+        _REDACTED_SENTINEL,
+        REDACTED_COLUMNS,
+    )
+
+    try:
+        state = inspect(instance)
+        mapper = getattr(state, "mapper", None)
+        if mapper is None:
+            return {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+    result: dict[str, Any] = {}
+    for col in mapper.column_attrs:
+        col_name = col.key
+        full_key = f"{table}.{col_name}"
+        if full_key in REDACTED_COLUMNS:
+            result[col_name] = _REDACTED_SENTINEL
+        else:
+            result[col_name] = _coerce(_get_column_value(instance, col_name))
+    return result
+
+
+def _changed_attrs(instance: object, table: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return (before, after) dicts containing only the *changed* columns."""
+    from app.modules.audit.repository import (  # noqa: PLC0415
+        _REDACTED_SENTINEL,
+        REDACTED_COLUMNS,
+    )
+
+    try:
+        state = inspect(instance)
+        mapper = getattr(state, "mapper", None)
+        attrs = getattr(state, "attrs", None)
+        if mapper is None or attrs is None:
+            return {}, {}
+    except Exception:  # noqa: BLE001
+        return {}, {}
+
+    before: dict[str, Any] = {}
+    after: dict[str, Any] = {}
+
+    for col in mapper.column_attrs:
+        col_name = col.key
+        try:
+            history = attrs[col_name].history
+        except (KeyError, AttributeError):
+            continue
+        if not history.has_changes():
+            continue
+        full_key = f"{table}.{col_name}"
+        if full_key in REDACTED_COLUMNS:
+            before[col_name] = _REDACTED_SENTINEL
+            after[col_name] = _REDACTED_SENTINEL
+        else:
+            old_val = history.deleted[0] if history.deleted else None
+            new_val = history.added[0] if history.added else None
+            before[col_name] = _coerce(old_val)
+            after[col_name] = _coerce(new_val)
+
+    return before, after
+
+
+def _entity_id(instance: object) -> str:
+    """Return a string representation of the entity's primary key."""
+    try:
+        mapper = inspect(instance)
+        pk = mapper.identity  # type: ignore[union-attr]
+        if pk and len(pk) == 1:
+            return str(pk[0])
+        return str(pk) if pk else "unknown"
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
+def _entity_type(instance: object) -> str:
+    """Return the class name of the entity (e.g. ``Account``)."""
+    return type(instance).__name__
+
+
+def register_audit_capture(target: object) -> None:
     """Attach the audit ``before_flush`` listener to a session (factory).
-
-    MOCK: the listener currently records nothing. It only logs at DEBUG so the
-    capture point is observable during development, then returns.
 
     Args:
         target: a SQLAlchemy ``Session``, ``sessionmaker`` /
@@ -39,24 +184,150 @@ def register_audit_capture(target: Any) -> None:
         return
 
     @event.listens_for(target, "before_flush")
-    def _capture(session: Session, flush_context: Any, instances: Any) -> None:  # noqa: ANN401, ARG001
-        # Section 9 replaces this body. Until then: no audit row is written.
-        # The design requires audit writes to share the mutation's transaction,
-        # so the real implementation emits rows here, inside the same flush.
-        if _LOG.isEnabledFor(logging.DEBUG):
-            _LOG.debug(
-                "audit capture (mock): new=%d dirty=%d deleted=%d — recording nothing",
-                len(session.new),
-                len(session.dirty),
-                len(session.deleted),
+    def _capture(  # noqa: ANN202
+        session: Session,
+        flush_context: object,  # noqa: ARG001
+        instances: object,  # noqa: ARG001
+    ) -> None:
+        """Inspect dirty/new/deleted sets and emit one audit row per entity."""
+        from app.modules.audit.models import AuditLogEntry  # noqa: PLC0415
+        from app.modules.audit.repository import (  # noqa: PLC0415
+            AUDIT_CHAIN_LOCK_KEY,
+            audit_actor_id_var,
+            audit_reason_var,
+            audit_request_id_var,
+            compute_entry_hash,
+        )
+
+        actor_id = audit_actor_id_var.get()
+        reason = audit_reason_var.get()
+        request_id = audit_request_id_var.get()
+
+        entries_to_write: list[dict[str, Any]] = []
+
+        # --- new (INSERT) ---
+        for obj in list(session.new):
+            tbl = _table_name(obj)
+            if not tbl or tbl in _EXCLUDED_TABLES:
+                continue
+            entries_to_write.append(
+                {
+                    "action": f"{_entity_type(obj)}.created",
+                    "entity_type": _entity_type(obj),
+                    "entity_id": _entity_id(obj),
+                    "before": None,
+                    "after": _snapshot(obj, tbl) or None,
+                }
             )
 
-    try:
-        target._hasoub_audit_capture_registered = True  # noqa: SLF001
-    except (AttributeError, TypeError):
-        # Some event targets (e.g. the Session class) may reject attribute
-        # assignment; the listener is still attached, which is what matters.
-        pass
+        # --- dirty (UPDATE) ---
+        for obj in list(session.dirty):
+            if not session.is_modified(obj):
+                continue
+            tbl = _table_name(obj)
+            if not tbl or tbl in _EXCLUDED_TABLES:
+                continue
+            before, after = _changed_attrs(obj, tbl)
+            if not before and not after:
+                continue
+            entries_to_write.append(
+                {
+                    "action": f"{_entity_type(obj)}.updated",
+                    "entity_type": _entity_type(obj),
+                    "entity_id": _entity_id(obj),
+                    "before": before or None,
+                    "after": after or None,
+                }
+            )
+
+        # --- deleted (DELETE) ---
+        for obj in list(session.deleted):
+            tbl = _table_name(obj)
+            if not tbl or tbl in _EXCLUDED_TABLES:
+                continue
+            entries_to_write.append(
+                {
+                    "action": f"{_entity_type(obj)}.deleted",
+                    "entity_type": _entity_type(obj),
+                    "entity_id": _entity_id(obj),
+                    "before": _snapshot(obj, tbl) or None,
+                    "after": None,
+                }
+            )
+
+        if not entries_to_write:
+            return
+
+        # Write each entry using the sync connection inside the ongoing flush.
+        # session.connection() returns the sync Connection that participates in
+        # the current transaction — no new connection, no new transaction.
+        try:
+            conn = session.connection()
+
+            # Take advisory lock to serialise chain appends.
+            conn.execute(
+                text("SELECT pg_advisory_xact_lock(:key)"),
+                {"key": AUDIT_CHAIN_LOCK_KEY},
+            )
+
+            # Read the tail hash.
+            tail_row = conn.execute(
+                AuditLogEntry.__table__
+                .select()
+                .with_only_columns(AuditLogEntry.__table__.c.entry_hash)
+                .order_by(AuditLogEntry.__table__.c.id.desc())
+                .limit(1)
+            ).one_or_none()
+            prev_hash: bytes | None = tail_row[0] if tail_row else None
+
+            now = datetime.now(UTC)
+
+            for entry_data in entries_to_write:
+                entry_fields: dict[str, Any] = {
+                    "actor_identity_id": str(actor_id),
+                    "action": entry_data["action"],
+                    "entity_type": entry_data["entity_type"],
+                    "entity_id": entry_data["entity_id"],
+                    "before": entry_data["before"],
+                    "after": entry_data["after"],
+                    "reason": reason,
+                    "request_id": request_id,
+                    "outcome": "success",
+                    "error_type": None,
+                    "occurred_at": now,
+                }
+                entry_hash = compute_entry_hash(entry_fields, prev_hash)
+
+                conn.execute(
+                    sa.insert(AuditLogEntry).values(
+                        occurred_at=now,
+                        actor_identity_id=actor_id,
+                        action=entry_data["action"],
+                        entity_type=entry_data["entity_type"],
+                        entity_id=entry_data["entity_id"],
+                        before=entry_data["before"],
+                        after=entry_data["after"],
+                        reason=reason,
+                        request_id=request_id,
+                        outcome="success",
+                        error_type=None,
+                        prev_hash=prev_hash,
+                        entry_hash=entry_hash,
+                    )
+                )
+                prev_hash = entry_hash
+
+        except Exception:
+            _LOG.exception(
+                "audit capture: failed to write %d entries for flush",
+                len(entries_to_write),
+            )
+            # Re-raise so the transaction rolls back — we must never silently
+            # drop audit rows for a committed mutation.
+            raise
+
+    with contextlib.suppress(AttributeError, TypeError):
+        setattr(target, _REGISTERED_MARKER, True)  # noqa: SLF001
 
 
 __all__ = ["register_audit_capture"]

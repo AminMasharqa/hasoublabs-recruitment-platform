@@ -16,10 +16,10 @@ Design notes:
   Section 9, would let audit rows commit apart from the change they describe).
 * **Commit is implicit and single.** The commit happens once, on successful exit
   of the context. Callers signal failure by raising; they do not commit.
-* **The failure audit entry is written elsewhere.** R8 AC5 also requires exactly
-  one failure entry per failed operation, and that entry must survive this
-  rollback — so it is written on a *separate* short-lived connection by the audit
-  layer (Section 9, design D-7), never inside this transaction.
+* **The failure audit entry is written on a separate connection.** R8 AC5
+  requires exactly one failure entry per failed operation, and that entry must
+  survive this rollback — so it is written by ``audit.repository.append_failure_entry``
+  on a dedicated short-lived connection in the rollback path of ``__aexit__``.
 
 Usage::
 
@@ -31,11 +31,18 @@ Usage::
 
 from __future__ import annotations
 
-from types import TracebackType
+import logging
+from typing import TYPE_CHECKING
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from app.platform.audit.hook import register_audit_capture
+from app.platform.db.engine import get_engine, get_sessionmaker
 
-from app.platform.db.engine import get_sessionmaker
+if TYPE_CHECKING:
+    from types import TracebackType
+
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+_LOG = logging.getLogger(__name__)
 
 
 class UnitOfWork:
@@ -44,6 +51,13 @@ class UnitOfWork:
     The session is created on ``__aenter__`` and closed on ``__aexit__``. The
     transaction commits if the ``async with`` block completes without raising,
     and rolls back otherwise. The originating exception is never swallowed.
+
+    Audit integration (Section 9)
+    ------------------------------
+    * ``register_audit_capture`` is called on the sessionmaker at construction
+      time (idempotent: the marker prevents double-registration).
+    * On rollback, ``append_failure_entry`` writes exactly one failure entry on
+      a separate short-lived connection, so it survives the rollback.
     """
 
     __slots__ = ("_sessionmaker", "_session")
@@ -55,6 +69,8 @@ class UnitOfWork:
         # The sessionmaker is injectable so tests can bind a UoW to a
         # Testcontainers engine without touching the process-wide singleton.
         self._sessionmaker = sessionmaker or get_sessionmaker()
+        # Attach the audit capture listener once per sessionmaker instance.
+        register_audit_capture(self._sessionmaker)
         self._session: AsyncSession | None = None
 
     @property
@@ -88,11 +104,41 @@ class UnitOfWork:
                 await session.commit()
             else:
                 await session.rollback()
+                # Write exactly one failure audit entry on a separate connection
+                # so it survives the rollback (R8 AC5).  Fire-and-forget; we log
+                # but never mask the original exception.
+                await self._write_failure_entry(exc)
         finally:
             await session.close()
             self._session = None
         # Never suppress the original exception.
         return False
+
+    async def _write_failure_entry(self, exc: BaseException | None) -> None:
+        """Write a failure audit entry on a separate short-lived connection."""
+        try:
+            from app.modules.audit.repository import (  # noqa: PLC0415
+                append_failure_entry,
+                audit_actor_id_var,
+                audit_reason_var,
+                audit_request_id_var,
+            )
+
+            engine = get_engine()
+            engine_url = str(engine.url)
+
+            await append_failure_entry(
+                engine_url=engine_url,
+                actor_identity_id=audit_actor_id_var.get(),
+                action="operation.failed",
+                entity_type="Transaction",
+                entity_id="unknown",
+                error_type=type(exc).__name__ if exc is not None else "UnknownError",
+                reason=audit_reason_var.get(),
+                request_id=audit_request_id_var.get(),
+            )
+        except Exception:
+            _LOG.exception("UnitOfWork: failed to write failure audit entry")
 
 
 __all__ = ["UnitOfWork"]

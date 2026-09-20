@@ -20,6 +20,9 @@ but it documents the dependency structure.
 
 from __future__ import annotations
 
+# ── Domain module tables (added as each module lands) ─────────────────────────
+# Section 9 (Salma) — audit tables registered.
+from app.modules.audit import models as _audit_models  # noqa: F401
 from app.platform.db.base import Base
 
 # ── Platform tables (Section 5, 6, 7) ─────────────────────────────────────────
@@ -29,16 +32,16 @@ from app.platform.jobs import models as _jobs_models  # noqa: F401
 from app.platform.mail import models as _mail_models  # noqa: F401
 from app.platform.notifications import models as _notifications_models  # noqa: F401
 
-# ── Domain module tables (added as each module lands) ─────────────────────────
-# Each owner appends their models import here in their own PR, e.g.:
-#   from app.modules.audit import models as _audit_models       # noqa: F401  (Section 9)
-#   from app.modules.identity import models as _identity_models # noqa: F401  (Section 11)
-#   from app.modules.cvs import models as _cvs_models           # noqa: F401  (Section 14)
-#   ... profiles (15), jobs (17), applications (18), reviews (20)
-# They are intentionally omitted now: importing an empty module skeleton would
-# add nothing, and importing one that does not yet define its tables would be a
-# no-op at best. This keeps the baseline migration limited to what actually
-# exists today (the platform tables above).
+# Wave B domain modules (Sections 11, 14, 15) — uncommented as they land:
+from app.modules.identity import models as _identity_models  # noqa: F401  (Section 11)
+from app.modules.cvs import models as _cvs_models  # noqa: F401  (Section 14)
+from app.modules.profiles import models as _profiles_models  # noqa: F401  (Section 15)
+# Wave C modules (Sections 17, 18, 20)
+from app.modules.jobs import models as _jobs_domain_models          # noqa: F401  (Section 17)
+from app.modules.applications import models as _apps_models         # noqa: F401  (Section 18)
+from app.modules.reviews import models as _reviews_models           # noqa: F401  (Section 20)
+# Wave D module (Section 21)
+from app.modules.reporting import models as _reporting_models  # noqa: F401  (Section 21)
 
 #: The metadata object Alembic diffs against. Importing this module has the side
 #: effect of registering every imported model's table on it.
