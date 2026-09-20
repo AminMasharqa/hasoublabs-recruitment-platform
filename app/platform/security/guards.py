@@ -350,22 +350,55 @@ def _get_auth_required_message(request: Request) -> str:
     return messages.get(locale, messages["en"])
 
 
-def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None:
+def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None:  # noqa: ARG001
     """Schedule an audit-log entry for the denial (R3 AC9).
 
-    Written on a separate connection so it never joins the request transaction.
-    The audit module (Salma, Section 9) will provide the full implementation.
-    Until then, log to the application logger as a placeholder.
+    Written on a separate connection (fire-and-forget background task) so the
+    entry never joins the request's transaction and never delays the response.
     """
-    actor_id = getattr(getattr(request.state, "principal", None), "account_id", None)
+    import asyncio  # noqa: PLC0415
+
+    from app.modules.audit.api import record_denial_async  # noqa: PLC0415
+    from app.modules.audit.repository import audit_actor_id_var  # noqa: PLC0415
+    from app.platform.db.engine import get_engine  # noqa: PLC0415
+
+    request_id = getattr(request.state, "request_id", None)
     path = request.url.path
     method = request.method
-    request_id = getattr(request.state, "request_id", "unknown")
-    logger.info(
-        "Authorization denied | actor=%s method=%s path=%s request_id=%s",
-        actor_id,
-        method,
-        path,
-        request_id,
-    )
+
+    # Actor comes from the ContextVar (set by middleware for authenticated requests).
+    actor_identity_id = audit_actor_id_var.get()
+
+    engine_url = str(get_engine().url)
+
+    async def _write() -> None:
+        try:
+            await record_denial_async(
+                actor_identity_id=actor_identity_id,
+                entity_type="Route",
+                entity_id=f"{method}:{path}",
+                request_id=request_id,
+                engine_url=engine_url,
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "audit: failed to write denial entry for %s %s request_id=%s",
+                method,
+                path,
+                request_id,
+            )
+
+    # Schedule as a background task on the running event loop.
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(_write())
+        else:
+            loop.run_until_complete(_write())
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "audit: could not schedule denial audit for %s %s",
+            method,
+            path,
+        )
 

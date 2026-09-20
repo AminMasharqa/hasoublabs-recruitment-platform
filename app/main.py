@@ -162,8 +162,8 @@ def _register_routers(app: FastAPI) -> None:
     # from app.modules.reviews.router import router as reviews_router
     # app.include_router(reviews_router, prefix="/api/v1")
 
-    # from app.modules.audit.router import router as audit_router
-    # app.include_router(audit_router, prefix="/api/v1")
+    from app.modules.audit.router import router as audit_router  # noqa: PLC0415
+    app.include_router(audit_router, prefix="/api/v1")
 
     # from app.modules.reporting.router import router as reporting_router
     # app.include_router(reporting_router, prefix="/api/v1")
