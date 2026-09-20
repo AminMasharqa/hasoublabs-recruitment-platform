@@ -360,7 +360,6 @@ def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None: 
 
     from app.modules.audit.api import record_denial_async  # noqa: PLC0415
     from app.modules.audit.repository import audit_actor_id_var  # noqa: PLC0415
-    from app.platform.db.engine import get_engine  # noqa: PLC0415
 
     request_id = getattr(request.state, "request_id", None)
     path = request.url.path
@@ -369,10 +368,12 @@ def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None: 
     # Actor comes from the ContextVar (set by middleware for authenticated requests).
     actor_identity_id = audit_actor_id_var.get()
 
-    engine_url = str(get_engine().url)
-
     async def _write() -> None:
+        # Import and resolve engine URL inside the task so unit tests without
+        # a live settings environment don't crash during handler setup.
         try:
+            from app.platform.db.engine import get_engine  # noqa: PLC0415
+            engine_url = str(get_engine().url)
             await record_denial_async(
                 actor_identity_id=actor_identity_id,
                 entity_type="Route",
