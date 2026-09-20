@@ -1,0 +1,117 @@
+# Local development stack for the HasoubLabs Recruitment Platform.
+#
+# "Local development is one command" (design: Deployment → Environments). This
+# brings up every backing service the platform talks to, with credentials that
+# match .env.example / .env exactly, so `uv run alembic upgrade head` and the
+# app connect with no further configuration.
+#
+# MVP note: only `postgres` is required to run migrations and the Section 2
+# tests. `valkey` and `mailpit` are needed once the app boots (sessions, rate
+# limits, outbox). `minio`, `clamav`, and `openbao` are needed by Wave B modules
+# (CVs, encryption) — they are defined here so the file is complete, but you can
+# start a subset, e.g.:  docker compose up -d postgres valkey mailpit
+#
+# Data persists in named volumes across restarts. To wipe everything:
+#   docker compose down -v
+
+services:
+  # ── PostgreSQL — source of truth (Section 2) ───────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: hasoub-postgres
+    environment:
+      POSTGRES_USER: hasoub
+      POSTGRES_PASSWORD: hasoub
+      POSTGRES_DB: hasoub_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` returns 0 only once the server accepts connections, so
+      # dependents that `condition: service_healthy` wait for a usable database,
+      # not merely a started container.
+      test: ["CMD-SHELL", "pg_isready -U hasoub -d hasoub_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Valkey — sessions, rate limits, ARQ broker ─────────────────────────────
+  valkey:
+    image: valkey/valkey:8
+    container_name: hasoub-valkey
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Mailpit — captures outbound mail in development ────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: hasoub-mailpit
+    ports:
+      - "1025:1025" # SMTP endpoint (matches SMTP_PORT in .env)
+      - "8025:8025" # Web UI — open http://localhost:8025 to read captured mail
+    restart: unless-stopped
+
+  # ── MinIO — S3-compatible object storage for CVs (Wave B) ──────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: hasoub-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000" # S3 API (matches MINIO_ENDPOINT in .env)
+      - "9001:9001" # Web console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ── ClamAV — CV malware scanning (Wave B) ──────────────────────────────────
+  clamav:
+    image: clamav/clamav:latest
+    container_name: hasoub-clamav
+    ports:
+      - "3310:3310"
+    healthcheck:
+      # ClamAV downloads virus definitions on first boot; the start_period gives
+      # it time before health checks begin counting failures.
+      test: ["CMD-SHELL", "echo PING | nc -w 5 localhost 3310 | grep -q PONG"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+
+  # ── OpenBao — KMS / key custody for envelope encryption (Wave B) ───────────
+  openbao:
+    image: openbao/openbao:latest
+    container_name: hasoub-openbao
+    command: ["server", "-dev", "-dev-root-token-id=dev-root-token"]
+    environment:
+      # Dev mode only. In staging/production OpenBao runs unsealed with real
+      # storage and a rotated root token — never this fixed dev token.
+      BAO_DEV_ROOT_TOKEN_ID: dev-root-token
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK # lets OpenBao mlock memory so secrets are not swapped to disk
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

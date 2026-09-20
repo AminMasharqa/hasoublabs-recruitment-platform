@@ -1,0 +1,221 @@
+#	HasoubLabs Recruitment Platform — Arabic (RTL) message catalog.
+#	Keep key-for-key in sync with en.po.
+msgid ""
+msgstr ""
+"Project-Id-Version: hasoublabs-recruitment-platform 0.1.0\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# ── API errors ───────────────────────────────────────────────────────────────
+
+msgid "error.validation_failed"
+msgstr "بعض الحقول المُدخلة غير صالحة."
+
+msgid "error.authentication_required"
+msgstr "يرجى تسجيل الدخول للمتابعة."
+
+msgid "error.not_authorized"
+msgstr "لا تملك صلاحية تنفيذ هذا الإجراء."
+
+msgid "error.account_not_approved"
+msgstr "لم تتم الموافقة على حسابك بعد."
+
+msgid "error.illegal_transition"
+msgstr "هذا التغيير غير مسموح من الحالة الحالية."
+
+msgid "error.conflicting_state"
+msgstr "هذا يتعارض مع بيانات موجودة مسبقًا."
+
+msgid "error.precondition_unmet"
+msgstr "لم تتحقق بعد بعض الشروط المطلوبة لهذا الإجراء."
+
+msgid "error.rate_limited"
+msgstr "عدد كبير من الطلبات. يرجى المحاولة بعد قليل."
+
+msgid "error.code_entry_locked"
+msgstr "تم إيقاف إدخال الرمز. اطلب رمز تحقق جديدًا للمتابعة."
+
+msgid "error.integrity_violation"
+msgstr "فشل التحقق من سلامة البيانات. تم تنبيه المسؤول."
+
+msgid "error.upstream_unavailable"
+msgstr "خدمة مطلوبة غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى."
+
+msgid "error.internal_server_error"
+msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+
+msgid "error.bad_request"
+msgstr "لم يتم فهم الطلب."
+
+msgid "error.not_found"
+msgstr "هذا العنصر غير موجود."
+
+msgid "error.method_not_allowed"
+msgstr "هذه الطريقة غير مسموح بها لهذا العنصر."
+
+msgid "error.unsupported_media_type"
+msgstr "نوع المحتوى هذا غير مدعوم."
+
+msgid "error.http_error"
+msgstr "لم يتم إكمال الطلب."
+
+# ── أخطاء على مستوى الحقل ────────────────────────────────────────────────────
+
+msgid "error.field.invalid"
+msgstr "هذه القيمة غير صالحة."
+
+msgid "error.field.required"
+msgstr "هذا الحقل مطلوب."
+
+msgid "error.field.blank"
+msgstr "لا يمكن أن يكون هذا الحقل فارغًا."
+
+msgid "error.field.too_long"
+msgstr "هذه القيمة أطول من المسموح."
+
+msgid "error.field.too_short"
+msgstr "هذه القيمة أقصر من المسموح."
+
+msgid "error.field.invalid_email"
+msgstr "أدخل عنوان بريد إلكتروني صالحًا."
+
+msgid "error.field.invalid_e164"
+msgstr "أدخل رقم هاتف صالحًا بالتنسيق الدولي."
+
+msgid "error.field.invalid_url"
+msgstr "أدخل رابط HTTPS صالحًا."
+
+msgid "error.field.invalid_enum"
+msgstr "اختر إحدى القيم المسموح بها."
+
+msgid "error.field.invalid_type"
+msgstr "نوع هذه القيمة غير صحيح."
+
+msgid "error.field.end_before_start"
+msgstr "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء."
+
+msgid "error.field.out_of_range"
+msgstr "هذه القيمة خارج النطاق المسموح."
+
+msgid "error.field.invalid_cursor"
+msgstr "مؤشر الصفحة غير صالح. ابدأ من الصفحة الأولى."
+
+msgid "error.field.mutually_exclusive"
+msgstr "لا يمكن استخدام هذه المعطيات معًا."
+
+# ── رسائل البريد الإلكتروني (إشعارات المرحلة الأولى) ──────────────────────────
+
+msgid "email.verification_code.subject"
+msgstr "رمز التحقق الخاص بك في HasoubLabs"
+
+msgid "email.verification_code.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"رمز التحقق الخاص بك هو: {code}\n"
+"\n"
+"تنتهي صلاحية الرمز بعد {expiry_hours} ساعة. إذا لم تطلبه، يمكنك تجاهل هذه "
+"الرسالة."
+
+msgid "email.registration_awaiting_review.subject"
+msgstr "تسجيل جديد بانتظار المراجعة"
+
+msgid "email.registration_awaiting_review.body"
+msgstr ""
+"أكد {full_name} عنوان بريده الإلكتروني وهو بانتظار المراجعة بصفة {role}.\n"
+"\n"
+"افتح لوحة الإدارة لمراجعة التسجيل."
+
+msgid "email.onboarding_meeting_required.subject"
+msgstr "ترتيب لقاء التعريف"
+
+msgid "email.onboarding_meeting_required.body"
+msgstr ""
+"تمت الموافقة على {full_name} وهو بانتظار لقاء التعريف.\n"
+"\n"
+"افتح لوحة الإدارة لترتيب اللقاء."
+
+msgid "email.account_approved.subject"
+msgstr "تمت الموافقة على حسابك في HasoubLabs"
+
+msgid "email.account_approved.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"تمت الموافقة على حسابك ولديك الآن وصول كامل إلى المنصة."
+
+msgid "email.account_rejected.subject"
+msgstr "تحديث بشأن تسجيلك في HasoubLabs"
+
+msgid "email.account_rejected.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"لم تتم الموافقة على تسجيلك.\n"
+"\n"
+"السبب: {reason}"
+
+msgid "email.application_submitted.subject"
+msgstr "استلمنا طلبك"
+
+msgid "email.application_submitted.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"تم إرسال طلبك لوظيفة {job_title} في {company} بنجاح."
+
+msgid "email.application_status_changed.subject"
+msgstr "تغيّرت حالة طلبك"
+
+msgid "email.application_status_changed.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"حالة طلبك لوظيفة {job_title} الآن: {status}"
+
+msgid "email.cv_quarantined.subject"
+msgstr "لم يتم إتاحة ملف سيرتك الذاتية"
+
+msgid "email.cv_quarantined.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"أشار الفحص الأمني إلى مشكلة في الملف {file_name}، لذلك تم حجره وهو غير متاح "
+"للتقديم. يرجى رفع ملف آخر."
+
+msgid "email.cv_integrity_failed.subject"
+msgstr "فشل التحقق من سلامة ملف السيرة الذاتية"
+
+msgid "email.cv_integrity_failed.body"
+msgstr ""
+"مرحبًا {full_name}،\n"
+"\n"
+"فشل التحقق من سلامة الملف {file_name}. تم إبلاغ فريقنا وسيتابع الأمر."
+
+msgid "email.signature"
+msgstr "فريق التوظيف في HasoubLabs"
+
+# ── عناوين الإشعارات داخل المنصة ──────────────────────────────────────────────
+
+msgid "notification.verification_code_issued.title"
+msgstr "تم إرسال رمز التحقق"
+
+msgid "notification.registration_awaiting_review.title"
+msgstr "تسجيل جديد بانتظار المراجعة"
+
+msgid "notification.onboarding_meeting_required.title"
+msgstr "مطلوب لقاء تعريفي"
+
+msgid "notification.account_decision_recorded.title"
+msgstr "تغيّرت حالة حسابك"
+
+msgid "notification.application_submitted.title"
+msgstr "تم إرسال الطلب"
+
+msgid "notification.application_status_changed.title"
+msgstr "تغيّرت حالة الطلب"
+
+msgid "notification.cv_integrity_issue.title"
+msgstr "هناك مشكلة في ملف سيرة ذاتية"
