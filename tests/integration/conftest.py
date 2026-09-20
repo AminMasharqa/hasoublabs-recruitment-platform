@@ -45,8 +45,13 @@ def _postgres_container() -> Iterator[object]:
     """Start one PostgreSQL 16 container for the whole integration session."""
     if not _TESTCONTAINERS_AVAILABLE:
         pytest.skip("testcontainers not installed")
-    with PostgresContainer("postgres:16") as container:
-        yield container
+    try:
+        with PostgresContainer("postgres:16") as container:
+            yield container
+    except Exception as exc:  # noqa: BLE001 - Docker client errors vary by platform
+        if exc.__class__.__module__.startswith("docker"):
+            pytest.skip(f"Docker is unavailable: {exc}")
+        raise
 
 
 def _sync_url(container: object) -> str:

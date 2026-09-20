@@ -154,6 +154,14 @@ class _StubSseKMS:
         self.context = context
 
 
+class _StubSse:
+    pass
+
+
+class _StubSseCustomerKey:
+    pass
+
+
 @pytest.fixture
 def stub_minio_sse(monkeypatch: pytest.MonkeyPatch) -> type[_StubSseKMS]:
     """Install a fake ``minio.sse`` module exposing :class:`_StubSseKMS`.
@@ -163,6 +171,8 @@ def stub_minio_sse(monkeypatch: pytest.MonkeyPatch) -> type[_StubSseKMS]:
     """
     module = types.ModuleType("minio.sse")
     module.SseKMS = _StubSseKMS  # type: ignore[attr-defined]
+    module.Sse = _StubSse  # type: ignore[attr-defined]
+    module.SseCustomerKey = _StubSseCustomerKey  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "minio.sse", module)
     return _StubSseKMS
 
