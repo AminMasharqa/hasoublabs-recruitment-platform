@@ -293,6 +293,19 @@ async def _setup_services(application: FastAPI) -> None:
     reviews_api = DefaultReviewsApi(uow_factory)
     application.state.reviews_api = reviews_api
 
+    # ── Reporting services (Wave D) ───────────────────────────────────────────
+    from app.modules.reporting.service import ReportService, ExportService  # noqa: PLC0415
+    from app.modules.reporting.api import DefaultReportingApi  # noqa: PLC0415
+
+    report_service = ReportService(uow_factory)
+    application.state.report_service = report_service
+
+    export_service = ExportService(uow_factory, arq_queue=arq_pool)
+    application.state.export_service = export_service
+
+    reporting_api = DefaultReportingApi(uow_factory)
+    application.state.reporting_api = reporting_api
+
     _LOG.info("All domain services initialised.")
 
 
@@ -471,9 +484,9 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(applications_router, prefix="/api/v1")
     from app.modules.reviews.router import router as reviews_router  # noqa: PLC0415
     app.include_router(reviews_router, prefix="/api/v1")
-    # Wave D router — uncomment as it lands:
-    # from app.modules.reporting.router import router as reporting_router
-    # app.include_router(reporting_router, prefix="/api/v1")
+    # Wave D router
+    from app.modules.reporting.router import router as reporting_router  # noqa: PLC0415
+    app.include_router(reporting_router, prefix="/api/v1")
 
 
 app = create_app()

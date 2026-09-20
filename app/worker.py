@@ -49,8 +49,8 @@ def _register_tasks() -> None:
     # Wave C tasks
     import app.modules.jobs.tasks  # noqa: F401, PLC0415 - extract_jd_from_url / _text, cleanup_drafts
 
-    # Wave D tasks — uncomment as they land:
-    # import app.modules.reporting.tasks     # generate_export, refresh_report_rollups
+    # Wave D tasks
+    import app.modules.reporting.tasks  # noqa: F401, PLC0415 - generate_export
 
 
 def _build_session_factory(settings: Settings) -> Callable[[], AsyncSession]:

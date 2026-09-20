@@ -40,8 +40,8 @@ from app.modules.profiles import models as _profiles_models  # noqa: F401  (Sect
 from app.modules.jobs import models as _jobs_domain_models          # noqa: F401  (Section 17)
 from app.modules.applications import models as _apps_models         # noqa: F401  (Section 18)
 from app.modules.reviews import models as _reviews_models           # noqa: F401  (Section 20)
-# Wave D modules — uncomment as they land:
-#   from app.modules.reporting import models as _reporting_models   # noqa: F401  (Section 21)
+# Wave D module (Section 21)
+from app.modules.reporting import models as _reporting_models  # noqa: F401  (Section 21)
 
 #: The metadata object Alembic diffs against. Importing this module has the side
 #: effect of registering every imported model's table on it.
