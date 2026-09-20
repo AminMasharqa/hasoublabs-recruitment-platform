@@ -32,10 +32,14 @@ from app.platform.jobs import models as _jobs_models  # noqa: F401
 from app.platform.mail import models as _mail_models  # noqa: F401
 from app.platform.notifications import models as _notifications_models  # noqa: F401
 
-# Sections below are uncommented as each Wave PR merges:
-#   from app.modules.identity import models as _identity_models # noqa: F401  (Section 11)
-#   from app.modules.cvs import models as _cvs_models           # noqa: F401  (Section 14)
-#   ... profiles (15), jobs (17), applications (18), reviews (20)
+# Wave B domain modules (Sections 11, 14, 15) — uncommented as they land:
+from app.modules.identity import models as _identity_models  # noqa: F401  (Section 11)
+from app.modules.cvs import models as _cvs_models  # noqa: F401  (Section 14)
+from app.modules.profiles import models as _profiles_models  # noqa: F401  (Section 15)
+# Wave C/D modules — uncomment as they land:
+#   from app.modules.jobs import models as _jobs_domain_models      # noqa: F401  (Section 17)
+#   from app.modules.applications import models as _apps_models     # noqa: F401  (Section 18)
+#   from app.modules.reviews import models as _reviews_models       # noqa: F401  (Section 20)
 
 #: The metadata object Alembic diffs against. Importing this module has the side
 #: effect of registering every imported model's table on it.

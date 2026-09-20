@@ -39,12 +39,16 @@ def _register_tasks() -> None:
     """
     import app.platform.mail.tasks  # noqa: F401, PLC0415 - registers drain_email_outbox
 
-    # Module owners add their task module here as their Wave lands:
-    # import app.modules.identity.tasks   # expire_verification_codes
-    # import app.modules.cvs.tasks        # scan_cv, verify_cv_checksums
-    # import app.modules.audit.tasks      # verify_audit_chain
-    # import app.modules.jobs.tasks       # extract_jd_from_url / _text
-    # import app.modules.reporting.tasks  # generate_export, refresh_report_rollups
+    # Wave B tasks
+    import app.modules.identity.tasks  # noqa: F401, PLC0415 - expire_verification_codes
+    import app.modules.cvs.tasks  # noqa: F401, PLC0415 - scan_cv, verify_cv_checksums
+
+    # Wave A audit tasks
+    import app.modules.audit.tasks  # noqa: F401, PLC0415 - verify_audit_chain, create_audit_partition
+
+    # Wave C/D tasks — uncomment as they land:
+    # import app.modules.jobs.tasks          # extract_jd_from_url / _text
+    # import app.modules.reporting.tasks     # generate_export, refresh_report_rollups
 
 
 def _build_session_factory(settings: Settings) -> Callable[[], AsyncSession]:
