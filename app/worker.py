@@ -46,8 +46,10 @@ def _register_tasks() -> None:
     # Wave A audit tasks
     import app.modules.audit.tasks  # noqa: F401, PLC0415 - verify_audit_chain, create_audit_partition
 
-    # Wave C/D tasks — uncomment as they land:
-    # import app.modules.jobs.tasks          # extract_jd_from_url / _text
+    # Wave C tasks
+    import app.modules.jobs.tasks  # noqa: F401, PLC0415 - extract_jd_from_url / _text, cleanup_drafts
+
+    # Wave D tasks — uncomment as they land:
     # import app.modules.reporting.tasks     # generate_export, refresh_report_rollups
 
 

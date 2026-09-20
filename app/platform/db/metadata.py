@@ -36,10 +36,12 @@ from app.platform.notifications import models as _notifications_models  # noqa: 
 from app.modules.identity import models as _identity_models  # noqa: F401  (Section 11)
 from app.modules.cvs import models as _cvs_models  # noqa: F401  (Section 14)
 from app.modules.profiles import models as _profiles_models  # noqa: F401  (Section 15)
-# Wave C/D modules — uncomment as they land:
-#   from app.modules.jobs import models as _jobs_domain_models      # noqa: F401  (Section 17)
-#   from app.modules.applications import models as _apps_models     # noqa: F401  (Section 18)
-#   from app.modules.reviews import models as _reviews_models       # noqa: F401  (Section 20)
+# Wave C modules (Sections 17, 18, 20)
+from app.modules.jobs import models as _jobs_domain_models          # noqa: F401  (Section 17)
+from app.modules.applications import models as _apps_models         # noqa: F401  (Section 18)
+from app.modules.reviews import models as _reviews_models           # noqa: F401  (Section 20)
+# Wave D modules — uncomment as they land:
+#   from app.modules.reporting import models as _reporting_models   # noqa: F401  (Section 21)
 
 #: The metadata object Alembic diffs against. Importing this module has the side
 #: effect of registering every imported model's table on it.

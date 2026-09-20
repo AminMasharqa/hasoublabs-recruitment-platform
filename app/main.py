@@ -246,6 +246,53 @@ async def _setup_services(application: FastAPI) -> None:
     identity_api = DefaultIdentityApi(uow_factory)
     application.state.identity_api = identity_api
 
+    # ── Jobs services ─────────────────────────────────────────────────────────
+    from app.modules.jobs.service import JobDescriptionService, JdExtractionService  # noqa: PLC0415
+
+    jd_service = JobDescriptionService(uow_factory, skill_resolver=skill_resolver)
+    application.state.jd_service = jd_service
+
+    jd_extraction_service = JdExtractionService(uow_factory, skill_resolver=skill_resolver)
+    application.state.jd_extraction_service = jd_extraction_service
+
+    # ── JobsApi (cross-module) ────────────────────────────────────────────────
+    from app.modules.jobs.api import DefaultJobsApi  # noqa: PLC0415
+
+    jobs_api = DefaultJobsApi(uow_factory)
+    application.state.jobs_api = jobs_api
+
+    # ── Applications services ─────────────────────────────────────────────────
+    from app.modules.applications.service import ApplicationService, ApplicationStatusService  # noqa: PLC0415
+    from app.modules.applications.api import DefaultApplicationsApi  # noqa: PLC0415
+
+    application_service = ApplicationService(
+        uow_factory,
+        profiles_api=profiles_api,
+        cvs_api=cvs_api,
+        identity_api=identity_api,
+        jobs_api=jobs_api,
+    )
+    application.state.application_service = application_service
+
+    application_status_service = ApplicationStatusService(
+        uow_factory,
+        identity_api=identity_api,
+    )
+    application.state.application_status_service = application_status_service
+
+    applications_api = DefaultApplicationsApi(uow_factory, identity_api=identity_api)
+    application.state.applications_api = applications_api
+
+    # ── Reviews services ──────────────────────────────────────────────────────
+    from app.modules.reviews.service import ReviewService  # noqa: PLC0415
+    from app.modules.reviews.api import DefaultReviewsApi  # noqa: PLC0415
+
+    review_service = ReviewService(uow_factory)
+    application.state.review_service = review_service
+
+    reviews_api = DefaultReviewsApi(uow_factory)
+    application.state.reviews_api = reviews_api
+
     _LOG.info("All domain services initialised.")
 
 
@@ -417,13 +464,14 @@ def _register_routers(app: FastAPI) -> None:
     from app.modules.audit.router import router as audit_router  # noqa: PLC0415
     app.include_router(audit_router, prefix="/api/v1")
 
-    # Wave C/D routers — uncomment as they land:
-    # from app.modules.jobs.router import router as jobs_router
-    # app.include_router(jobs_router, prefix="/api/v1")
-    # from app.modules.applications.router import router as applications_router
-    # app.include_router(applications_router, prefix="/api/v1")
-    # from app.modules.reviews.router import router as reviews_router
-    # app.include_router(reviews_router, prefix="/api/v1")
+    # Wave C/D routers
+    from app.modules.jobs.router import router as jobs_router  # noqa: PLC0415
+    app.include_router(jobs_router, prefix="/api/v1")
+    from app.modules.applications.router import router as applications_router  # noqa: PLC0415
+    app.include_router(applications_router, prefix="/api/v1")
+    from app.modules.reviews.router import router as reviews_router  # noqa: PLC0415
+    app.include_router(reviews_router, prefix="/api/v1")
+    # Wave D router — uncomment as it lands:
     # from app.modules.reporting.router import router as reporting_router
     # app.include_router(reporting_router, prefix="/api/v1")
 
