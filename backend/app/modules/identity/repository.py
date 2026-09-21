@@ -54,15 +54,17 @@ async def get_account_by_email(
     Case-insensitive comparison; scoped to the role so the same email address
     may hold a Candidate account and a separate Senior account.
     """
-    from sqlalchemy import cast, String  # noqa: PLC0415
+    from sqlalchemy import cast  # noqa: PLC0415
     from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY  # noqa: PLC0415
+
+    from app.platform.db.enums import role_type  # noqa: PLC0415
 
     stmt = (
         select(Account)
         .where(
             func.lower(Account.email) == email.lower(),
             Account.email_released.is_(False),
-            Account.roles.contains(cast([role.value], PG_ARRAY(String))),
+            Account.roles.contains(cast([role], PG_ARRAY(role_type))),
         )
     )
     result = await session.scalars(stmt)
@@ -114,10 +116,12 @@ async def update_account_mfa(
     session: AsyncSession,
     account: Account,
     secret_enc: bytes,
+    wrapped_key: bytes,
     enrolled_at: datetime,
 ) -> None:
-    """Store the encrypted MFA secret and record enrolment time."""
+    """Store the encrypted MFA secret, its wrapped data key, and enrolment time."""
     account.mfa_secret_enc = secret_enc
+    account.mfa_wrapped_key = wrapped_key
     account.mfa_enrolled_at = enrolled_at
     account.updated_at = utc_now()
 
@@ -301,8 +305,10 @@ async def list_accounts(
 
     Results are ordered by (created_at ASC, id ASC) for stable pagination.
     """
-    from sqlalchemy import cast, String  # noqa: PLC0415
+    from sqlalchemy import cast  # noqa: PLC0415
     from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY  # noqa: PLC0415
+
+    from app.platform.db.enums import role_type  # noqa: PLC0415
 
     stmt = select(Account).where(Account.email_released.is_(False))
 
@@ -310,8 +316,10 @@ async def list_accounts(
         stmt = stmt.where(Account.status == status)
 
     if role is not None:
+        # ``accounts.roles`` is ``role[]``; casting the operand to ``varchar[]``
+        # leaves PostgreSQL with no ``role[] @> varchar[]`` operator.
         stmt = stmt.where(
-            Account.roles.contains(cast([role.value], PG_ARRAY(String)))
+            Account.roles.contains(cast([role.value], PG_ARRAY(role_type)))
         )
 
     if after_id is not None:
@@ -329,16 +337,19 @@ async def list_accounts(
 
 async def get_all_admin_accounts(session: AsyncSession) -> list[Account]:
     """Return all active Admin accounts (used to build notification targets)."""
-    from sqlalchemy import cast, String  # noqa: PLC0415
+    from sqlalchemy import cast  # noqa: PLC0415
     from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY  # noqa: PLC0415
-    from app.platform.db.enums import Role  # noqa: PLC0415
+
+    from app.platform.db.enums import Role, role_type  # noqa: PLC0415
 
     stmt = (
         select(Account)
         .where(
             Account.email_released.is_(False),
             Account.status == AccountStatus.APPROVED,
-            Account.roles.contains(cast([Role.ADMIN.value], PG_ARRAY(String))),
+            # ``role[] @> varchar[]`` is not an operator PostgreSQL has; the
+            # operand has to be cast to the same element type as the column.
+            Account.roles.contains(cast([Role.ADMIN.value], PG_ARRAY(role_type))),
         )
         .order_by(Account.created_at)
     )

@@ -38,11 +38,14 @@ from __future__ import annotations
 
 import contextlib
 from datetime import UTC, datetime
+import enum
 import logging
 from typing import TYPE_CHECKING, Any
+import uuid
 
 import sqlalchemy as sa
 from sqlalchemy import event, inspect, text
+from sqlalchemy.orm import Session as SyncSession
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -87,6 +90,10 @@ def _coerce(val: object) -> object:
         return val.isoformat()
     if isinstance(val, bytes):
         return val.hex()
+    if isinstance(val, uuid.UUID):
+        return str(val)
+    if isinstance(val, enum.Enum):
+        return val.value
     return val
 
 def _snapshot(instance: object, table: str) -> dict[str, Any]:
@@ -172,18 +179,43 @@ def _entity_type(instance: object) -> str:
     return type(instance).__name__
 
 
-def register_audit_capture(target: object) -> None:
-    """Attach the audit ``before_flush`` listener to a session (factory).
+def register_audit_capture(target: object) -> None:  # noqa: ARG001
+    """Attach the audit ``before_flush`` listener to the ORM session machinery.
 
     Args:
-        target: a SQLAlchemy ``Session``, ``sessionmaker`` /
-            ``async_sessionmaker``, or the ``Session`` class — anything the
-            SQLAlchemy event API accepts for the ``before_flush`` event.
+        target: accepted for backwards compatibility with existing call sites
+            (``UnitOfWork`` passes the process-wide ``async_sessionmaker``; the
+            legacy mock passed an ``AsyncSession.sync_session``). The value is
+            no longer used to decide *what* to register against — see "Why
+            ``Session``" below — but the parameter stays so callers need no
+            edits.
+
+    Why ``Session``, not the async target
+    --------------------------------------
+    SQLAlchemy's async ORM does not support attaching ORM events such as
+    ``before_flush`` directly to ``AsyncSession``/``async_sessionmaker``: the
+    flush machinery actually runs on the *synchronous* ``Session`` that every
+    ``AsyncSession`` proxies internally (``AsyncSession.sync_session``, an
+    instance of ``AsyncSession.sync_session_class``). This project does not
+    configure a custom ``sync_session_class``, so that class is plain
+    ``sqlalchemy.orm.Session`` — the same class shared by every
+    ``async_sessionmaker`` in the process. Registering on that class is
+    therefore both correct (it's where ``before_flush`` actually fires) and
+    equivalent in scope to "every session this app creates", since the app
+    creates no sync ORM sessions of its own.
+
+    Idempotency
+    -----------
+    The registration marker is set on ``Session`` itself (the actual event
+    target) rather than on whatever ``target`` was passed in, so calling this
+    function once per ``UnitOfWork``/sessionmaker instance — as callers already
+    do — still only attaches the listener once per process, and a second call
+    with a *different* target object does not double-register it either.
     """
-    if getattr(target, _REGISTERED_MARKER, False):
+    if getattr(SyncSession, _REGISTERED_MARKER, False):
         return
 
-    @event.listens_for(target, "before_flush")
+    @event.listens_for(SyncSession, "before_flush")
     def _capture(  # noqa: ANN202
         session: Session,
         flush_context: object,  # noqa: ARG001
@@ -327,7 +359,7 @@ def register_audit_capture(target: object) -> None:
             raise
 
     with contextlib.suppress(AttributeError, TypeError):
-        setattr(target, _REGISTERED_MARKER, True)  # noqa: SLF001
+        setattr(SyncSession, _REGISTERED_MARKER, True)  # noqa: SLF001
 
 
 __all__ = ["register_audit_capture"]

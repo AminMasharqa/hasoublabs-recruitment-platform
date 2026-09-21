@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "HasoubLabs Recruitment",
+    "skipToContent": "Skip to main content",
+    "mainContent": "Main content"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "open": "Open the navigation",
+    "close": "Close the navigation",
+    "dashboard": "Dashboard",
+    "profile": "My profile",
+    "cvs": "My CVs",
+    "jobs": "Jobs",
+    "myJobs": "My job descriptions",
+    "applications": "My applications",
+    "applicants": "Applicants",
+    "reviews": "Reviews",
+    "accounts": "Accounts",
+    "candidates": "Candidates",
+    "audit": "Audit log",
+    "reports": "Reports",
+    "exports": "Exports",
+    "diagnostics": "Diagnostics",
+    "account": "Account"
+  },
+  "route": {
+    "statusNotice": "Account status",
+    "verification": "Verify your email address",
+    "registration": "Create your account",
+    "placeholder": {
+      "title": "Not available yet",
+      "body": "This screen is still being built. Use the navigation to go somewhere else."
+    },
+    "notFound": {
+      "title": "This address does not exist",
+      "body": "Check the address, or use the navigation to go somewhere else."
+    }
+  },
+  "locale": {
+    "label": "Language",
+    "ar": "العربية",
+    "he": "עברית",
+    "en": "English"
+  },
+  "context": {
+    "label": "Active role",
+    "switch": "Switch role",
+    "switchTo": "Switch to {{context}}",
+    "ADMIN": "Administrator",
+    "CANDIDATE": "Candidate",
+    "SENIOR": "Senior"
+  },
+  "session": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "expired": "Your session has expired. Sign in again to continue.",
+    "denied": "You are not authorized to view this."
+  },
+  "action": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "retry": "Try again",
+    "reload": "Reload the page",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "clearFilters": "Clear filters",
+    "download": "Download",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
+  },
+  "state": {
+    "loading": "Loading…",
+    "empty": "There is nothing in {{destination}} yet.",
+    "emptyFiltered": "No entries in {{destination}} match the current filters.",
+    "errorTitle": "This could not be loaded"
+  },
+  "supportReference": {
+    "label": "Support reference",
+    "hint": "Quote this reference when you contact support.",
+    "copy": "Copy the support reference"
+  },
+  "recovery": {
+    "title": "This screen could not be displayed",
+    "body": "The rest of the application is still available. Reload the page to try again."
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "description": "Details to quote when you report a problem.",
+    "bundleVersion": "Bundle version",
+    "bundleVersionUnknown": "This build recorded no version identifier.",
+    "apiHealth": "Backend status",
+    "status": {
+      "healthy": "Reachable, reporting itself healthy",
+      "other": "Reachable, reporting something else",
+      "unknown": "Reachable, reporting no status"
+    },
+    "reportedStatus": "Reported status",
+    "checkedAt": "Checked at",
+    "utc": "{{value}} UTC",
+    "latestFailure": "Most recent failed request"
+  }
+}

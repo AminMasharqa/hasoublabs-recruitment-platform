@@ -1,0 +1,113 @@
+{
+  "title": "Accounts",
+  "description": "Issue registration links and move accounts through their lifecycle.",
+  "listLabel": "Accounts",
+  "view": {
+    "accounts": "Back to accounts",
+    "pendingSkills": "Review pending skill terms"
+  },
+  "filters": {
+    "legend": "Filter accounts",
+    "status": "Account status",
+    "role": "Role",
+    "any": "Any",
+    "apply": "Apply filters"
+  },
+  "status": {
+    "PendingVerification": "Pending email verification",
+    "PendingApproval": "Pending approval",
+    "ApprovedPendingMeeting": "Approved, meeting pending",
+    "Approved": "Approved",
+    "Rejected": "Rejected",
+    "Suspended": "Suspended",
+    "Deactivated": "Deactivated"
+  },
+  "role": {
+    "ADMIN": "Administrator",
+    "CANDIDATE": "Candidate",
+    "SENIOR": "Senior"
+  },
+  "card": {
+    "created": "Created {{value}}",
+    "utc": "{{value}} UTC",
+    "roles": "Roles:",
+    "noRoles": "No role assigned",
+    "language": "Language preference: {{value}}",
+    "mfaEnrolled": "Two-factor enrolled",
+    "mfaNotEnrolled": "Two-factor not enrolled"
+  },
+  "lifecycle": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "record-meeting": "Meeting held",
+    "suspend": "Suspend",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "reopen": "Reopen",
+    "fastTrack": "Fast-track",
+    "fastTrackHint": "Approve without the onboarding meeting step.",
+    "noneAvailable": "This account has no lifecycle actions left."
+  },
+  "confirm": {
+    "reasonLabel": "Reason",
+    "reasonHint": "Between {{min}} and {{max}} characters. It is recorded in the audit log.",
+    "reject": {
+      "title": "Reject this account?",
+      "body": "The applicant is told the account was rejected and the email address is released for reuse. A rejected account can be reopened later.",
+      "confirm": "Reject account"
+    },
+    "suspend": {
+      "title": "Suspend this account?",
+      "body": "The holder keeps the account but loses access until it is reactivated.",
+      "confirm": "Suspend account"
+    },
+    "deactivate": {
+      "title": "Deactivate this account permanently?",
+      "body": "Access ends and the email address is released for reuse. This cannot be undone.",
+      "confirm": "Deactivate account"
+    }
+  },
+  "roles": {
+    "label": "Roles",
+    "hint": "Saving replaces the complete role set of this account.",
+    "save": "Save roles",
+    "refusal": {
+      "admin_exclusive": "The Administrator role cannot be combined with another role.",
+      "empty": "Choose at least one role."
+    }
+  },
+  "link": {
+    "title": "Registration links",
+    "description": "Issue a link for someone to register with. The role is fixed by the link.",
+    "create": "Create a {{role}} link",
+    "issuedTitle": "Registration link created",
+    "onceNotice": "This is the only time the token is shown. Copy it now — it cannot be retrieved afterwards, and leaving this screen discards it.",
+    "token": "Token",
+    "url": "Registration address",
+    "copyValue": "Copy the {{value}}",
+    "expires": "Expires {{value}}",
+    "forRole": "Registers as: {{role}}",
+    "dismiss": "Hide the token",
+    "noToken": "The server returned no token for this link. Create another one."
+  },
+  "pendingSkills": {
+    "title": "Pending skill terms",
+    "description": "Terms entered by candidates and seniors that the skill taxonomy could not match.",
+    "listLabel": "Pending skill terms",
+    "normalized": "Normalized:",
+    "recorded": "Recorded {{value}}",
+    "empty": "No skill terms are awaiting review."
+  },
+  "pagination": {
+    "pageSize": "Showing up to {{size}} accounts per page.",
+    "first": "First page"
+  },
+  "announce": {
+    "statusChanged": "The account status is now {{status}}.",
+    "rolesSaved": "The role set was saved.",
+    "linkIssued": "The registration link was created.",
+    "loaded": "The account list was updated.",
+    "empty": "No accounts matched.",
+    "failed": "The account list could not be loaded."
+  }
+}

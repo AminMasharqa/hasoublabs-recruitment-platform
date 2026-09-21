@@ -4,13 +4,19 @@ Tasks registered here:
 - ``generate_export``: fetches data, writes a .xlsx file to MinIO using
   XlsxWriter in constant_memory mode, updates the ReportExport row with a
   signed download URL (R29).
+- ``refresh_report_rollups``: refreshes the optional report materialized views
+  (R28). Reports read live tables today, so this is a no-op until a rollup view
+  is introduced — it discovers views from the catalog rather than hard-coding a
+  list, so adding one needs no change here.
 """
 
 from __future__ import annotations
 
 import io
 import logging
+import re
 from datetime import datetime, timedelta, UTC
+from typing import Final
 from uuid import UUID
 
 from app.platform.jobs.catalog import JobName
@@ -139,6 +145,63 @@ async def generate_export(ctx: dict, *, export_id: str, **_kwargs: object) -> di
                     error_message=str(exc)[:500],
                 )
         raise
+
+
+#: Postgres identifiers may hold anything when quoted, but a rollup view we are
+#: willing to refresh is plain ASCII. The names come from ``pg_matviews``, not
+#: from a request, so this is a belt-and-braces guard on interpolated DDL.
+_SAFE_IDENTIFIER: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+@task(
+    JobName.REFRESH_REPORT_ROLLUPS,
+    retry=RetryPolicy(max_tries=2, base_delay_seconds=60),
+    timeout_seconds=600,
+)
+async def refresh_report_rollups(ctx: dict, **_kwargs: object) -> dict:  # noqa: ARG001
+    """Refresh every materialized view in the application schema (R28).
+
+    The design lists report rollups as *optional* materialized views: the Admin
+    report endpoints aggregate live tables, and a rollup is introduced only if a
+    report outgrows that. So this job is a catalog sweep rather than a fixed list
+    — it refreshes whatever exists and reports zero when nothing does.
+
+    ``CONCURRENTLY`` is deliberately not used: it cannot run inside a
+    transaction block and requires a unique index on the view. A plain refresh
+    takes an exclusive lock on a view no request path reads yet.
+    """
+    from sqlalchemy import text  # noqa: PLC0415
+
+    from app.platform.jobs.runtime import worker_session_factory  # noqa: PLC0415
+
+    session_factory = worker_session_factory()
+
+    async with session_factory() as session:
+        rows = (
+            await session.execute(
+                text(
+                    "SELECT schemaname, matviewname FROM pg_matviews"
+                    " WHERE schemaname = current_schema()"
+                    " ORDER BY matviewname"
+                )
+            )
+        ).all()
+
+        refreshed: list[str] = []
+        skipped: list[str] = []
+        for schema, view in rows:
+            if not (_SAFE_IDENTIFIER.match(schema) and _SAFE_IDENTIFIER.match(view)):
+                _LOG.warning("refresh_report_rollups: skipping unsafe name %r.%r", schema, view)
+                skipped.append(f"{schema}.{view}")
+                continue
+            await session.execute(text(f'REFRESH MATERIALIZED VIEW "{schema}"."{view}"'))
+            refreshed.append(view)
+
+        await session.commit()
+
+    if refreshed:
+        _LOG.info("refresh_report_rollups: refreshed %s", ", ".join(refreshed))
+    return {"status": "ok", "refreshed": refreshed, "skipped": skipped}
 
 
 def _write_xlsx(entity_type: str, rows: list[dict]) -> bytes:

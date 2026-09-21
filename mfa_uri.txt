@@ -1,0 +1,6 @@
+﻿otpauth://totp/HasoubLabs:e2e-admin%40example.com?secret=VMIUTCXXAOUEMRLBIU2U5UK6WGZR7ZZA&issuer=HasoubLabs
+
+# Re-enrolled 2026-09-22 during the task 28 pipeline run. The previous secret
+# (I7KGIJ3TJ6XCEQIYHEU3ICEMRXXVMRO3) is no longer valid: only one TOTP secret is
+# stored per account, so enrolling again replaced it.
+# Use as: $env:E2E_ADMIN_TOTP_SECRET = 'VMIUTCXXAOUEMRLBIU2U5UK6WGZR7ZZA'

@@ -1,0 +1,71 @@
+{
+  "title": "Create your account",
+  "intro": "An administrator invited you with a registration link. Complete these details to create your account.",
+  "checking": "Checking your registration link…",
+  "invalidLink": {
+    "title": "This registration link is not usable",
+    "body": "The link is invalid or has expired. Ask your administrator for a new registration link."
+  },
+  "linkFailed": "Your registration link could not be checked.",
+  "roleNotice": {
+    "CANDIDATE": "This link creates a candidate account.",
+    "SENIOR": "This link creates a senior account."
+  },
+  "field": {
+    "role": "Account type",
+    "fullName": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "passwordHint": "At least {{minLength}} characters.",
+    "languagePreference": "Preferred language",
+    "residencyProofType": "Residency proof",
+    "residencyProofValue": "Residency proof",
+    "street": "Street",
+    "number": "House or building number",
+    "numberHint": "Leave this empty if the address has no number.",
+    "city": "City",
+    "country": "Country"
+  },
+  "proofType": {
+    "MobilePhone": "Mobile phone number",
+    "NationalId": "National identity number",
+    "Address": "Address"
+  },
+  "proofHint": {
+    "MobilePhone": "The mobile number registered in your name.",
+    "NationalId": "Your national identity number.",
+    "Address": "Enter the parts of your address separately. They are submitted together as one residency proof."
+  },
+  "addressLegend": "Residential address",
+  "submit": "Create account",
+  "submitting": "Creating your account…",
+  "emailConflict": "An account already exists for this email address. Sign in instead, or register with a different address.",
+  "invalid": {
+    "title": "Your details could not be submitted",
+    "body": "Correct the values below, then submit again."
+  },
+  "failed": "Your account could not be created.",
+  "verification": {
+    "title": "Verify your email address",
+    "description": "We sent a code to your email address. Enter it here to finish creating your account.",
+    "noAccount": {
+      "title": "There is no account to verify here",
+      "body": "Open the verification screen from the link in your email, or register again with your registration link."
+    },
+    "field": {
+      "code": "Verification code",
+      "codeHint": "The {{length}} digits from the email."
+    },
+    "submit": "Verify",
+    "submitting": "Verifying your code…",
+    "resend": "Send a new code",
+    "resending": "Sending a new code…",
+    "resent": "A new code is on its way. The previous code no longer works.",
+    "resendFailed": "A new code could not be sent.",
+    "lockedTitle": "Code entry is locked",
+    "invalid": {
+      "title": "That code could not be submitted"
+    },
+    "failed": "Your email address could not be verified."
+  }
+}

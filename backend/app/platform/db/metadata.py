@@ -31,6 +31,13 @@ from app.platform.db.base import Base
 from app.platform.jobs import models as _jobs_models  # noqa: F401
 from app.platform.mail import models as _mail_models  # noqa: F401
 from app.platform.notifications import models as _notifications_models  # noqa: F401
+# Reference data and the skill taxonomy are platform-owned tables created by
+# migrations 0009a and 0004a. They must be registered here too: without them
+# ``candidate_skills.skill_id``'s foreign key cannot resolve, which makes
+# ``Base.metadata`` unsortable and every autogenerate/compare_metadata call raise
+# NoReferencedTableError — the reason the enum drift in Bug 2 went unnoticed.
+from app.platform.reference import models as _reference_models  # noqa: F401
+from app.platform.taxonomy import models as _taxonomy_models  # noqa: F401
 
 # Wave B domain modules (Sections 11, 14, 15) — uncommented as they land:
 from app.modules.identity import models as _identity_models  # noqa: F401  (Section 11)

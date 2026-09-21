@@ -137,7 +137,7 @@ class FakeSkillRepository:
     async def find_fuzzy_candidates(self, normalized: str) -> list[FuzzyCandidate]:
         return list(self.fuzzy)
 
-    def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
+    async def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
         self.added.append(term)
 
 

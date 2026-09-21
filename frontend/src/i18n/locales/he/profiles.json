@@ -1,0 +1,154 @@
+{
+  "candidate": {
+    "title": "הפרופיל שלי",
+    "description": "שמרו על פרטים מעודכנים. פרופיל שלם נדרש לפני הגשת מועמדות למשרה.",
+    "stateLabel": "מצב הפרופיל"
+  },
+  "senior": {
+    "title": "הפרופיל והעדפות הקשר שלי",
+    "description": "שמרו על פרטים מעודכנים ושלטו בשאלה אם וכיצד ניתן לפנות אליכם בנוגע למשרות.",
+    "companyAffiliation": "שיוך לחברה",
+    "contactSection": "העדפות קשר",
+    "contactChannelLabel": "כיצד ניתן לפנות אליך",
+    "contactChannelDescription": "בחרו «אין לפנות אליי» אם אינכם מעוניינים בפניות בנוגע למשרות.",
+    "contactScopeLabel": "המשרות שלגביהן ניתן לפנות אליך",
+    "contactScopePlaceholder": "בחרו היקף משרות",
+    "scopeHint": "הבחירה קובעת לגבי אילו משרות אחרים יוכלו לפנות אליכם.",
+    "scopeRequiresCompany": "האפשרות «משרות בחברה שלי» מחייבת שיוך לחברה למעלה.",
+    "scopeRequiresExpertise": "האפשרות «משרות בתחום ההתמחות שלי» מחייבת כישור התמחות אחד לפחות למטה.",
+    "contactNoneNote": "בחרתם שלא לקבל פניות, ולכן לא נשמר היקף פניות.",
+    "contactAddressLabel": "כתובת לפנייה",
+    "contactAddressRegistered": "כתובת הדואר האלקטרוני הרשומה בחשבון שלך",
+    "contactAddressNote": "נעשה שימוש בכתובת הדואר האלקטרוני של החשבון. אין כתובת פנייה נפרדת להזנה.",
+    "chatUnavailable": "הצ׳אט בפלטפורמה אינו זמין עדיין.",
+    "expertiseSection": "תחום התמחות",
+    "expertiseDescription": "הוסיפו בין {{min}} ל־{{max}} כישורים המתארים את תחום ההתמחות שלך.",
+    "expertiseEmpty": "אין עדיין כישורי התמחות.",
+    "expertiseEntry": "כישור התמחות {{number}}",
+    "addExpertise": "הוספת כישור התמחות",
+    "adminTitle": "פרופיל בכיר",
+    "adminDescription": "זו תצוגה לקריאה בלבד של פרופיל הבכיר והעדפות הקשר שלו.",
+    "adminMissingAccount": "לא צוין חשבון בכיר בכתובת."
+  },
+  "contactChannel": {
+    "Chat": "צ׳אט בפלטפורמה",
+    "Email": "דואר אלקטרוני",
+    "Both": "צ׳אט בפלטפורמה ודואר אלקטרוני",
+    "None": "אין לפנות אליי"
+  },
+  "contactScope": {
+    "OwnPostingsOnly": "רק משרות שפרסמתי",
+    "SameCompany": "משרות בחברה שלי",
+    "FieldOfExpertise": "משרות בתחום ההתמחות שלי"
+  },
+  "state": {
+    "Draft": "טיוטה",
+    "Complete": "שלם"
+  },
+  "section": {
+    "core": "פרטים אישיים",
+    "education": "השכלה",
+    "work": "ניסיון תעסוקתי",
+    "skills": "כישורים",
+    "languages": "שפות"
+  },
+  "field": {
+    "fullName": "שם מלא",
+    "email": "כתובת דואר אלקטרוני",
+    "phone": "מספר טלפון",
+    "city": "עיר",
+    "summary": "תקציר",
+    "linkedinUrl": "כתובת לינקדאין",
+    "institution": "מוסד לימודים",
+    "degree": "תואר",
+    "fieldOfStudy": "תחום לימודים",
+    "enrolmentStatus": "מצב ההרשמה",
+    "startYear": "שנת התחלה",
+    "endYear": "שנת סיום",
+    "company": "חברה",
+    "jobTitle": "תפקיד",
+    "startDate": "תאריך התחלה",
+    "endDate": "תאריך סיום",
+    "description": "תיאור",
+    "skillTerm": "כישור",
+    "yearsExperience": "שנות ניסיון",
+    "languageCode": "קוד שפה",
+    "proficiency": "רמת שליטה"
+  },
+  "enrolment": {
+    "Enrolled": "בלימודים",
+    "Graduated": "סיים לימודים"
+  },
+  "proficiency": {
+    "Native": "שפת אם",
+    "Fluent": "שוטפת",
+    "Professional": "רמה מקצועית",
+    "Conversational": "רמת שיחה",
+    "Basic": "רמה בסיסית"
+  },
+  "entry": {
+    "education": "רשומת השכלה {{number}}",
+    "work": "רשומת ניסיון תעסוקתי {{number}}",
+    "skill": "כישור {{number}}",
+    "language": "שפה {{number}}"
+  },
+  "action": {
+    "addEducation": "הוספת רשומת השכלה",
+    "addWork": "הוספת רשומת ניסיון תעסוקתי",
+    "addSkill": "הוספת כישור",
+    "addLanguage": "הוספת שפה",
+    "remove": "הסרת {{entry}}",
+    "save": "שמירת הפרופיל",
+    "saving": "שומר את הפרופיל שלך…"
+  },
+  "limit": {
+    "reached": "הגעת למספר המרבי של {{max}} רשומות."
+  },
+  "empty": {
+    "education": "אין עדיין רשומות השכלה.",
+    "work": "אין עדיין רשומות ניסיון תעסוקתי.",
+    "skills": "אין עדיין כישורים.",
+    "languages": "אין עדיין שפות."
+  },
+  "completeness": {
+    "title": "הפרופיל שלך עדיין טיוטה",
+    "description": "אלה נדרשים כדי שהפרופיל ייחשב שלם:",
+    "field": {
+      "full_name": "השם המלא שלך",
+      "email": "כתובת הדואר האלקטרוני שלך",
+      "phone": "מספר הטלפון שלך",
+      "city": "העיר שלך",
+      "education": "רשומת השכלה אחת לפחות",
+      "skills": "כישור אחד לפחות"
+    },
+    "generic": "הפרופיל שלך אינו שלם עדיין."
+  },
+  "complete": {
+    "title": "הפרופיל שלך שלם",
+    "body": "לא חסר דבר. אפשר להגיש מועמדות למשרות פתוחות."
+  },
+  "apply": {
+    "blockedTitle": "הגשת מועמדות מושבתת כל עוד הפרופיל הוא טיוטה",
+    "blockedBody": "השלימו את הפריטים המופיעים למעלה כדי לאפשר את פקדי ההגשה.",
+    "blockedReason": "הפרופיל שלך הוא טיוטה. השלימו אותו כדי להגיש מועמדות."
+  },
+  "save": {
+    "succeeded": "הפרופיל שלך נשמר.",
+    "failedTitle": "הפרופיל שלך לא נשמר"
+  },
+  "formLevel": {
+    "title": "חלק מהנתונים שהוגשו לא נשמרו"
+  },
+  "readOnly": {
+    "none": "לא הוזן",
+    "yearsExperience": "שנות ניסיון: {{value}}",
+    "years": "מ־{{start}} עד {{end}}",
+    "ongoing": "מ־{{start}} ועד היום"
+  },
+  "admin": {
+    "title": "פרופיל מועמד",
+    "description": "זו תצוגה לקריאה בלבד של פרופיל המועמד.",
+    "accountLabel": "חשבון",
+    "missingAccount": "לא צוין חשבון מועמד בכתובת."
+  }
+}

@@ -43,7 +43,12 @@ from app.platform.mail.templates import EmailTemplate
 from app.platform.notifications.models import NotificationType
 from app.platform.notifications.service import push, push_many
 from app.platform.security.errors import AuthenticationRequired
-from app.platform.security.mfa import MFAEnrolmentData, generate_secret, is_enrolled
+from app.platform.security.mfa import (
+    MFAEnrolmentData,
+    generate_secret,
+    is_enrolled,
+    verify_code,
+)
 from app.platform.security.password import (
     PasswordPolicyViolation,
     hash_password,
@@ -1046,8 +1051,11 @@ class AuthService:
 
             enrolment: MFAEnrolmentData = generate_secret(account_email=account.email)
 
-            # Encrypt the raw secret before storing.
-            secret_enc, _wrapped_key = await self._envelope_enc.encrypt(
+            # Encrypt the raw secret before storing. The wrapped data key MUST
+            # be persisted alongside the ciphertext (mirroring
+            # residency_proofs.value_wrapped_key) — without it, verify_mfa has
+            # no way to unwrap the data key and decrypt the secret later.
+            secret_enc, wrapped_key = await self._envelope_enc.encrypt(
                 enrolment.raw_secret
             )
 
@@ -1055,6 +1063,7 @@ class AuthService:
                 session,
                 account,
                 secret_enc=secret_enc,
+                wrapped_key=wrapped_key,
                 enrolled_at=utc_now(),
             )
 
@@ -1069,18 +1078,10 @@ class AuthService:
         Returns True if valid, False otherwise.
         Raises MfaRequired if the account is not enrolled.
 
-        NOTE: The current Account model stores ``mfa_secret_enc`` as a raw
-        AES-256-GCM blob (nonce||ciphertext) encrypted with a DEK that is NOT
-        wrapped via OpenBao — because the Account table does not yet have a
-        ``mfa_wrapped_key`` column. A future migration should add that column
-        so the full envelope encryption is used. For now we use the envelope
-        encrypt method to store but call decrypt with the stored blob only when
-        the wrapped key is bundled in the account row.
-
-        In this iteration, ``enroll_mfa`` stores ``nonce||ciphertext`` and the
-        wrapped key is discarded (we accept this known limitation); verify_mfa
-        cannot decrypt without the wrapped key, so we fall back to returning
-        False (forcing the operator to add the column before enabling MFA).
+        Decrypts ``mfa_secret_enc`` via envelope encryption, using the
+        OpenBao-wrapped data key stored in ``mfa_wrapped_key`` at enrolment
+        time (mirroring how ``residency_proofs.value_wrapped_key`` is used),
+        then checks the submitted code against the recovered raw secret.
         """
         async with self._uow_factory() as uow:
             session = uow.session
@@ -1089,13 +1090,17 @@ class AuthService:
         if account is None or not is_enrolled(account.mfa_secret_enc):
             raise MfaRequired(log_message=f"MFA not enrolled for account {account_id}")
 
-        # Without the wrapped key stored separately, we cannot decrypt the
-        # secret. Return False to signal that MFA verification is not available
-        # until the mfa_wrapped_key column is added in a migration.
-        # TODO: Add mfa_wrapped_key column to accounts and store it in enroll_mfa.
-        logger.warning(
-            "verify_mfa: account %s has MFA enrolled but wrapped key is not available "
-            "(mfa_wrapped_key column not yet added to accounts table); returning False",
-            account_id,
+        if account.mfa_wrapped_key is None:
+            # Enrolled before the wrapped key was persisted (pre-migration
+            # data) — cannot decrypt; the account must re-enroll.
+            logger.warning(
+                "verify_mfa: account %s has MFA enrolled but no wrapped key is "
+                "stored; re-enrolment is required",
+                account_id,
+            )
+            return False
+
+        raw_secret = await self._envelope_enc.decrypt(
+            account.mfa_secret_enc, account.mfa_wrapped_key
         )
-        return False
+        return verify_code(raw_secret, code)

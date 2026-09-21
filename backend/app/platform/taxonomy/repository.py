@@ -21,7 +21,7 @@ from sqlalchemy import func, select
 from app.platform.taxonomy.models import Skill, SkillAlias, UnmatchedSkillTerm
 
 if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 __all__ = [
     "FuzzyCandidate",
@@ -71,24 +71,43 @@ class SkillRepositoryProtocol(Protocol):
         """Return canonical-skill candidates near ``normalized`` by trigram similarity."""
         ...
 
-    def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
-        """Stage a new unmatched-term row for persistence in the current transaction."""
+    async def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
+        """Persist a new unmatched-term row.
+
+        Committed independently of any caller transaction — see
+        :class:`SkillRepository` for why.
+        """
         ...
 
 
 class SkillRepository:
-    """SQLAlchemy implementation of :class:`SkillRepositoryProtocol`."""
+    """SQLAlchemy implementation of :class:`SkillRepositoryProtocol`.
 
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+    This repository is invoked *outside* of any caller's ``UnitOfWork``:
+    ``SkillResolver.resolve`` (and every service that calls it — profiles, jobs)
+    deliberately resolves skill terms before opening its own transaction, so
+    there is no caller-owned session for this repository to join. It therefore
+    owns a sessionmaker, not a session, and opens (and commits/closes) one
+    short-lived session per call — a lookup-scoped analogue of ``UnitOfWork``
+    for this narrow surface. This also means ``add_unmatched_term`` commits its
+    row independently: an unmatched term is not part of the atomicity guarantee
+    of whatever profile/job write later uses the resolved skill ids, matching
+    the resolver's own contract that a term is stored+flagged unconditionally,
+    regardless of what happens afterwards.
+    """
+
+    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
+        self._sessionmaker = sessionmaker
 
     async def find_skill_by_normalized_name(self, normalized: str) -> Skill | None:
         stmt = select(Skill).where(Skill.normalized_name == normalized)
-        return (await self._session.execute(stmt)).scalar_one_or_none()
+        async with self._sessionmaker() as session:
+            return (await session.execute(stmt)).scalar_one_or_none()
 
     async def find_alias_by_normalized(self, normalized: str) -> SkillAlias | None:
         stmt = select(SkillAlias).where(SkillAlias.normalized_alias == normalized)
-        return (await self._session.execute(stmt)).scalar_one_or_none()
+        async with self._sessionmaker() as session:
+            return (await session.execute(stmt)).scalar_one_or_none()
 
     async def find_fuzzy_candidates(self, normalized: str) -> list[FuzzyCandidate]:
         """Trigram-nearest canonical skills, via canonical names and aliases.
@@ -114,11 +133,14 @@ class SkillRepository:
         )
 
         candidates: list[FuzzyCandidate] = []
-        for row in (await self._session.execute(name_stmt)).all():
-            candidates.append(FuzzyCandidate(skill_id=row[0], normalized_value=row[1]))
-        for row in (await self._session.execute(alias_stmt)).all():
-            candidates.append(FuzzyCandidate(skill_id=row[0], normalized_value=row[1]))
+        async with self._sessionmaker() as session:
+            for row in (await session.execute(name_stmt)).all():
+                candidates.append(FuzzyCandidate(skill_id=row[0], normalized_value=row[1]))
+            for row in (await session.execute(alias_stmt)).all():
+                candidates.append(FuzzyCandidate(skill_id=row[0], normalized_value=row[1]))
         return candidates
 
-    def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
-        self._session.add(term)
+    async def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
+        async with self._sessionmaker() as session:
+            session.add(term)
+            await session.commit()

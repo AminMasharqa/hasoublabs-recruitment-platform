@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    ForeignKey,
     Index,
     Integer,
     LargeBinary,
@@ -115,6 +116,7 @@ class CvVersion(Base, UuidPkMixin):
     __tablename__ = "cv_versions"
 
     variant_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("cv_variants.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )

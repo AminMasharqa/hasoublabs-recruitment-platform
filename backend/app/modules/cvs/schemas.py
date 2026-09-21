@@ -7,6 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.platform.db.enums import CvVersionState
+
 
 # ── DTOs (response shapes) ────────────────────────────────────────────────────
 
@@ -31,7 +33,7 @@ class CvVersionDTO(BaseModel):
     id: UUID
     variant_id: UUID
     version_number: int
-    state: str
+    state: CvVersionState
     mime_type: str
     original_filename: str
     size_bytes: int

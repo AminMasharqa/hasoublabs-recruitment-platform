@@ -22,6 +22,7 @@ class JobName(StrEnum):
     SCAN_CV = "scan_cv"
     VERIFY_CV_CHECKSUMS = "verify_cv_checksums"
     VERIFY_AUDIT_CHAIN = "verify_audit_chain"
+    CREATE_AUDIT_PARTITION = "create_audit_partition"
     EXTRACT_JD_FROM_URL = "extract_jd_from_url"
     EXTRACT_JD_FROM_TEXT = "extract_jd_from_text"
     GENERATE_EXPORT = "generate_export"
@@ -78,6 +79,15 @@ SCHEDULES: Final[tuple[Schedule, ...]] = (
         cron={"minute": 5},
     ),
     Schedule(
+        job=JobName.CREATE_AUDIT_PARTITION,
+        # Daily rather than monthly: the DDL is idempotent, so a daily tick
+        # self-heals a missed run instead of leaving audit_log without a
+        # partition for the coming month — which would fail every insert.
+        description="Ensure this month's and next month's audit_log partitions exist",
+        requirement="R8 (audit_log monthly partitioning)",
+        cron={"hour": 0, "minute": 10},
+    ),
+    Schedule(
         job=JobName.VERIFY_CV_CHECKSUMS,
         description="Nightly sweep re-hashing stored CV objects",
         requirement="R5 AC15",
@@ -100,3 +110,27 @@ SCHEDULES: Final[tuple[Schedule, ...]] = (
 SCHEDULES_BY_JOB: Final[dict[JobName, Schedule]] = {
     schedule.job: schedule for schedule in SCHEDULES
 }
+
+#: Catalogued jobs that no module registers a handler for yet.
+#:
+#: This is the same idea as ``PUBLIC_ROUTE_PATHS`` in the security guards: the
+#: gap is declared in one place so the boot-time check can tell a known gap from
+#: a wiring mistake, and so the list of what is still missing is greppable.
+#:
+#: Two consequences for anything named here:
+#:   * the worker reports it at boot but does not refuse to start;
+#:   * the scheduler does not enqueue it — a job with no handler would otherwise
+#:     fail on every tick and bury real errors in the worker log.
+#:
+#: Removing a name from this set is part of landing its handler.
+#:
+#: ``apply_retention_policy`` needs the declarative
+#: ``(entity, retention_basis, minimum_period, action)`` policy table from the
+#: design's Data Retention Model, which no migration creates yet. It is a
+#: feature, not a wiring gap, and it anonymises candidate data — so it stays
+#: unregistered rather than becoming a handler that silently does nothing.
+UNIMPLEMENTED_JOBS: Final[frozenset[JobName]] = frozenset(
+    {
+        JobName.APPLY_RETENTION_POLICY,
+    }
+)

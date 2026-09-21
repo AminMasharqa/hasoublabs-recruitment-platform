@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Final
 import uuid
 
 from app.platform.jobs.catalog import SCHEDULES
+from app.platform.jobs.registry import registered_task
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -206,8 +207,13 @@ class LeaderElectedScheduler:
                 _LOG.info("Acquired scheduler leadership")
 
     async def _fire(self, schedule: Schedule) -> None:
-        """Enqueue one scheduled job, if we are the leader."""
+        """Enqueue one scheduled job, if we are the leader and it has a handler."""
         if not self._lock.is_leader:
+            return
+        if registered_task(schedule.job) is None:
+            # Enqueuing a job no handler serves fails on every tick and drowns
+            # real errors. The worker already reported the gap once at boot.
+            _LOG.debug("Skipping %s: no handler registered", schedule.job)
             return
         slot = int(time.time() // schedule.granularity_seconds)
         idempotency_key = f"schedule:{schedule.job.value}:{slot}"

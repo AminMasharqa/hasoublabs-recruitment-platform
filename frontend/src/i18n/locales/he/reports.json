@@ -1,0 +1,107 @@
+{
+  "title": "דוחות",
+  "description": "פעילות הצינור והתקדמות המועמדים, עם ייצוא של כל אחד מהם ל‑Excel.",
+  "filters": {
+    "legend": "סינון הדוח",
+    "dateFrom": "מתאריך",
+    "dateTo": "עד תאריך",
+    "dateHint": "ימים שלמים, לפי שעון UTC.",
+    "jdId": "מזהה תיאור התפקיד",
+    "jdIdPlaceholder": "מזהה של תיאור תפקיד אחד",
+    "reversedRange": "תאריך ההתחלה מאוחר מתאריך הסיום, ולכן הטווח אינו מכסה דבר.",
+    "apply": "החלה"
+  },
+  "activity": {
+    "title": "פעילות",
+    "loading": "טוען את דוח הפעילות…",
+    "period": "התקופה המכוסה",
+    "periodRange": "מ־{{from}} עד {{to}}",
+    "unbounded": "בלי גבול"
+  },
+  "metric": {
+    "candidates_registered": "מועמדים שנרשמו",
+    "candidates_approved": "מועמדים שאושרו",
+    "candidates_rejected": "מועמדים שנדחו",
+    "cv_versions_uploaded": "גרסאות קורות חיים שהועלו",
+    "applications_submitted": "מועמדויות שהוגשו",
+    "applications_under_review": "מועמדויות בבדיקה",
+    "applications_forwarded": "מועמדויות שהועברו",
+    "applications_closed": "מועמדויות שנסגרו"
+  },
+  "progress": {
+    "title": "התקדמות מועמדים",
+    "caption": "כל חשבון מועמד עם הסטטוס שלו והמועמדויות שלו.",
+    "loading": "טוען את התקדמות המועמדים…",
+    "pageSize": "עד {{size}} מועמדים בכל עמוד.",
+    "email": "כתובת דואר אלקטרוני",
+    "accountStatus": "סטטוס החשבון",
+    "createdAt": "נוצר",
+    "applications": "מועמדויות",
+    "drillDown": "פתיחה",
+    "noApplications": "אין מועמדויות עדיין.",
+    "openAccount": "פתיחת החשבון",
+    "openAccountFor": "פתיחת החשבון של {{email}}",
+    "openApplication": "פתיחת המועמדות",
+    "openApplicationFor": "פתיחת המועמדות עבור {{title}}",
+    "firstPage": "חזרה לעמוד הראשון"
+  },
+  "export": {
+    "legend": "ייצוא ל‑Excel",
+    "description": "הייצוא מכסה את המסננים שהוחלו למעלה ומופק ברקע.",
+    "entityType": "מה לייצא",
+    "request": "ייצוא ל‑Excel",
+    "dismiss": "הפסקת מעקב אחר הייצוא",
+    "polling": "מפיק את הקובץ…",
+    "statusLine": "המצב הנוכחי: {{status}}",
+    "requestFailedTitle": "לא ניתן היה להתחיל את הייצוא",
+    "pollFailedTitle": "לא ניתן היה לקרוא את מצב הייצוא",
+    "failedTitle": "הייצוא נכשל",
+    "failedWithoutMessage": "הייצוא נכשל ולא דיווח על סיבה.",
+    "noJobId": "הייצוא התקבל אך לא דיווח על משימה למעקב, ולכן לא ניתן לקרוא את מצבו.",
+    "expiresAt": "קישור ההורדה יפוג ב־{{value}}.",
+    "noExpiry": "קישור ההורדה אינו מדווח על מועד תפוגה.",
+    "readyWithoutUrl": "הייצוא מוכן אך אינו מדווח עדיין על קישור הורדה.",
+    "downloadFor": "הורדת ייצוא {{entity}}"
+  },
+  "exports": {
+    "title": "ייצואים",
+    "description": "הפקת קובץ Excel של מועמדים, תיאורי תפקיד או מועמדויות."
+  },
+  "entityType": {
+    "candidates": "מועמדים",
+    "job_descriptions": "תיאורי תפקיד",
+    "applications": "מועמדויות"
+  },
+  "status": {
+    "pending": "בתור",
+    "running": "בהפקה",
+    "ready": "מוכן",
+    "failed": "נכשל"
+  },
+  "accountStatus": {
+    "PendingVerification": "ממתין לאימות דואר אלקטרוני",
+    "PendingApproval": "ממתין לאישור",
+    "ApprovedPendingMeeting": "אושר, ממתין לפגישה",
+    "Approved": "אושר",
+    "Rejected": "נדחה",
+    "Suspended": "מושעה",
+    "Deactivated": "מנוטרל"
+  },
+  "applicationStatus": {
+    "Submitted": "הוגשה",
+    "Under Review": "בבדיקה",
+    "Forwarded to Recruiter": "הועברה למגייס",
+    "Closed": "נסגרה"
+  },
+  "announce": {
+    "activityLoaded": "דוח הפעילות נטען.",
+    "activityFailed": "לא ניתן היה לטעון את דוח הפעילות.",
+    "progressLoaded": "דוח התקדמות המועמדים נטען.",
+    "progressEmpty": "אין מועמדים המתאימים למסננים הנוכחיים.",
+    "progressFailed": "לא ניתן היה לטעון את דוח התקדמות המועמדים.",
+    "exportPolling": "הייצוא בהפקה.",
+    "exportReady": "הייצוא מוכן להורדה.",
+    "exportFailed": "הייצוא נכשל.",
+    "exportRequestFailed": "לא ניתן היה להתחיל את הייצוא."
+  }
+}

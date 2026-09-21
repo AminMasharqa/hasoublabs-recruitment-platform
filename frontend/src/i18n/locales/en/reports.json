@@ -1,0 +1,107 @@
+{
+  "title": "Reports",
+  "description": "Pipeline activity and candidate progress, with an Excel export of either.",
+  "filters": {
+    "legend": "Filter the report",
+    "dateFrom": "From date",
+    "dateTo": "To date",
+    "dateHint": "Whole days, counted in UTC.",
+    "jdId": "Job description identifier",
+    "jdIdPlaceholder": "Identifier of a single job description",
+    "reversedRange": "The from date is later than the to date, so the range covers nothing.",
+    "apply": "Apply"
+  },
+  "activity": {
+    "title": "Activity",
+    "loading": "Loading the activity report…",
+    "period": "Period covered",
+    "periodRange": "{{from}} to {{to}}",
+    "unbounded": "No bound"
+  },
+  "metric": {
+    "candidates_registered": "Candidates registered",
+    "candidates_approved": "Candidates approved",
+    "candidates_rejected": "Candidates rejected",
+    "cv_versions_uploaded": "CV versions uploaded",
+    "applications_submitted": "Applications submitted",
+    "applications_under_review": "Applications under review",
+    "applications_forwarded": "Applications forwarded",
+    "applications_closed": "Applications closed"
+  },
+  "progress": {
+    "title": "Candidate progress",
+    "caption": "Each candidate account with its status and its applications.",
+    "loading": "Loading candidate progress…",
+    "pageSize": "Up to {{size}} candidates per page.",
+    "email": "Email address",
+    "accountStatus": "Account status",
+    "createdAt": "Created",
+    "applications": "Applications",
+    "drillDown": "Open",
+    "noApplications": "No applications yet.",
+    "openAccount": "Open the account",
+    "openAccountFor": "Open the account of {{email}}",
+    "openApplication": "Open the application",
+    "openApplicationFor": "Open the application for {{title}}",
+    "firstPage": "Back to the first page"
+  },
+  "export": {
+    "legend": "Excel export",
+    "description": "The export covers the filters applied above and is produced in the background.",
+    "entityType": "What to export",
+    "request": "Export to Excel",
+    "dismiss": "Stop following this export",
+    "polling": "Producing the file…",
+    "statusLine": "Current state: {{status}}",
+    "requestFailedTitle": "The export could not be started",
+    "pollFailedTitle": "The export state could not be read",
+    "failedTitle": "The export failed",
+    "failedWithoutMessage": "The export failed and reported no reason.",
+    "noJobId": "The export was accepted but reported no job to follow, so its state cannot be read.",
+    "expiresAt": "The download link expires at {{value}}.",
+    "noExpiry": "The download link reports no expiry.",
+    "readyWithoutUrl": "The export is ready but reports no download link yet.",
+    "downloadFor": "Download the {{entity}} export"
+  },
+  "exports": {
+    "title": "Exports",
+    "description": "Produce an Excel file of candidates, job descriptions or applications."
+  },
+  "entityType": {
+    "candidates": "Candidates",
+    "job_descriptions": "Job descriptions",
+    "applications": "Applications"
+  },
+  "status": {
+    "pending": "Queued",
+    "running": "Being produced",
+    "ready": "Ready",
+    "failed": "Failed"
+  },
+  "accountStatus": {
+    "PendingVerification": "Awaiting email verification",
+    "PendingApproval": "Awaiting approval",
+    "ApprovedPendingMeeting": "Approved, meeting pending",
+    "Approved": "Approved",
+    "Rejected": "Rejected",
+    "Suspended": "Suspended",
+    "Deactivated": "Deactivated"
+  },
+  "applicationStatus": {
+    "Submitted": "Submitted",
+    "Under Review": "Under review",
+    "Forwarded to Recruiter": "Forwarded to a recruiter",
+    "Closed": "Closed"
+  },
+  "announce": {
+    "activityLoaded": "The activity report has been loaded.",
+    "activityFailed": "The activity report could not be loaded.",
+    "progressLoaded": "The candidate progress report has been loaded.",
+    "progressEmpty": "No candidates match the current filters.",
+    "progressFailed": "The candidate progress report could not be loaded.",
+    "exportPolling": "The export is being produced.",
+    "exportReady": "The export is ready to download.",
+    "exportFailed": "The export failed.",
+    "exportRequestFailed": "The export could not be started."
+  }
+}

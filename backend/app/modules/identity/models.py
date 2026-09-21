@@ -80,8 +80,14 @@ class Account(Base, UuidPkMixin, TimestampMixin):
     # Argon2id hash; never NULL (every account must have a password).
     password_hash: Mapped[str] = mapped_column(String(1024), nullable=False)
 
-    # MFA secret encrypted via AES-256-GCM envelope encryption.
+    # MFA secret encrypted via AES-256-GCM envelope encryption (nonce||ciphertext).
     mfa_secret_enc: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, default=None)
+    # OpenBao-wrapped per-record data key for mfa_secret_enc — the counterpart of
+    # residency_proofs.value_wrapped_key. Without this, mfa_secret_enc cannot be
+    # decrypted, so TOTP verification cannot proceed past enrolment.
+    mfa_wrapped_key: Mapped[bytes | None] = mapped_column(
+        LargeBinary, nullable=True, default=None
+    )
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(
         UtcTimestampMs, nullable=True, default=None
     )

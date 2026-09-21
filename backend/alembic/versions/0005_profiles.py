@@ -2,11 +2,12 @@
 candidate_skills, candidate_languages, senior_profiles, senior_expertise_skills.
 
 Revision ID: 0005_profiles
-Revises: 0004_cvs
+Revises: 0004a_skill_taxonomy
 Create Date: 2026-09-20
 
 The enum types used here (enrolment_status, profile_state, contact_channel_pref,
-contact_scope_pref) were all created in migration 0003_identity.
+contact_scope_pref) were all created in migration 0003_identity. candidate_skills
+and senior_expertise_skills reference skills.id, created in 0004a_skill_taxonomy.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0005_profiles"
-down_revision: str | None = "0004_cvs"
+down_revision: str | None = "0004a_skill_taxonomy"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -1,0 +1,221 @@
+{
+  "browse": {
+    "title": "משרות",
+    "description": "התפקידים הפתוחים בפלטפורמה.",
+    "resultsLabel": "תיאורי משרה",
+    "loading": "טוען תיאורי משרה…"
+  },
+  "filters": {
+    "legend": "סינון משרות",
+    "search": "מילת חיפוש",
+    "searchPlaceholder": "תפקיד, חברה או מילת מפתח",
+    "location": "מיקום",
+    "locationPlaceholder": "עיר או אזור",
+    "workModel": "מודל עבודה",
+    "employmentType": "סוג העסקה",
+    "experienceLevel": "רמת ניסיון",
+    "any": "הכול",
+    "skills": "כישורים",
+    "skillSearch": "חיפוש כישור",
+    "skillSearchPlaceholder": "חלק מתוך שם הכישור",
+    "skillsEmpty": "אין כישורים המתאימים למילה הזאת.",
+    "skillsLoading": "מחפש בטקסונומיית הכישורים…",
+    "apply": "החלת הסינון",
+    "clear": "ניקוי הסינון"
+  },
+  "pagination": {
+    "next": "העמוד הבא",
+    "first": "חזרה לעמוד הראשון",
+    "pageSize": "עד {{size}} תיאורי משרה בכל עמוד."
+  },
+  "card": {
+    "company": "חברה",
+    "location": "מיקום",
+    "workModel": "מודל עבודה",
+    "employmentType": "סוג העסקה",
+    "experienceLevel": "רמת ניסיון",
+    "publishedAt": "תאריך פרסום",
+    "notStated": "לא צוין",
+    "notPublished": "לא פורסם",
+    "view": "הצגת הפרטים",
+    "viewFor": "הצגת הפרטים של {{title}}"
+  },
+  "status": {
+    "label": "סטטוס",
+    "Draft": "טיוטה",
+    "Open": "פתוחה",
+    "Closed": "סגורה",
+    "closedNotice": "התפקיד הזה סגור ואינו מקבל עוד פניות."
+  },
+  "apply": {
+    "action": "הגשת מועמדות",
+    "actionFor": "הגשת מועמדות ל{{title}}",
+    "closed": "הגשת המועמדות לתפקיד הזה סגורה.",
+    "draft": "התפקיד הזה עוד לא פורסם.",
+    "unavailable": "שליחת מועמדות אינה זמינה בגרסה הזאת."
+  },
+  "detail": {
+    "loading": "טוען את תיאור המשרה…",
+    "description": "תיאור",
+    "descriptionMissing": "לתפקיד הזה אין טקסט תיאור.",
+    "requiredSkills": "כישורים נדרשים",
+    "requiredSkillsMissing": "התפקיד הזה אינו מפרט כישורים נדרשים.",
+    "unresolvedSkill": "כישור {{id}}",
+    "unresolvedSkillsNote": "חלק מהכישורים מוצגים כמזהים מפני שהחיפוש בטקסונומיה לא החזיר להם שם.",
+    "applicationChannel": "דרך ההגשה",
+    "externalUrl": "עמוד ההגשה החיצוני",
+    "creator": "פורסם על ידי החשבון",
+    "createdAt": "נוצר",
+    "updatedAt": "עדכון אחרון",
+    "closedAt": "נסגר",
+    "timestamps": "תאריכים",
+    "back": "חזרה למשרות",
+    "missingId": "הכתובת הזאת אינה נושאת מזהה של תיאור משרה."
+  },
+  "channel": {
+    "Senior_Dashboard": "דרך הפלטפורמה, אל הבכיר שפרסם",
+    "Admin_Dashboard": "דרך הפלטפורמה, אל מנהל מערכת",
+    "External_Careers_URL": "בעמוד המשרות של המעסיק"
+  },
+  "contacts": {
+    "title": "בכירים שאפשר ליצור איתם קשר",
+    "loading": "טוען בכירים זמינים ליצירת קשר…",
+    "empty": "אין כרגע בכירים זמינים ליצירת קשר בנוגע לתפקיד הזה.",
+    "channels": "ערוצי קשר",
+    "channelChat": "צ׳אט בפלטפורמה",
+    "channelEmail": "דואר אלקטרוני",
+    "chatUnavailable": "הצ׳אט בפלטפורמה אינו זמין עדיין.",
+    "mail": "שליחת דואר אלקטרוני",
+    "mailTo": "שליחת דואר אלקטרוני אל {{name}}",
+    "mailUnavailable": "הבכיר הזה מקבל דואר אלקטרוני, אך הפלטפורמה אינה מדווחת על כתובת."
+  },
+  "workModel": {
+    "Onsite": "מהמשרד",
+    "Hybrid": "היברידי",
+    "Remote": "מרחוק"
+  },
+  "employmentType": {
+    "Full-time": "משרה מלאה",
+    "Part-time": "משרה חלקית",
+    "Contract": "חוזה",
+    "Freelance": "פרילנס",
+    "Internship": "התמחות"
+  },
+  "experienceLevel": {
+    "Junior-level": "ג׳וניור",
+    "Mid-level": "דרג בינוני",
+    "Senior-level": "בכיר",
+    "Lead": "מוביל"
+  },
+  "announce": {
+    "loaded": "תיאורי המשרה נטענו.",
+    "empty": "אין תיאורי משרה המתאימים לסינון הנוכחי.",
+    "failed": "לא ניתן לטעון את תיאורי המשרה.",
+    "detailLoaded": "תיאור המשרה נטען.",
+    "created": "תיאור המשרה נוצר כטיוטה.",
+    "saved": "השינויים נשמרו.",
+    "published": "תיאור המשרה פתוח כעת.",
+    "closed": "תיאור המשרה סגור כעת.",
+    "channelChanged": "ערוץ ההגשה עודכן.",
+    "extractionReady": "הערכים שחולצו מוכנים לבדיקה.",
+    "extractionFailed": "לא חולץ דבר מהמקור."
+  },
+  "authoring": {
+    "newTitle": "תיאור משרה חדש",
+    "newDescription": "מלאו את הטופס, או חלצו קודם את הערכים ממשרה קיימת.",
+    "editTitle": "עריכת תיאור המשרה",
+    "create": "יצירת תיאור משרה",
+    "confirmAndCreate": "אישור ויצירה",
+    "confirmationRequired": "אשרו או החליפו כל מיומנות מוצעת לפני יצירת תיאור המשרה.",
+    "save": "שמירת השינויים",
+    "nothingChanged": "שום דבר לא השתנה, ולכן אין מה לשמור.",
+    "notEditable": "תיאור משרה סגור אינו ניתן לעריכה.",
+    "backToList": "חזרה לתיאורי המשרה",
+    "manage": "ניהול תיאור המשרה",
+    "manageFor": "ניהול {{title}}"
+  },
+  "form": {
+    "title": "שם התפקיד",
+    "company": "חברה",
+    "location": "מקום",
+    "unselected": "לא צוין",
+    "externalUrl": "כתובת הגשה חיצונית",
+    "externalUrlHint": "כתובת HTTPS באורך {{max}} תווים לכל היותר.",
+    "externalUrlRequired": "נדרשת לפרסום בערוץ הזה: כתובת HTTPS באורך {{max}} תווים לכל היותר.",
+    "missingExtracted": "החילוץ לא מצא ערך לשדה הזה. הזינו אותו ידנית.",
+    "skillsSection": "מיומנויות נדרשות",
+    "skillsHint": "עד {{max}} מיומנויות. ההצעות מגיעות ממדרג המיומנויות, וכל מונח מתקבל.",
+    "skillsEmpty": "עדיין לא נוספו מיומנויות נדרשות.",
+    "skillsLimit": "הגעתם למקסימום של {{max}} מיומנויות.",
+    "skillsLocked": "לא ניתן לערוך את המיומנויות כי המדרג לא החזיר שם עבור: {{ids}}.",
+    "skillTerm": "מיומנות {{number}}",
+    "removeSkill": "הסרת {{entry}}",
+    "addSkillLabel": "הוספת מיומנות",
+    "addSkillPlaceholder": "חלק משם המיומנות",
+    "addSkill": "הוספה"
+  },
+  "extract": {
+    "legend": "חילוץ ממשרה קיימת",
+    "description": "הזינו כתובת של משרה פומבית או הדביקו את הטקסט שלה, והערכים יחולצו לבדיקתכם.",
+    "urlLabel": "כתובת המשרה",
+    "urlHint": "כתובת HTTPS באורך {{max}} תווים לכל היותר.",
+    "fromUrl": "חילוץ מהכתובת",
+    "or": "או",
+    "textLabel": "טקסט המשרה",
+    "textHint": "בין {{min}} ל-{{max}} תווים.",
+    "fromText": "חילוץ מהטקסט",
+    "pending": "מחלצים את הערכים…",
+    "ready": "הערכים חולצו. בדקו וערכו אותם למטה.",
+    "failed": "לא ניתן לחלץ דבר מהמקור הזה. מלאו את הטופס בעצמכם.",
+    "unknownStatus": "החילוץ דיווח על מצב לא צפוי: {{status}}.",
+    "missingCount": "{{count}} שדות נשארו ריקים ויש להזין אותם.",
+    "discard": "ביטול החילוץ"
+  },
+  "candidates": {
+    "legend": "מיומנויות מוצעות",
+    "description": "כל מיומנות מוצעת חייבת לקבל אישור, החלפה או הסרה לפני יצירת תיאור המשרה.",
+    "allDecided": "כל המיומנויות המוצעות טופלו.",
+    "undecided": "{{count}} מיומנויות מוצעות עדיין מחכות להחלטה.",
+    "decisionLabel": "מה לעשות עם המיומנות הזו?",
+    "decision": {
+      "confirmed": "להשאיר",
+      "replaced": "להחליף",
+      "discarded": "להסיר"
+    },
+    "state": {
+      "pending": "ללא החלטה",
+      "confirmed": "נשמרה",
+      "replaced": "הוחלפה",
+      "discarded": "הוסרה"
+    },
+    "replacementLabel": "מיומנות חלופית",
+    "replacementHint": "המונח שיישלח במקום ההצעה."
+  },
+  "lifecycle": {
+    "publish": "פרסום",
+    "close": "סגירה",
+    "noneAvailable": "תיאור המשרה הזה אינו מאפשר שינויים נוספים.",
+    "publishNeedsUrl": "פרסום דרך דף משרות חיצוני מחייב כתובת תקינה.",
+    "confirmCloseTitle": "לסגור את תיאור המשרה?",
+    "confirmCloseBody": "הסגירה עוצרת הגשות חדשות ומסירה את התפקיד מרשימות המשרות הפתוחות.",
+    "confirmCloseIrreversible": "אין דרך לבטל סגירה: תיאור משרה סגור לא ייפתח ולא ייערך שוב.",
+    "confirmCloseAction": "לסגור",
+    "channelLabel": "ערוץ הגשה",
+    "channelHint": "לאן נשלח המועמד כשהוא מגיש.",
+    "channelSave": "שמירת הערוץ",
+    "illegalTransition": "השינוי הזה אינו אפשרי: תיאור המשרה במצב {{from}} ואינו יכול לעבור ל{{to}}.",
+    "unknownState": "מצב שלא דווח"
+  },
+  "admin": {
+    "title": "כל תיאורי המשרה",
+    "description": "כל תיאורי המשרה בפלטפורמה, בכל מצב שהם.",
+    "resultsLabel": "כל תיאורי המשרה",
+    "anyStatus": "כל מצב"
+  },
+  "senior": {
+    "title": "תיאורי המשרה שלי",
+    "description": "צרו תיאור משרה ונהלו את מחזור החיים שלו.",
+    "browseOpen": "עיון בתפקידים הפתוחים",
+    "noListing": "תיאור משרה חדש נפתח בדף הניהול שלו; תיאור קיים נפתח מהכתובת שלו."
+  }
+}

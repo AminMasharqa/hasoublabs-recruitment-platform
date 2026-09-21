@@ -141,7 +141,7 @@ class SkillResolver:
         best_id, best_score = await self._best_fuzzy_candidate(normalized)
         linked = best_id is not None and best_score >= self._threshold
 
-        self._repo.add_unmatched_term(
+        await self._repo.add_unmatched_term(
             UnmatchedSkillTerm(
                 raw_term=term,
                 normalized_term=normalized,

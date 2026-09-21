@@ -1,0 +1,78 @@
+{
+  "admin": {
+    "title": "Candidate reviews",
+    "description": "The full review timeline of a candidate, oldest first."
+  },
+  "senior": {
+    "title": "My reviews",
+    "description": "The reviews you have submitted for a candidate, oldest first.",
+    "timelineLink": "Back to my reviews"
+  },
+  "candidate": {
+    "label": "Candidate account",
+    "hint": "The candidate's account identifier.",
+    "submit": "Show reviews",
+    "none": "Name a candidate account to read or add reviews.",
+    "missing": "This address carries no candidate account identifier."
+  },
+  "form": {
+    "open": "Add a review",
+    "title": "New review",
+    "description": "Ratings and a written assessment. A submitted review cannot be edited or removed; submit a correction instead.",
+    "submit": "Submit review"
+  },
+  "rating": {
+    "rating_technical": "Technical ability",
+    "rating_communication": "Communication",
+    "rating_culture_fit": "Culture fit",
+    "rating_overall": "Overall impression",
+    "hint": "A whole number from {{min}} to {{max}}."
+  },
+  "field": {
+    "assessment": "Assessment",
+    "assessmentHint": "Between {{min}} and {{max}} characters.",
+    "jd": "Job description",
+    "jdHint": "Optional. The identifier of the job description this review relates to."
+  },
+  "correction": {
+    "open": "Submit a correction",
+    "title": "Correction",
+    "submit": "Submit correction",
+    "correcting": "Correcting review {{seq}}. The original stays in the timeline.",
+    "indicator": "Correction",
+    "corrected": "Corrected later",
+    "correctsSeq": "Corrects review {{value}}",
+    "correctsOffPage": "Corrects review {{id}}, which is not on this page.",
+    "correctedBySeq": "Corrected by review {{value}}"
+  },
+  "filters": {
+    "legend": "Filter reviews",
+    "reviewer": "Reviewer account",
+    "reviewerHint": "The reviewer's account identifier.",
+    "jd": "Job description",
+    "jdHint": "The job description identifier.",
+    "dateFrom": "Created from",
+    "dateTo": "Created up to",
+    "apply": "Apply filters",
+    "clear": "Clear filters"
+  },
+  "timeline": {
+    "listLabel": "Review timeline",
+    "loading": "Loading the review timeline…",
+    "pageSize": "Up to {{size}} reviews per page.",
+    "next": "Next page",
+    "first": "Back to the first page"
+  },
+  "card": {
+    "sequence": "Review {{value}}",
+    "reviewer": "Reviewer",
+    "jd": "Job description",
+    "jdNone": "Not linked to a job description"
+  },
+  "announce": {
+    "loaded": "The review timeline has been loaded.",
+    "empty": "No reviews match the current filters.",
+    "failed": "The review timeline could not be loaded.",
+    "submitted": "The review has been submitted."
+  }
+}

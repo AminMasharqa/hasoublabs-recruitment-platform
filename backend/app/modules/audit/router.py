@@ -11,7 +11,9 @@ All routes require ``Role.ADMIN`` + ``AccountStatus.APPROVED`` — enforced via
 
 from __future__ import annotations
 
+from datetime import datetime  # noqa: TC003 — resolved at runtime by FastAPI
 from typing import TYPE_CHECKING, Annotated, Any
+import uuid  # noqa: TC003 — resolved at runtime by FastAPI
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -28,9 +30,6 @@ from app.platform.security.guards import require
 from app.platform.security.types import Role
 
 if TYPE_CHECKING:
-    from datetime import datetime
-    import uuid
-
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.platform.security.principal import Principal

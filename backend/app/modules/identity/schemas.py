@@ -11,6 +11,19 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.platform.db.enums import AccountStatus, ResidencyProofType, Role
+
+
+def _upper(value: object) -> object:
+    """Upper-case a raw string before enum coercion.
+
+    Role members are declared upper-case, and the endpoints have always accepted
+    a case-insensitive spelling. Normalising in a ``mode="before"`` validator keeps
+    that behaviour while letting the field itself be typed as the enum, so the
+    OpenAPI document publishes a named ``Role`` schema instead of a bare string.
+    """
+    return value.upper() if isinstance(value, str) else value
+
 
 # ── Request schemas ────────────────────────────────────────────────────────
 
@@ -23,7 +36,7 @@ class RegistrationRequest(BaseModel):
     password: str = Field(..., min_length=1)
     full_name: str = Field(..., min_length=1, max_length=100)
     language_preference: str = Field(default="ar", min_length=2, max_length=5)
-    residency_proof_type: str = Field(
+    residency_proof_type: ResidencyProofType = Field(
         ..., description="MobilePhone, NationalId, or Address"
     )
     residency_proof_value: str = Field(..., min_length=1, max_length=1000)
@@ -65,16 +78,13 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=1)
-    role: str = Field(..., description="ADMIN, CANDIDATE, or SENIOR")
+    role: Role = Field(..., description="ADMIN, CANDIDATE, or SENIOR")
     mfa_code: str | None = Field(default=None, min_length=6, max_length=6)
 
-    @field_validator("role")
+    @field_validator("role", mode="before")
     @classmethod
-    def validate_role(cls, v: str) -> str:
-        v_upper = v.upper()
-        if v_upper not in ("ADMIN", "CANDIDATE", "SENIOR"):
-            raise ValueError("role must be ADMIN, CANDIDATE, or SENIOR")
-        return v_upper
+    def normalize_role(cls, v: object) -> object:
+        return _upper(v)
 
 
 class RefreshRequest(BaseModel):
@@ -124,16 +134,12 @@ class AdminDeactivateRequest(BaseModel):
 class AdminRoleUpdateRequest(BaseModel):
     """Replace the full role set of an account."""
 
-    roles: list[str] = Field(..., min_length=1)
+    roles: list[Role] = Field(..., min_length=1)
 
-    @field_validator("roles")
+    @field_validator("roles", mode="before")
     @classmethod
-    def validate_roles(cls, v: list[str]) -> list[str]:
-        allowed = {"ADMIN", "CANDIDATE", "SENIOR"}
-        for role in v:
-            if role.upper() not in allowed:
-                raise ValueError(f"Invalid role: {role}")
-        return [r.upper() for r in v]
+    def normalize_roles(cls, v: object) -> object:
+        return [_upper(role) for role in v] if isinstance(v, list) else v
 
 
 class CreateRegistrationLinkRequest(BaseModel):
@@ -158,8 +164,8 @@ class AccountDTO(BaseModel):
 
     id: UUID
     email: str
-    roles: list[str]
-    status: str
+    roles: list[Role]
+    status: AccountStatus
     language_preference: str
     created_at: datetime
     mfa_enrolled: bool
@@ -173,7 +179,7 @@ class RegistrationLinkDTO(BaseModel):
     """
 
     id: UUID
-    role: str
+    role: Role
     expires_at: datetime
     # Raw token returned once at creation; None for fetch/validate responses.
     token: str | None = None
@@ -198,7 +204,7 @@ class MfaEnrolmentDTO(BaseModel):
 class StatusNoticeDTO(BaseModel):
     """Minimal status information for non-Approved accounts."""
 
-    status: str
+    status: AccountStatus
     next_step: str | None = None
 
 

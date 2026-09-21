@@ -1,0 +1,154 @@
+{
+  "candidate": {
+    "title": "My profile",
+    "description": "Keep your details up to date. A complete profile is required before you can apply to a job.",
+    "stateLabel": "Profile state"
+  },
+  "senior": {
+    "title": "My profile and contact preferences",
+    "description": "Keep your details up to date and control whether and how you can be contacted about jobs.",
+    "companyAffiliation": "Company affiliation",
+    "contactSection": "Contact preferences",
+    "contactChannelLabel": "How you can be contacted",
+    "contactChannelDescription": "Choose none if you do not want to be contacted about jobs.",
+    "contactScopeLabel": "Which jobs you can be contacted about",
+    "contactScopePlaceholder": "Choose which jobs",
+    "scopeHint": "This decides which jobs other people may contact you about.",
+    "scopeRequiresCompany": "Same company requires a company affiliation above.",
+    "scopeRequiresExpertise": "Field of expertise requires at least one expertise skill below.",
+    "contactNoneNote": "You have chosen not to be contacted, so no contact scope is saved.",
+    "contactAddressLabel": "Contact address",
+    "contactAddressRegistered": "The email address registered on your account",
+    "contactAddressNote": "Your account email address is used. There is no separate contact address to enter.",
+    "chatUnavailable": "In-platform chat is not available yet.",
+    "expertiseSection": "Field of expertise",
+    "expertiseDescription": "Add between {{min}} and {{max}} skills that describe your field of expertise.",
+    "expertiseEmpty": "No expertise skills yet.",
+    "expertiseEntry": "Expertise skill {{number}}",
+    "addExpertise": "Add an expertise skill",
+    "adminTitle": "Senior profile",
+    "adminDescription": "This is a read-only view of the senior's profile and contact preferences.",
+    "adminMissingAccount": "No senior account was named in the address."
+  },
+  "contactChannel": {
+    "Chat": "In-platform chat",
+    "Email": "Email",
+    "Both": "In-platform chat and email",
+    "None": "Do not contact me"
+  },
+  "contactScope": {
+    "OwnPostingsOnly": "Only jobs I posted",
+    "SameCompany": "Jobs at my company",
+    "FieldOfExpertise": "Jobs in my field of expertise"
+  },
+  "state": {
+    "Draft": "Draft",
+    "Complete": "Complete"
+  },
+  "section": {
+    "core": "Personal details",
+    "education": "Education",
+    "work": "Work experience",
+    "skills": "Skills",
+    "languages": "Languages"
+  },
+  "field": {
+    "fullName": "Full name",
+    "email": "Email address",
+    "phone": "Phone number",
+    "city": "City",
+    "summary": "Summary",
+    "linkedinUrl": "LinkedIn URL",
+    "institution": "Institution",
+    "degree": "Degree",
+    "fieldOfStudy": "Field of study",
+    "enrolmentStatus": "Enrolment status",
+    "startYear": "Start year",
+    "endYear": "End year",
+    "company": "Company",
+    "jobTitle": "Job title",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "description": "Description",
+    "skillTerm": "Skill",
+    "yearsExperience": "Years of experience",
+    "languageCode": "Language code",
+    "proficiency": "Proficiency"
+  },
+  "enrolment": {
+    "Enrolled": "Enrolled",
+    "Graduated": "Graduated"
+  },
+  "proficiency": {
+    "Native": "Native",
+    "Fluent": "Fluent",
+    "Professional": "Professional",
+    "Conversational": "Conversational",
+    "Basic": "Basic"
+  },
+  "entry": {
+    "education": "Education entry {{number}}",
+    "work": "Work experience entry {{number}}",
+    "skill": "Skill {{number}}",
+    "language": "Language {{number}}"
+  },
+  "action": {
+    "addEducation": "Add an education entry",
+    "addWork": "Add a work experience entry",
+    "addSkill": "Add a skill",
+    "addLanguage": "Add a language",
+    "remove": "Remove {{entry}}",
+    "save": "Save profile",
+    "saving": "Saving your profile…"
+  },
+  "limit": {
+    "reached": "You have reached the limit of {{max}} entries."
+  },
+  "empty": {
+    "education": "No education entries yet.",
+    "work": "No work experience entries yet.",
+    "skills": "No skills yet.",
+    "languages": "No languages yet."
+  },
+  "completeness": {
+    "title": "Your profile is still a draft",
+    "description": "These are required before your profile counts as complete:",
+    "field": {
+      "full_name": "Your full name",
+      "email": "Your email address",
+      "phone": "Your phone number",
+      "city": "Your city",
+      "education": "At least one education entry",
+      "skills": "At least one skill"
+    },
+    "generic": "Your profile is not complete yet."
+  },
+  "complete": {
+    "title": "Your profile is complete",
+    "body": "Nothing is missing. You can apply to open jobs."
+  },
+  "apply": {
+    "blockedTitle": "Applying is disabled while your profile is a draft",
+    "blockedBody": "Complete the items listed above to enable the apply controls.",
+    "blockedReason": "Your profile is a draft. Complete it to apply."
+  },
+  "save": {
+    "succeeded": "Your profile was saved.",
+    "failedTitle": "Your profile was not saved"
+  },
+  "formLevel": {
+    "title": "Some of what you submitted could not be saved"
+  },
+  "readOnly": {
+    "none": "Not provided",
+    "yearsExperience": "Years of experience: {{value}}",
+    "years": "{{start}} to {{end}}",
+    "ongoing": "{{start}} to present"
+  },
+  "admin": {
+    "title": "Candidate profile",
+    "description": "This is a read-only view of the candidate's profile.",
+    "accountLabel": "Account",
+    "missingAccount": "No candidate account was named in the address."
+  }
+}

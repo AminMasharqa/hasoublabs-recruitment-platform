@@ -1,0 +1,72 @@
+/*
+ * Direction conventions for the Web_Client (Requirement 19 AC8, AC9).
+ *
+ * ## The rule
+ *
+ * Every directional style is expressed with a logical CSS property. A physical
+ * `left` or `right` in application CSS is a defect: it does not mirror when the
+ * Direction_Provider switches the document to `rtl`, so the layout breaks for
+ * Arabic and Hebrew instead of mirroring (AC8).
+ *
+ * Use the logical form on the left, never the physical form on the right:
+ *
+ *   margin-inline-start / -end        not  margin-left / margin-right
+ *   padding-inline-start / -end       not  padding-left / padding-right
+ *   margin-inline / padding-inline    not  a left+right pair
+ *   border-inline-start / -end        not  border-left / border-right
+ *   border-start-start-radius (etc.)  not  border-top-left-radius
+ *   inset-inline-start / -end         not  left / right
+ *   inset-inline / inset-block        not  a left+right / top+bottom pair
+ *   text-align: start | end           not  text-align: left | right
+ *   float: inline-start | inline-end  not  float: left | right
+ *   inline-size / block-size          not  width / height where the axis matters
+ *
+ * The block-axis logical properties (`margin-block-start`, `inset-block-end`,
+ * ...) carry no mirroring benefit but are used for symmetry.
+ *
+ * Mantine's own components are direction-aware and read the direction from its
+ * `DirectionProvider`, which `DirectionProvider.tsx` keeps in step with the
+ * active Locale. Mantine style props (`mx`, `px`, ...) are already logical, so
+ * prefer them over a custom rule. Where a component-scoped rule genuinely needs
+ * to branch on direction — a mirrored glyph, an asymmetric shadow — use the
+ * `[dir='rtl']` attribute selector rather than a media or class hack, because
+ * the attribute is the single source of truth this module writes.
+ *
+ * Mirroring covers inline content order, navigation placement, table column
+ * order, directional icons, progress direction and drawer and menu anchoring
+ * (AC8); all of those follow from logical properties plus Mantine's own
+ * direction handling, except directional glyphs, which need `.mirror-inline`.
+ */
+
+/*
+ * Visual bidi isolation for Backend_Api text of unknown direction, applied by
+ * the `BidiText` component (Requirement 19 AC10).
+ *
+ * Isolation changes how the surrounding run is laid out around the value; it
+ * does not alter a single stored character. Paired with `dir="auto"` on the same
+ * element, the browser resolves the value's own base direction from its first
+ * strong character, so an Arabic name inside an English sentence — or the
+ * reverse — reads correctly without the neighbouring text pulling it apart.
+ */
+.bidi-isolate {
+  unicode-bidi: isolate;
+}
+
+/*
+ * A glyph whose meaning is tied to the inline axis (a "next" chevron, a back
+ * arrow, a progress caret) mirrors under `rtl`. Text and icons that carry no
+ * inline meaning — a logo, a check mark, a spinner — must not use this class.
+ */
+[dir='rtl'] .mirror-inline {
+  transform: scaleX(-1);
+}
+
+/*
+ * Respect the operating-system reduced-motion preference (Requirement 20 AC12)
+ * for the mirroring transition, if a consumer animates it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .mirror-inline {
+    transition: none;
+  }
+}

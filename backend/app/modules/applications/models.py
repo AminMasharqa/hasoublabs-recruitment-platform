@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Index, String, Text
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.platform.db.base import Base, TimestampMixin, UuidPkMixin, utc_now
@@ -172,6 +172,7 @@ class ApplicationStatusTransition(Base, UuidPkMixin):
     __tablename__ = "application_status_transitions"
 
     application_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )

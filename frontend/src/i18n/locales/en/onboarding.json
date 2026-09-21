@@ -1,0 +1,36 @@
+{
+  "title": "Your account status",
+  "intro": "This is where your registration stands right now.",
+  "statusLabel": "Current status",
+  "nextStepLabel": "What happens next",
+  "unknownStatus": "Checking your account status…",
+  "verifyAction": "Enter the verification code",
+  "closedNotice": "Signing out is the only action available on this account.",
+  "status": {
+    "PendingVerification": "Awaiting email verification",
+    "PendingApproval": "Awaiting administrator review",
+    "ApprovedPendingMeeting": "Approved, meeting pending",
+    "Approved": "Approved",
+    "Rejected": "Not accepted",
+    "Suspended": "Suspended",
+    "Deactivated": "Deactivated"
+  },
+  "description": {
+    "PendingVerification": "We emailed a 6-digit code to the address you registered with. Your account reaches administrator review once you confirm it.",
+    "PendingApproval": "Your email address is confirmed and an administrator is reviewing your registration.",
+    "ApprovedPendingMeeting": "An administrator approved your registration. An onboarding meeting is still to be recorded before the rest of the platform opens to you.",
+    "Approved": "Your account is approved, so every destination your role permits is open to you.",
+    "Rejected": "Your registration was not accepted, so no other part of the platform is open to you.",
+    "Suspended": "Your account is suspended, so no other part of the platform is open to you.",
+    "Deactivated": "Your account is deactivated, so no other part of the platform is open to you."
+  },
+  "nextStep": {
+    "PendingVerification": "Enter the 6-digit code from that email.",
+    "PendingApproval": "Wait for the review to finish. You will be emailed once a decision is taken.",
+    "ApprovedPendingMeeting": "Arrange your onboarding meeting with the administrator who approved you.",
+    "Approved": "Continue to any destination in the navigation.",
+    "Rejected": "Contact support if you believe this decision is a mistake.",
+    "Suspended": "Contact support to find out how access can be restored.",
+    "Deactivated": "Contact support if this account needs to be reopened."
+  }
+}

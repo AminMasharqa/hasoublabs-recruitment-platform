@@ -1,0 +1,154 @@
+{
+  "candidate": {
+    "title": "ملفي الشخصي",
+    "description": "حدّث بياناتك باستمرار. يلزم اكتمال الملف الشخصي قبل التقدّم إلى أي وظيفة.",
+    "stateLabel": "حالة الملف الشخصي"
+  },
+  "senior": {
+    "title": "ملفي الشخصي وتفضيلات التواصل",
+    "description": "حدّث بياناتك وتحكّم في ما إذا كان يمكن التواصل معك بشأن الوظائف وكيف يتم ذلك.",
+    "companyAffiliation": "الشركة التابع لها",
+    "contactSection": "تفضيلات التواصل",
+    "contactChannelLabel": "كيف يمكن التواصل معك",
+    "contactChannelDescription": "اختر «لا تتواصلوا معي» إذا لم ترغب في تلقّي استفسارات بشأن الوظائف.",
+    "contactScopeLabel": "الوظائف التي يمكن التواصل معك بشأنها",
+    "contactScopePlaceholder": "اختر نطاق الوظائف",
+    "scopeHint": "يحدّد هذا الخيار الوظائف التي يمكن للآخرين التواصل معك بشأنها.",
+    "scopeRequiresCompany": "خيار «وظائف شركتي» يتطلّب تحديد الشركة التابع لها أعلاه.",
+    "scopeRequiresExpertise": "خيار «وظائف في مجال خبرتي» يتطلّب مهارة خبرة واحدة على الأقل أدناه.",
+    "contactNoneNote": "لقد اخترت عدم التواصل معك، لذلك لا يُحفظ أي نطاق للتواصل.",
+    "contactAddressLabel": "عنوان التواصل",
+    "contactAddressRegistered": "البريد الإلكتروني المسجّل في حسابك",
+    "contactAddressNote": "يُستخدم البريد الإلكتروني لحسابك. لا يوجد عنوان تواصل منفصل لإدخاله.",
+    "chatUnavailable": "المحادثة داخل المنصّة غير متاحة بعد.",
+    "expertiseSection": "مجال الخبرة",
+    "expertiseDescription": "أضف بين {{min}} و{{max}} مهارات تصف مجال خبرتك.",
+    "expertiseEmpty": "لا توجد مهارات خبرة بعد.",
+    "expertiseEntry": "مهارة الخبرة رقم {{number}}",
+    "addExpertise": "إضافة مهارة خبرة",
+    "adminTitle": "الملف الشخصي للخبير",
+    "adminDescription": "هذا عرض للقراءة فقط لملف الخبير الشخصي وتفضيلات التواصل الخاصة به.",
+    "adminMissingAccount": "لم يُذكر أي حساب خبير في العنوان."
+  },
+  "contactChannel": {
+    "Chat": "المحادثة داخل المنصّة",
+    "Email": "البريد الإلكتروني",
+    "Both": "المحادثة داخل المنصّة والبريد الإلكتروني",
+    "None": "لا تتواصلوا معي"
+  },
+  "contactScope": {
+    "OwnPostingsOnly": "الوظائف التي نشرتها فقط",
+    "SameCompany": "وظائف شركتي",
+    "FieldOfExpertise": "وظائف في مجال خبرتي"
+  },
+  "state": {
+    "Draft": "مسودة",
+    "Complete": "مكتمل"
+  },
+  "section": {
+    "core": "البيانات الشخصية",
+    "education": "التعليم",
+    "work": "الخبرة العملية",
+    "skills": "المهارات",
+    "languages": "اللغات"
+  },
+  "field": {
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "city": "المدينة",
+    "summary": "نبذة",
+    "linkedinUrl": "رابط لينكدإن",
+    "institution": "المؤسسة التعليمية",
+    "degree": "الدرجة العلمية",
+    "fieldOfStudy": "مجال الدراسة",
+    "enrolmentStatus": "حالة الالتحاق",
+    "startYear": "سنة البدء",
+    "endYear": "سنة الانتهاء",
+    "company": "الشركة",
+    "jobTitle": "المسمى الوظيفي",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "description": "الوصف",
+    "skillTerm": "المهارة",
+    "yearsExperience": "سنوات الخبرة",
+    "languageCode": "رمز اللغة",
+    "proficiency": "مستوى الإتقان"
+  },
+  "enrolment": {
+    "Enrolled": "ملتحق",
+    "Graduated": "متخرّج"
+  },
+  "proficiency": {
+    "Native": "لغة أم",
+    "Fluent": "بطلاقة",
+    "Professional": "مستوى مهني",
+    "Conversational": "محادثة",
+    "Basic": "مستوى أساسي"
+  },
+  "entry": {
+    "education": "مؤهل تعليمي رقم {{number}}",
+    "work": "خبرة عملية رقم {{number}}",
+    "skill": "المهارة رقم {{number}}",
+    "language": "اللغة رقم {{number}}"
+  },
+  "action": {
+    "addEducation": "إضافة مؤهل تعليمي",
+    "addWork": "إضافة خبرة عملية",
+    "addSkill": "إضافة مهارة",
+    "addLanguage": "إضافة لغة",
+    "remove": "حذف {{entry}}",
+    "save": "حفظ الملف الشخصي",
+    "saving": "جارٍ حفظ ملفك الشخصي…"
+  },
+  "limit": {
+    "reached": "لقد وصلت إلى الحد الأقصى وهو {{max}} عنصرًا."
+  },
+  "empty": {
+    "education": "لا توجد مؤهلات تعليمية بعد.",
+    "work": "لا توجد خبرات عملية بعد.",
+    "skills": "لا توجد مهارات بعد.",
+    "languages": "لا توجد لغات بعد."
+  },
+  "completeness": {
+    "title": "ملفك الشخصي لا يزال مسودة",
+    "description": "هذه العناصر مطلوبة قبل أن يُعدّ ملفك الشخصي مكتملًا:",
+    "field": {
+      "full_name": "اسمك الكامل",
+      "email": "بريدك الإلكتروني",
+      "phone": "رقم هاتفك",
+      "city": "مدينتك",
+      "education": "مؤهل تعليمي واحد على الأقل",
+      "skills": "مهارة واحدة على الأقل"
+    },
+    "generic": "ملفك الشخصي غير مكتمل بعد."
+  },
+  "complete": {
+    "title": "ملفك الشخصي مكتمل",
+    "body": "لا ينقص أي عنصر. يمكنك التقدّم إلى الوظائف المتاحة."
+  },
+  "apply": {
+    "blockedTitle": "التقدّم إلى الوظائف معطّل ما دام ملفك مسودة",
+    "blockedBody": "أكمل العناصر المذكورة أعلاه لتفعيل أزرار التقدّم.",
+    "blockedReason": "ملفك الشخصي مسودة. أكمله لتتمكن من التقدّم."
+  },
+  "save": {
+    "succeeded": "تم حفظ ملفك الشخصي.",
+    "failedTitle": "لم يتم حفظ ملفك الشخصي"
+  },
+  "formLevel": {
+    "title": "تعذّر حفظ بعض ما أدخلته"
+  },
+  "readOnly": {
+    "none": "غير مُقدَّم",
+    "yearsExperience": "سنوات الخبرة: {{value}}",
+    "years": "من {{start}} إلى {{end}}",
+    "ongoing": "من {{start}} حتى الآن"
+  },
+  "admin": {
+    "title": "الملف الشخصي للمرشّح",
+    "description": "هذا عرض للقراءة فقط لملف المرشّح الشخصي.",
+    "accountLabel": "الحساب",
+    "missingAccount": "لم يُذكر أي حساب مرشّح في العنوان."
+  }
+}

@@ -19,7 +19,7 @@ from sqlalchemy import select
 from app.platform.reference.models import IsraeliLocality, IsraeliMobilePrefix
 
 if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 __all__ = [
     "ReferenceDataRepository",
@@ -71,10 +71,17 @@ class ReferenceDataRepository:
     Upserts are idempotent: they look up the unique key first and only insert
     when absent, so the loader is safe to run repeatedly (at startup or in a
     migration data step) without duplicating rows.
+
+    This repository is read-mostly and is invoked *outside* of any caller's
+    ``UnitOfWork`` — the validator that owns it deliberately resolves residency
+    before opening its own transaction, so it cannot join a caller-owned session
+    (see ``RegistrationService.register``). It therefore owns a sessionmaker,
+    not a session, and opens (and commits/closes) one short-lived session per
+    call — a lookup-scoped analogue of ``UnitOfWork`` for this narrow surface.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
+        self._sessionmaker = sessionmaker
 
     async def find_locality_by_normalized_name(
         self, normalized: str, *, dataset_version: str
@@ -83,7 +90,8 @@ class ReferenceDataRepository:
             IsraeliLocality.dataset_version == dataset_version,
             IsraeliLocality.normalized_name == normalized,
         )
-        return (await self._session.execute(stmt)).scalars().first()
+        async with self._sessionmaker() as session:
+            return (await session.execute(stmt)).scalars().first()
 
     async def find_mobile_prefix(
         self, prefix: str, *, dataset_version: str
@@ -92,7 +100,8 @@ class ReferenceDataRepository:
             IsraeliMobilePrefix.dataset_version == dataset_version,
             IsraeliMobilePrefix.prefix == prefix,
         )
-        return (await self._session.execute(stmt)).scalar_one_or_none()
+        async with self._sessionmaker() as session:
+            return (await session.execute(stmt)).scalar_one_or_none()
 
     async def upsert_locality(
         self,
@@ -108,18 +117,20 @@ class ReferenceDataRepository:
             IsraeliLocality.locale == locale,
             IsraeliLocality.normalized_name == normalized_name,
         )
-        if (await self._session.execute(existing)).scalars().first() is not None:
-            return False
-        self._session.add(
-            IsraeliLocality(
-                locality_key=locality_key,
-                locale=locale,
-                name=name,
-                normalized_name=normalized_name,
-                dataset_version=dataset_version,
+        async with self._sessionmaker() as session:
+            if (await session.execute(existing)).scalars().first() is not None:
+                return False
+            session.add(
+                IsraeliLocality(
+                    locality_key=locality_key,
+                    locale=locale,
+                    name=name,
+                    normalized_name=normalized_name,
+                    dataset_version=dataset_version,
+                )
             )
-        )
-        return True
+            await session.commit()
+            return True
 
     async def upsert_mobile_prefix(
         self, *, prefix: str, active: bool, dataset_version: str
@@ -128,13 +139,15 @@ class ReferenceDataRepository:
             IsraeliMobilePrefix.dataset_version == dataset_version,
             IsraeliMobilePrefix.prefix == prefix,
         )
-        if (await self._session.execute(existing)).scalar_one_or_none() is not None:
-            return False
-        self._session.add(
-            IsraeliMobilePrefix(
-                prefix=prefix,
-                active=active,
-                dataset_version=dataset_version,
+        async with self._sessionmaker() as session:
+            if (await session.execute(existing)).scalar_one_or_none() is not None:
+                return False
+            session.add(
+                IsraeliMobilePrefix(
+                    prefix=prefix,
+                    active=active,
+                    dataset_version=dataset_version,
+                )
             )
-        )
-        return True
+            await session.commit()
+            return True

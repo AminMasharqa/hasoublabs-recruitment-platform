@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "HasoubLabs גיוס",
+    "skipToContent": "דלג לתוכן הראשי",
+    "mainContent": "תוכן ראשי"
+  },
+  "nav": {
+    "label": "ניווט ראשי",
+    "open": "פתח את הניווט",
+    "close": "סגור את הניווט",
+    "dashboard": "לוח בקרה",
+    "profile": "הפרופיל שלי",
+    "cvs": "קורות החיים שלי",
+    "jobs": "משרות",
+    "myJobs": "תיאורי המשרות שלי",
+    "applications": "המועמדויות שלי",
+    "applicants": "מועמדים",
+    "reviews": "חוות דעת",
+    "accounts": "חשבונות",
+    "candidates": "מועמדים לגיוס",
+    "audit": "יומן ביקורת",
+    "reports": "דוחות",
+    "exports": "ייצוא נתונים",
+    "diagnostics": "אבחון",
+    "account": "חשבון"
+  },
+  "route": {
+    "statusNotice": "מצב החשבון",
+    "verification": "אימות כתובת הדוא״ל שלך",
+    "registration": "יצירת החשבון שלך",
+    "placeholder": {
+      "title": "עוד לא זמין",
+      "body": "המסך הזה עדיין בבנייה. השתמש בניווט כדי לעבור למקום אחר."
+    },
+    "notFound": {
+      "title": "הכתובת הזאת אינה קיימת",
+      "body": "בדוק את הכתובת, או השתמש בניווט כדי לעבור למקום אחר."
+    }
+  },
+  "locale": {
+    "label": "שפה",
+    "ar": "العربية",
+    "he": "עברית",
+    "en": "English"
+  },
+  "context": {
+    "label": "תפקיד פעיל",
+    "switch": "החלפת תפקיד",
+    "switchTo": "מעבר אל {{context}}",
+    "ADMIN": "מנהל",
+    "CANDIDATE": "מועמד",
+    "SENIOR": "מומחה"
+  },
+  "session": {
+    "signIn": "התחברות",
+    "signOut": "התנתקות",
+    "expired": "תוקף ההתחברות שלך פג. יש להתחבר שוב כדי להמשיך.",
+    "denied": "אין לך הרשאה לצפות בתוכן הזה."
+  },
+  "action": {
+    "save": "שמירה",
+    "cancel": "ביטול",
+    "confirm": "אישור",
+    "retry": "נסה שוב",
+    "reload": "רענן את הדף",
+    "close": "סגירה",
+    "copy": "העתקה",
+    "copied": "הועתק",
+    "clearFilters": "ניקוי הסינון",
+    "download": "הורדה",
+    "previousPage": "הדף הקודם",
+    "nextPage": "הדף הבא"
+  },
+  "state": {
+    "loading": "טוען…",
+    "empty": "אין עדיין פריטים ב{{destination}}.",
+    "emptyFiltered": "אין ב{{destination}} פריטים שמתאימים לסינון הנוכחי.",
+    "errorTitle": "לא ניתן היה לטעון את התוכן"
+  },
+  "supportReference": {
+    "label": "מספר סימוכין לתמיכה",
+    "hint": "יש לציין את מספר הסימוכין בפנייה לתמיכה.",
+    "copy": "העתק את מספר הסימוכין"
+  },
+  "recovery": {
+    "title": "לא ניתן היה להציג את המסך הזה",
+    "body": "שאר האפליקציה עדיין זמין. רענן את הדף כדי לנסות שוב."
+  },
+  "diagnostics": {
+    "title": "אבחון",
+    "description": "פרטים שכדאי לציין בעת דיווח על תקלה.",
+    "bundleVersion": "גרסת החבילה",
+    "bundleVersionUnknown": "בבנייה הזו לא נרשם מזהה גרסה.",
+    "apiHealth": "מצב השירות",
+    "status": {
+      "healthy": "השירות זמין ומדווח שהוא תקין",
+      "other": "השירות זמין ומדווח על מצב אחר",
+      "unknown": "השירות זמין ואינו מדווח על מצב"
+    },
+    "reportedStatus": "המצב שדווח",
+    "checkedAt": "נבדק ב־",
+    "utc": "{{value}} בשעון UTC",
+    "latestFailure": "הבקשה הכושלת האחרונה"
+  }
+}

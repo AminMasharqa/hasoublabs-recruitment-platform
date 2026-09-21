@@ -95,8 +95,10 @@ async def _setup_services(application: FastAPI) -> None:
     from app.platform.reference.models import IsraeliLocality, IsraeliMobilePrefix  # noqa: PLC0415
     from app.platform.reference.repository import ReferenceDataRepository  # noqa: PLC0415
     from app.platform.reference.service import ReferenceDataService  # noqa: PLC0415
+    from app.platform.reference.loader import load_reference_data  # noqa: PLC0415
 
     reference_repo = ReferenceDataRepository(session_factory)
+    await load_reference_data(reference_repo)
     reference_service = ReferenceDataService(reference_repo)
     application.state.reference_service = reference_service
 
@@ -156,22 +158,20 @@ async def _setup_services(application: FastAPI) -> None:
     application.state.auth_service = auth_service
 
     # ── CV services ───────────────────────────────────────────────────────────
-    from app.platform.storage.minio_store import MinioObjectStore, MinioSettings  # noqa: PLC0415
+    from app.platform.storage.minio_store import MinioObjectStore  # noqa: PLC0415
     from app.modules.cvs.service import (  # noqa: PLC0415
         CvVariantService,
         CvUploadService,
         CvIntegrityService,
     )
 
-    minio_settings = MinioSettings(
-        endpoint=settings.minio_endpoint,
-        access_key=settings.minio_access_key,
-        secret_key=settings.minio_secret_key,
-        secure=settings.minio_secure,
+    from app.platform.storage.minio_store import (  # noqa: PLC0415
+        build_minio_client,
+        minio_settings_from_config,
     )
-    from app.platform.storage.minio_store import build_minio_client  # noqa: PLC0415
+    minio_settings = minio_settings_from_config(settings)
     minio_client = build_minio_client(minio_settings)
-    object_store = MinioObjectStore(minio_client)
+    object_store = MinioObjectStore(minio_client, minio_settings)
     application.state.object_store = object_store
 
     cv_variant_service = CvVariantService(uow_factory)

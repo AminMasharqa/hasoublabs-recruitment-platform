@@ -25,6 +25,7 @@ Authorization notes:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from uuid import UUID  # noqa: TC003 — resolved at runtime by FastAPI
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
@@ -38,8 +39,6 @@ from app.platform.security.guards import require
 from app.platform.security.types import Role
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.platform.security.principal import Principal
 
 router = APIRouter(tags=["reviews"])

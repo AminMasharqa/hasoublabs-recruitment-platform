@@ -1,0 +1,78 @@
+{
+  "fallback": "Something went wrong. Please try again, and quote the support reference if you contact support.",
+
+  "validation_failed": "Some of the submitted fields are not valid.",
+  "validation_error": "Some of the submitted fields are not valid.",
+  "authentication_required": "Please sign in to continue.",
+  "not_authorized": "You are not authorized to perform this action.",
+  "account_not_approved": "Your account is not approved yet.",
+  "illegal_transition": "That change is not allowed from the current state.",
+  "conflicting_state": "This conflicts with data that already exists.",
+  "precondition_unmet": "Some requirements for this action are not met yet.",
+  "rate_limited": "Too many requests. Please try again shortly.",
+  "code_entry_locked": "Code entry is locked. Request a new verification code to continue.",
+  "integrity_violation": "An integrity check failed. An administrator has been alerted.",
+  "upstream_unavailable": "A required service is temporarily unavailable. Please try again.",
+  "internal_server_error": "Something went wrong. Please try again.",
+  "bad_request": "The request could not be understood.",
+  "not_found": "That resource does not exist.",
+  "method_not_allowed": "That method is not allowed for this resource.",
+  "unsupported_media_type": "That content type is not supported.",
+  "http_error": "The request could not be completed.",
+
+  "unexpected_response": "The server sent a response the application could not read. Please try again.",
+  "request_timeout": "The request took too long and was stopped. Please try again.",
+
+  "mfa_required": "Enter your authenticator code to continue.",
+  "invalid_mfa_code": "That authenticator code is incorrect.",
+  "invalid_registration_link": "This registration link is invalid or has expired.",
+  "residency_validation_failed": "The residency proof could not be validated. Check the details and try again.",
+  "invalid_verification_code": "That verification code is incorrect.",
+  "verification_code_expired": "That verification code has expired. Request a new one.",
+  "duplicate_email": "An account already exists for this email address and role.",
+
+  "profile_validation_failed": "Some profile fields are not valid.",
+  "skill_limit_exceeded": "You have reached the maximum number of skills.",
+  "contact_preference_invalid": "That combination of contact preferences is not allowed.",
+
+  "cv_limit_exceeded": "You already have the maximum number of active CV variants. Archive one before creating another.",
+  "last_variant_error": "This is your last active CV variant, so it cannot be archived.",
+  "cv_upload_validation_failed": "This file cannot be uploaded. Choose a PDF or Word document within the size limit.",
+  "cv_integrity_error": "An integrity check failed for this CV file. An administrator has been alerted.",
+
+  "jd_not_open": "This job is not open for applications.",
+  "jd_already_closed": "This job is already closed.",
+  "jd_edit_forbidden_when_closed": "A closed job cannot be edited.",
+  "jd_publish_precondition_failed": "This job cannot be published yet. Complete the listed requirements first.",
+  "extraction_draft_expired": "The extracted draft has expired. Run the extraction again.",
+  "ssrf_guard_rejected": "That address cannot be fetched. Provide a publicly reachable HTTPS address.",
+
+  "application_not_ready": "Your profile is not ready for applications yet. Complete the listed items and try again.",
+  "duplicate_application": "You have already applied to this job.",
+
+  "review_correction_not_allowed": "This review cannot be corrected.",
+
+  "audit_write_failed": "The action could not be recorded in the audit log, so it was not applied.",
+
+  "unsupported_entity_type": "Export is not available for that entity type.",
+  "export_not_ready": "The export is still being prepared.",
+  "export_failed": "The export could not be completed.",
+
+  "field": {
+    "invalid": "This value is not valid.",
+    "required": "This field is required.",
+    "blank": "This field cannot be blank.",
+    "too_long": "This value is too long.",
+    "too_short": "This value is too short.",
+    "invalid_email": "Enter a valid email address.",
+    "invalid_e164": "Enter a valid phone number in international format.",
+    "invalid_url": "Enter a valid HTTPS URL.",
+    "invalid_enum": "Choose one of the allowed values.",
+    "invalid_type": "This value has the wrong type.",
+    "end_before_start": "The end date cannot be earlier than the start date.",
+    "out_of_range": "This value is outside the allowed range.",
+    "invalid_cursor": "That page cursor is not valid. Start from the first page.",
+    "mutually_exclusive": "These parameters cannot be used together.",
+    "unknown_violation": "This value is not valid."
+  }
+}
