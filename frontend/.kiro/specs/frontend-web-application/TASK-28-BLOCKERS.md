@@ -55,7 +55,7 @@ E2E environment used:
 $env:E2E_API_BASE_URL   = 'http://127.0.0.1:8000/api/v1'
 $env:VITE_API_BASE_URL  = 'http://127.0.0.1:8000/api/v1'   # no dev-server proxy exists
 $env:E2E_MAILPIT_BASE_URL = 'http://localhost:8025'
-$env:E2E_ADMIN_TOTP_SECRET = 'VMIUTCXXAOUEMRLBIU2U5UK6WGZR7ZZA'
+$env:E2E_ADMIN_TOTP_SECRET = '<your enrolled base32 secret>'
 ```
 
 ### Seeded Admin (the precondition `e2e/README.md` describes)
@@ -66,15 +66,14 @@ TOTP secret was unrecoverable (envelope-encrypted via OpenBao), so it was
 re-enrolled: the account's `mfa_secret_enc` / `mfa_wrapped_key` /
 `mfa_enrolled_at` columns were set to `NULL`, `POST /auth/mfa/enroll` was called
 on the resulting un-enrolled session, and the secret was read out of the returned
-`provisioning_uri`. **The secret above is live** — reuse it rather than
-re-enrolling.
+`provisioning_uri`. TOTP secrets are not committed: each developer re-enrols the
+account this way and keeps the secret in their own environment.
 
 Account id: `b9ab10fc-e5e0-4610-9b61-49bb471ac952`.
 
-The untracked `mfa_uri.txt` at the repo root held the *previous* provisioning URI
-(secret `I7KGIJ3TJ6XCEQIYHEU3ICEMRXXVMRO3`). Only one secret is stored per
-account, so re-enrolling invalidated it; that file has been updated to the current
-secret rather than left as a stale trap.
+A `mfa_uri.txt` at the repo root once held a provisioning URI; it has been
+removed and is now git-ignored. Only one secret is stored per account, so
+re-enrolling invalidates any previously issued secret.
 
 Note `POST /auth/mfa/verify` requires `account_id` in the body in addition to
 `code` (not obvious from the enrolment response).
@@ -757,7 +756,7 @@ npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
 - The worker log is quiet now apart from Bug 5's hourly false tamper report.
   `expire_verification_codes` completes cleanly, so Bug 6 no longer appears
   behind it — silent again rather than fixed.
-- `e2e-admin@example.com` is MFA-enrolled with the secret recorded above.
+- `e2e-admin@example.com` is MFA-enrolled; the secret is not committed (re-enrol to obtain one).
 - Docker services untouched. The throwaway `hasoub_drift` database used to
   validate the migration up/down/up has been dropped, and every probe script
   written along the way deleted.
