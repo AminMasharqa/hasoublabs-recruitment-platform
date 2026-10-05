@@ -37,6 +37,7 @@ import {
   login,
   registerVerifiedApprovedAccount,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 type SupportedLocale = 'ar' | 'he' | 'en'
 
@@ -132,7 +133,7 @@ test.describe('tri-locale coverage', () => {
       await page.locator('#login-role').selectOption('CANDIDATE')
       await page.getByTestId('login-submit').click()
 
-      await page.goto('/candidate/profile')
+      await navigateInApp(page, '/candidate/profile')
       await expect(page.getByTestId('candidate-profile-form')).toBeVisible()
 
       // Req 19 AC10/AC11: Arabic/Hebrew text entered here is submitted and
@@ -171,7 +172,7 @@ test.describe('tri-locale coverage', () => {
       await page.locator('#login-role').selectOption('CANDIDATE')
       await page.getByTestId('login-submit').click()
 
-      await page.goto('/candidate/cvs')
+      await navigateInApp(page, '/candidate/cvs')
       await page.getByTestId('cv-variant-create-open').click()
       await page.getByTestId('cv-variant-create-name').fill('Locale CV')
       await page.getByTestId('cv-variant-create-submit').click()
@@ -216,7 +217,7 @@ test.describe('tri-locale coverage', () => {
       await page.locator('#login-role').selectOption('CANDIDATE')
       await page.getByTestId('login-submit').click()
 
-      await page.goto('/jobs')
+      await navigateInApp(page, '/jobs')
       await page.getByTestId('job-filter-search').fill(title)
       await page.getByTestId('job-filters-apply').click()
 
@@ -259,7 +260,7 @@ test.describe('tri-locale coverage', () => {
       // A minimal Complete profile and one CV_Variant, the preconditions the
       // apply gate reads (Req 9 AC13) — this block's own subject is the dialog's
       // direction and layout, not re-proving profile/CV completion.
-      await page.goto('/candidate/profile')
+      await navigateInApp(page, '/candidate/profile')
       await page.locator('#full_name').fill('Locale Apply Candidate')
       await page.locator('#phone').fill('0501234580')
       await page.locator('#city').fill('Jerusalem')
@@ -274,12 +275,12 @@ test.describe('tri-locale coverage', () => {
       await page.getByTestId('profile-save').click()
       await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
 
-      await page.goto('/candidate/cvs')
+      await navigateInApp(page, '/candidate/cvs')
       await page.getByTestId('cv-variant-create-open').click()
       await page.getByTestId('cv-variant-create-name').fill('Locale Apply CV')
       await page.getByTestId('cv-variant-create-submit').click()
 
-      await page.goto('/jobs')
+      await navigateInApp(page, '/jobs')
       await page.getByTestId('job-filter-search').fill(job.title)
       await page.getByTestId('job-filters-apply').click()
       const card = page.locator('[data-testid^="job-card-"]', { hasText: job.title })
@@ -322,7 +323,7 @@ test.describe('tri-locale coverage', () => {
       await page.locator('#login-role').selectOption('SENIOR')
       await page.getByTestId('login-submit').click()
 
-      await page.goto('/senior/reviews/new')
+      await navigateInApp(page, '/senior/reviews/new')
       await page.getByTestId('review-candidate-input').fill(candidate.id)
       await page.getByTestId('review-candidate-submit').click()
 
@@ -340,7 +341,7 @@ test.describe('tri-locale coverage', () => {
       await page.getByTestId('review-new-assessment').fill(assessment)
       await page.getByTestId('review-new-submit').click()
 
-      await page.goto('/senior/reviews')
+      await navigateInApp(page, '/senior/reviews')
       await page.getByTestId('review-candidate-input').fill(candidate.id)
       await page.getByTestId('review-candidate-submit').click()
 

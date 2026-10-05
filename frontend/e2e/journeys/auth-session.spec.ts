@@ -28,6 +28,7 @@ import {
   login,
   registerVerifiedApprovedAccount,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 test.describe('login, refresh, logout and context switch', () => {
   test('a wrong password is refused without disclosing whether the account exists', async ({
@@ -122,7 +123,7 @@ test.describe('login, refresh, logout and context switch', () => {
     // Candidate route group requires the CANDIDATE Active_Context, which this
     // session no longer carries, so the uniform denial renders in place rather
     // than the profile screen.
-    await page.goto('/candidate/profile')
+    await navigateInApp(page, '/candidate/profile')
     await expect(page.getByTestId('authorization-denied')).toBeVisible()
   })
 })

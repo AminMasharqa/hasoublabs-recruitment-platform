@@ -28,6 +28,7 @@ import {
   readVerificationCodeFromMailpit,
   uniqueTestEmail,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 const REGISTRATION_PASSWORD = 'Correct-Horse-Battery-Staple-9'
 
@@ -138,7 +139,7 @@ test.describe('registration -> verification -> onboarding gating', () => {
 
     // Req 7 AC2: attempting to reach a feature screen directly is refused —
     // redirected back to the Onboarding_Screens rather than rendering `/jobs`.
-    await page.goto('/jobs')
+    await navigateInApp(page, '/jobs')
     await expect(page).toHaveURL(/\/status/)
   })
 })

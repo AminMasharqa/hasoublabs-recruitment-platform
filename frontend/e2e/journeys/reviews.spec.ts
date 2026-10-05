@@ -10,6 +10,7 @@
 import { expect, test } from '@playwright/test'
 
 import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 test.describe('review submission', () => {
   test('a Senior submits a Review, and it appears on their own timeline', async ({ page }) => {
@@ -27,7 +28,7 @@ test.describe('review submission', () => {
     await page.locator('#login-role').selectOption('SENIOR')
     await page.getByTestId('login-submit').click()
 
-    await page.goto('/senior/reviews/new')
+    await navigateInApp(page, '/senior/reviews/new')
     await expect(page.getByTestId('senior-review-new-screen')).toBeVisible()
 
     // Req 15 AC1: the Candidate is named by identifier before the form opens.
@@ -49,7 +50,7 @@ test.describe('review submission', () => {
     // open after a success (it links to the timeline rather than closing).
 
     // Req 15 AC7 (Senior own-only timeline): the submitted Review appears.
-    await page.goto('/senior/reviews')
+    await navigateInApp(page, '/senior/reviews')
     await page.getByTestId('review-candidate-input').fill(candidate.id)
     await page.getByTestId('review-candidate-submit').click()
     const timelineList = page.locator('[data-testid^="review-card-"]')
@@ -76,7 +77,7 @@ test.describe('review submission', () => {
     await page.locator('#login-role').selectOption('SENIOR')
     await page.getByTestId('login-submit').click()
 
-    await page.goto('/senior/reviews/new')
+    await navigateInApp(page, '/senior/reviews/new')
     await page.getByTestId('review-candidate-input').fill(candidate.id)
     await page.getByTestId('review-candidate-submit').click()
     await page.getByTestId('review-new-rating_technical').fill('3')
@@ -86,7 +87,7 @@ test.describe('review submission', () => {
     await page.getByTestId('review-new-assessment').fill('An initial assessment, to be corrected next.')
     await page.getByTestId('review-new-submit').click()
 
-    await page.goto('/senior/reviews')
+    await navigateInApp(page, '/senior/reviews')
     await page.getByTestId('review-candidate-input').fill(candidate.id)
     await page.getByTestId('review-candidate-submit').click()
     await expect(page.getByTestId('senior-reviews-screen')).toBeVisible()

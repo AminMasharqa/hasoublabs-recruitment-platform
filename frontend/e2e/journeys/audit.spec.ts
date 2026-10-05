@@ -15,6 +15,7 @@ import {
   registerVerifiedApprovedAccount,
   SEED_ADMIN,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 import { currentTotpCode } from '../support/totp'
 
 test.describe('audit browse', () => {
@@ -44,7 +45,7 @@ test.describe('audit browse', () => {
     }
 
     // Req 17 AC2: filtered to the entity this test seeded, by its entity id.
-    await page.goto(`/admin/audit?entity_id=${encodeURIComponent(account.id)}`)
+    await navigateInApp(page, `/admin/audit?entity_id=${encodeURIComponent(account.id)}`)
     await expect(page.getByTestId('audit-screen')).toBeVisible()
     await expect(page.getByTestId('audit-list')).toBeVisible({ timeout: 15_000 })
 
@@ -85,7 +86,7 @@ test.describe('audit browse', () => {
       await page.getByTestId('mfa-code-submit').click()
     }
 
-    await page.goto('/admin/audit')
+    await navigateInApp(page, '/admin/audit')
     await expect(page.getByTestId('audit-chain-verify')).toBeVisible()
     await page.getByTestId('audit-chain-verify-run').click()
 

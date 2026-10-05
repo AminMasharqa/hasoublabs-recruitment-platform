@@ -18,6 +18,7 @@ import { createHash } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 test.describe('CV upload and download', () => {
   test('an uploaded CV becomes downloadable once scanned, under its original filename', async ({
@@ -33,7 +34,7 @@ test.describe('CV upload and download', () => {
     await page.getByTestId('login-submit').click()
 
     // Req 11 AC2: create a CV_Variant.
-    await page.goto('/candidate/cvs')
+    await navigateInApp(page, '/candidate/cvs')
     await expect(page.getByTestId('cv-variants-screen')).toBeVisible()
     await page.getByTestId('cv-variant-create-open').click()
     await page.getByTestId('cv-variant-create-name').fill('E2E Primary CV')
@@ -98,7 +99,7 @@ test.describe('CV upload and download', () => {
     await page.locator('#login-role').selectOption('CANDIDATE')
     await page.getByTestId('login-submit').click()
 
-    await page.goto('/candidate/cvs')
+    await navigateInApp(page, '/candidate/cvs')
     await page.getByTestId('cv-variant-create-open').click()
     await page.getByTestId('cv-variant-create-name').fill('E2E Pending CV')
     await page.getByTestId('cv-variant-create-submit').click()

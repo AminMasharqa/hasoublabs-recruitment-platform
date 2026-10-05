@@ -11,6 +11,7 @@
 import { expect, test } from '@playwright/test'
 
 import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 test.describe('candidate profile completion', () => {
   test('a fresh profile is Draft, and completing the core fields moves it to Complete', async ({
@@ -26,7 +27,7 @@ test.describe('candidate profile completion', () => {
     await page.getByTestId('login-submit').click()
     await expect(page).toHaveURL(/\/jobs/)
 
-    await page.goto('/candidate/profile')
+    await navigateInApp(page, '/candidate/profile')
     await expect(page.getByTestId('candidate-profile-screen')).toBeVisible()
     await expect(page.getByTestId('candidate-profile-form')).toBeVisible()
 
@@ -67,7 +68,7 @@ test.describe('candidate profile completion', () => {
     // that the profile is Complete (it still requires a CV_Variant too, which
     // this journey does not seed — see `journeys/cv.spec.ts` and
     // `journeys/jobs-applications.spec.ts` for the apply flow itself).
-    await page.goto('/jobs')
+    await navigateInApp(page, '/jobs')
     await expect(page.getByTestId('jobs-browse-screen')).toBeVisible()
   })
 
@@ -83,7 +84,7 @@ test.describe('candidate profile completion', () => {
     await page.locator('#login-role').selectOption('CANDIDATE')
     await page.getByTestId('login-submit').click()
 
-    await page.goto('/candidate/profile')
+    await navigateInApp(page, '/candidate/profile')
     // Req 22 AC5: an invalid LinkedIn URL (not HTTPS) is rejected by the
     // Form_Validator before any request is issued, and the entered value stays
     // exactly as typed (Req 22 AC11).

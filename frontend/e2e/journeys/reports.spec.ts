@@ -11,6 +11,7 @@
 import { expect, test } from '@playwright/test'
 
 import { SEED_ADMIN } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 import { currentTotpCode } from '../support/totp'
 
 test.describe('report + Excel export', () => {
@@ -34,7 +35,7 @@ test.describe('report + Excel export', () => {
       await page.getByTestId('mfa-code-submit').click()
     }
 
-    await page.goto('/admin/reports')
+    await navigateInApp(page, '/admin/reports')
     await expect(page.getByTestId('reports-screen')).toBeVisible()
 
     // Req 18 AC1-AC2: the activity report's metrics render.

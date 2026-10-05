@@ -15,6 +15,7 @@ import {
   registerVerifiedApprovedAccount,
   SEED_ADMIN,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 import { currentTotpCode } from '../support/totp'
 
 /** Signs in as the seeded Admin through the real UI, including the MFA step. */
@@ -85,7 +86,7 @@ test.describe('admin account lifecycle', () => {
     // AccountFiltersPanel offers status/role only, no free-text search — filter
     // to CANDIDATE + Approved to narrow the walk, then page forward (AC3) until
     // this test's own seeded account is on screen.
-    await page.goto('/admin/accounts?status=Approved&role=CANDIDATE')
+    await navigateInApp(page, '/admin/accounts?status=Approved&role=CANDIDATE')
     await expect(page.getByTestId('accounts-list')).toBeVisible()
 
     const card = page.locator(`[data-testid="account-card-${account.id}"]`)

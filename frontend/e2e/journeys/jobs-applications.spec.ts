@@ -17,10 +17,11 @@ import {
   login,
   registerVerifiedApprovedAccount,
 } from '../support/backend'
+import { navigateInApp } from '../support/navigation'
 
 /** Fills the four fields the Backend_Api's Complete rule requires beyond the core ones. */
 async function completeMinimalProfile(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/candidate/profile')
+  await navigateInApp(page, '/candidate/profile')
   await page.locator('#full_name').fill('E2E Apply Candidate')
   await page.locator('#phone').fill('0501234571')
   await page.locator('#city').fill('Haifa')
@@ -37,7 +38,7 @@ async function completeMinimalProfile(page: import('@playwright/test').Page): Pr
 }
 
 async function createCvVariant(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/candidate/cvs')
+  await navigateInApp(page, '/candidate/cvs')
   await page.getByTestId('cv-variant-create-open').click()
   await page.getByTestId('cv-variant-create-name').fill('E2E Apply CV')
   await page.getByTestId('cv-variant-create-submit').click()
@@ -70,7 +71,7 @@ test.describe('job browse -> apply -> track', () => {
 
     // Req 12 AC1-AC2: the published role is findable through the browse filters —
     // the free-text search narrows the list to the one role this test created.
-    await page.goto('/jobs')
+    await navigateInApp(page, '/jobs')
     await expect(page.getByTestId('jobs-browse-screen')).toBeVisible()
     await page.getByTestId('job-filter-search').fill(job.title)
     await page.getByTestId('job-filters-apply').click()
@@ -131,7 +132,7 @@ test.describe('job browse -> apply -> track', () => {
     await page.locator('#login-role').selectOption('CANDIDATE')
     await page.getByTestId('login-submit').click()
 
-    await page.goto('/jobs')
+    await navigateInApp(page, '/jobs')
     await page.getByTestId('job-filter-search').fill(job.title)
     await page.getByTestId('job-filters-apply').click()
     const card = page.locator('[data-testid^="job-card-"]', { hasText: job.title })
