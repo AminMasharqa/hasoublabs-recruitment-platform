@@ -464,7 +464,7 @@ parameters, unchanged.
 
 ---
 
-## Bug 3 — `GET /admin/reports/activity` returns 500 (untyped NULL parameters)
+## Bug 3 — `GET /admin/reports/activity` returns 500 (untyped NULL parameters) — **FIXED 2026-10-05**
 
 Independent of Bugs 1 and 2. Reproduced directly with an Admin bearer token.
 
@@ -500,6 +500,47 @@ one of `count_candidates_registered`, `count_candidates_by_status` and
 
 This is what fails `e2e/journeys/reports.spec.ts` once the login blocker below is
 cleared.
+
+### What was changed
+
+The defect was wider than the three functions named above, and it covered both
+report endpoints. All of the raw SQL is in
+`backend/app/modules/reporting/repository.py`:
+
+- **Untyped NULL parameters**, in 7 predicates (activity counts, application
+  counts and the applications export). They are now
+  `CAST(:p AS timestamptz) IS NULL OR col >= CAST(:p AS timestamptz)`, so asyncpg
+  can type the parameter at Prepare time.
+- **`:name::type` inside `text()`**, at 5 sites. SQLAlchemy does not treat `:name`
+  as a bind when `::` follows it, so the literal reached PostgreSQL. These are now
+  `CAST(:name AS uuid)` / `CAST(:account_ids AS uuid[])`. One of them was in the
+  candidate-progress **page query** itself, so `/admin/reports/candidate-progress`
+  also returned 500 on every call, first page included.
+- **The paging bug behind it.** `list_candidate_progress` fetched `limit + 1`
+  rows to detect a next page, then returned only `limit` of them. The service's
+  `len(rows) > limit` check could therefore never be true: `has_next` was always
+  false, and nothing past the first page was reachable. Bug 3's 500s had hidden
+  this. The repository now returns the extra row and the service trims it, which
+  is the same contract as `jobs/repository.py::list_open_jds`.
+
+No other module has either SQL pattern (checked across `backend/app`).
+
+### Verification
+
+- **`tests/integration/test_reporting_queries.py` (new)** runs every activity query
+  and the applications export against `alembic upgrade head`, unfiltered and with
+  a date window, for any JD and for one JD. It also pages candidate progress
+  exactly the way `ReportService` does, using the extra row as the only
+  `has_next` signal.
+  - Before the fix: 4 × `AmbiguousParameterError` and 1 × the `:` syntax error.
+  - With the over-fetch trimmed again, the paging test fails.
+  - With the fix: 5 passed.
+- **Live API:** `/admin/reports/activity` returns 200 unfiltered, with a date window
+  and with a JD filter. `/candidate-progress` walks 6 pages (all 200) and reaches
+  all 128 candidates in the dev database, with no duplicates.
+  `candidates_registered` is 128, which agrees.
+- **`e2e/journeys/reports.spec.ts`:** 2 passed.
+- **Backend unit suite:** 263 passed.
 
 ---
 
@@ -886,7 +927,7 @@ There were no 5xx responses in the whole run. Each failure is attributed from it
 | 5 | Unattributed: review timeline | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
 | 5 | Unattributed: candidate profile save | `profile`, `jobs-applications` apply, `tri-locale` application ×3. A click on "My profile" times out. |
 | 2 | Environment: MinIO | `cv` ×2 |
-| 1 | Bug 3 | `reports`: `GET /admin/reports/activity` and `/candidate-progress` → 500 with Bug 3's exact signatures |
+| 1 | Bug 3 (since fixed; `reports` passes) | `reports`: `GET /admin/reports/activity` and `/candidate-progress` → 500 with Bug 3's exact signatures |
 | 1 | Unattributed: audit action naming | `audit`: the entry's action is `Account.updated`; the test expects `/approve/i`. |
 | 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
 | 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
@@ -913,8 +954,10 @@ review group as possibly flaky until it is investigated.
    Bugs 8 and 9, both done). Start with the one-line journey-helper fix, then look
    at `MfaCodeStep`. The state-reset or remount hypothesis in Bug 4's section is
    still unconfirmed.
-5. Bug 3 — cast the timestamp parameters in the activity-report queries, and fix
-   the `:jd_id::uuid` syntax error while in there.
+5. ~~Bug 3 — cast the timestamp parameters in the activity-report queries, and fix
+   the `:jd_id::uuid` syntax error while in there.~~ **Done** (2026-10-05), along
+   with the candidate-progress `has_next` bug it was hiding. The `reports` e2e
+   journey passes.
 6. Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5
    failure auditing.
 7. Bug 5 — needs the history decision recorded in its section before the code

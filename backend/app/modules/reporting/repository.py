@@ -39,8 +39,10 @@ async def count_candidates_registered(
         """
         SELECT count(*) FROM accounts
         WHERE 'CANDIDATE' = ANY(roles)
-          AND (:date_from IS NULL OR created_at >= :date_from)
-          AND (:date_to   IS NULL OR created_at <= :date_to)
+          AND (CAST(:date_from AS timestamptz) IS NULL
+               OR created_at >= CAST(:date_from AS timestamptz))
+          AND (CAST(:date_to AS timestamptz) IS NULL
+               OR created_at <= CAST(:date_to AS timestamptz))
         """
     )
     result = await session.execute(stmt, {"date_from": date_from, "date_to": date_to})
@@ -59,8 +61,10 @@ async def count_candidates_by_status(
         """
         SELECT count(*) FROM account_status_transitions
         WHERE to_status = :status
-          AND (:date_from IS NULL OR occurred_at >= :date_from)
-          AND (:date_to   IS NULL OR occurred_at <= :date_to)
+          AND (CAST(:date_from AS timestamptz) IS NULL
+               OR occurred_at >= CAST(:date_from AS timestamptz))
+          AND (CAST(:date_to AS timestamptz) IS NULL
+               OR occurred_at <= CAST(:date_to AS timestamptz))
           AND account_id IN (
               SELECT id FROM accounts WHERE 'CANDIDATE' = ANY(roles)
           )
@@ -82,8 +86,10 @@ async def count_cv_versions_uploaded(
     stmt = text(
         """
         SELECT count(*) FROM cv_versions
-        WHERE (:date_from IS NULL OR created_at >= :date_from)
-          AND (:date_to   IS NULL OR created_at <= :date_to)
+        WHERE (CAST(:date_from AS timestamptz) IS NULL
+               OR created_at >= CAST(:date_from AS timestamptz))
+          AND (CAST(:date_to AS timestamptz) IS NULL
+               OR created_at <= CAST(:date_to AS timestamptz))
         """
     )
     result = await session.execute(stmt, {"date_from": date_from, "date_to": date_to})
@@ -102,9 +108,11 @@ async def count_applications_by_status(
         """
         SELECT status, count(*) AS cnt
         FROM applications
-        WHERE (:date_from IS NULL OR submitted_at >= :date_from)
-          AND (:date_to   IS NULL OR submitted_at <= :date_to)
-          AND (:jd_id     IS NULL OR jd_id = :jd_id::uuid)
+        WHERE (CAST(:date_from AS timestamptz) IS NULL
+               OR submitted_at >= CAST(:date_from AS timestamptz))
+          AND (CAST(:date_to AS timestamptz) IS NULL
+               OR submitted_at <= CAST(:date_to AS timestamptz))
+          AND (CAST(:jd_id AS uuid)     IS NULL OR jd_id = CAST(:jd_id AS uuid))
         GROUP BY status
         """
     )
@@ -134,12 +142,14 @@ async def list_candidate_progress(
     created_at, applications (list of dicts with jd_id, application_id, status,
     submitted_at, jd_title).
 
-    Keyset pagination on (created_at ASC, id ASC) using after_id.
+    Keyset pagination on (created_at ASC, id ASC) using after_id. Returns up to
+    ``limit + 1`` rows: the extra row is how the caller detects ``has_next``, and
+    the caller trims it.
     """
     # First fetch candidate accounts
     if after_id is not None:
         cursor_stmt = text(
-            "SELECT created_at FROM accounts WHERE id = :after_id::uuid"
+            "SELECT created_at FROM accounts WHERE id = CAST(:after_id AS uuid)"
         )
         cursor_result = await session.execute(cursor_stmt, {"after_id": str(after_id)})
         cursor_row = cursor_result.first()
@@ -152,9 +162,10 @@ async def list_candidate_progress(
         SELECT id, email, status, created_at
         FROM accounts
         WHERE 'CANDIDATE' = ANY(roles)
-          AND (:after_created_at IS NULL
-               OR created_at > :after_created_at
-               OR (created_at = :after_created_at AND id > :after_id::uuid))
+          AND (CAST(:after_created_at AS timestamptz) IS NULL
+               OR created_at > CAST(:after_created_at AS timestamptz)
+               OR (created_at = CAST(:after_created_at AS timestamptz)
+                   AND id > CAST(:after_id AS uuid)))
         ORDER BY created_at ASC, id ASC
         LIMIT :limit
         """
@@ -172,7 +183,7 @@ async def list_candidate_progress(
     if not account_rows:
         return []
 
-    account_ids = [str(row.id) for row in account_rows[:limit]]
+    account_ids = [str(row.id) for row in account_rows]
     accounts_map = {
         str(row.id): {
             "account_id": row.id,
@@ -181,7 +192,7 @@ async def list_candidate_progress(
             "created_at": row.created_at,
             "applications": [],
         }
-        for row in account_rows[:limit]
+        for row in account_rows
     }
 
     # Fetch applications for those candidates
@@ -191,7 +202,7 @@ async def list_candidate_progress(
                coalesce(j.title, '') AS jd_title
         FROM applications a
         LEFT JOIN job_descriptions j ON j.id = a.jd_id
-        WHERE a.candidate_id = ANY(:account_ids::uuid[])
+        WHERE a.candidate_id = ANY(CAST(:account_ids AS uuid[]))
         ORDER BY a.submitted_at DESC
         """
     )
@@ -291,9 +302,11 @@ async def fetch_applications_for_export(
         FROM applications a
         LEFT JOIN job_descriptions j ON j.id = a.jd_id
         LEFT JOIN accounts acc ON acc.id = a.candidate_id
-        WHERE (:date_from IS NULL OR a.submitted_at >= :date_from)
-          AND (:date_to   IS NULL OR a.submitted_at <= :date_to)
-          AND (:jd_id     IS NULL OR a.jd_id = :jd_id::uuid)
+        WHERE (CAST(:date_from AS timestamptz) IS NULL
+               OR a.submitted_at >= CAST(:date_from AS timestamptz))
+          AND (CAST(:date_to AS timestamptz) IS NULL
+               OR a.submitted_at <= CAST(:date_to AS timestamptz))
+          AND (CAST(:jd_id AS uuid)     IS NULL OR a.jd_id = CAST(:jd_id AS uuid))
         ORDER BY a.submitted_at ASC
         """
     )
