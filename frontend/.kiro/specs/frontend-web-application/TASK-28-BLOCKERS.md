@@ -879,6 +879,23 @@ There were no 5xx responses in the whole run. Each failure is attributed from it
 | 1 | Unattributed | `jobs-applications` closed role: the closed job's card is not visible in the list. |
 | 1 | Unattributed | `registration` gating: signing in as a not-yet-approved account is refused (`POST /auth/login` → 403) instead of landing on `/status`. |
 
+### Re-run 2026-10-05 after the Bug 4 fix — 62 passed, 17 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Unattributed: review timeline | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
+| 5 | Unattributed: candidate profile save | `profile`, `jobs-applications` apply, `tri-locale` application ×3. A click on "My profile" times out. |
+| 2 | Environment: MinIO | `cv` ×2 |
+| 1 | Bug 3 | `reports`: `GET /admin/reports/activity` and `/candidate-progress` → 500 with Bug 3's exact signatures |
+| 1 | Unattributed: audit action naming | `audit`: the entry's action is `Account.updated`; the test expects `/approve/i`. |
+| 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
+| 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
+| 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
+
+Bug 4 accounts for none of these: every admin journey now passes the MFA step.
+`reviews.spec.ts:63` passed in the previous run and failed in this one. Treat the
+review group as possibly flaky until it is investigated.
+
 ## Suggested order of attack
 
 1. ~~Bug 1 — add `app/modules/audit/tasks.py`, plus handlers for the orphaned
