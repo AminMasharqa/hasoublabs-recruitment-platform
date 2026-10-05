@@ -39,10 +39,12 @@ test.describe('audit browse', () => {
     await page.locator('#login-role').selectOption('ADMIN')
     await page.getByTestId('login-submit').click()
     const mfaStep = page.getByTestId('mfa-code-step')
-    if (await mfaStep.isVisible().catch(() => false)) {
-      await page.getByTestId('mfa-code-input').fill(currentTotpCode(secret))
-      await page.getByTestId('mfa-code-submit').click()
-    }
+    // The seeded Admin is MFA-enrolled, so the step always follows the credentials.
+    // Wait for it: an immediate isVisible() check races the 401 mfa_required
+    // response and silently skips the code (TASK-28 Bug 4).
+    await expect(mfaStep).toBeVisible()
+    await page.getByTestId('mfa-code-input').fill(currentTotpCode(secret))
+    await page.getByTestId('mfa-code-submit').click()
 
     // Req 17 AC2: filtered to the entity this test seeded, by its entity id.
     await navigateInApp(page, `/admin/audit?entity_id=${encodeURIComponent(account.id)}`)
@@ -81,10 +83,12 @@ test.describe('audit browse', () => {
     await page.locator('#login-role').selectOption('ADMIN')
     await page.getByTestId('login-submit').click()
     const mfaStep = page.getByTestId('mfa-code-step')
-    if (await mfaStep.isVisible().catch(() => false)) {
-      await page.getByTestId('mfa-code-input').fill(currentTotpCode(secret))
-      await page.getByTestId('mfa-code-submit').click()
-    }
+    // The seeded Admin is MFA-enrolled, so the step always follows the credentials.
+    // Wait for it: an immediate isVisible() check races the 401 mfa_required
+    // response and silently skips the code (TASK-28 Bug 4).
+    await expect(mfaStep).toBeVisible()
+    await page.getByTestId('mfa-code-input').fill(currentTotpCode(secret))
+    await page.getByTestId('mfa-code-submit').click()
 
     await navigateInApp(page, '/admin/audit')
     await expect(page.getByTestId('audit-chain-verify')).toBeVisible()

@@ -30,10 +30,12 @@ async function loginAsAdminThroughUi(
   await page.getByTestId('login-submit').click()
 
   const mfaStep = page.getByTestId('mfa-code-step')
-  if (await mfaStep.isVisible().catch(() => false)) {
-    await page.getByTestId('mfa-code-input').fill(currentTotpCode(totpSecret))
-    await page.getByTestId('mfa-code-submit').click()
-  }
+  // The seeded Admin is MFA-enrolled, so the step always follows the credentials.
+  // Wait for it: an immediate isVisible() check races the 401 mfa_required
+  // response and silently skips the code (TASK-28 Bug 4).
+  await expect(mfaStep).toBeVisible()
+  await page.getByTestId('mfa-code-input').fill(currentTotpCode(totpSecret))
+  await page.getByTestId('mfa-code-submit').click()
 }
 
 test.describe('admin account lifecycle', () => {

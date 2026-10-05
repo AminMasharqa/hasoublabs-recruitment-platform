@@ -503,7 +503,7 @@ cleared.
 
 ---
 
-## Bug 4 — MFA code step issues no second `/auth/login` request (frontend or journey helper)
+## Bug 4 — MFA code step issues no second `/auth/login` request (frontend or journey helper) — **FIXED 2026-10-05: the journey helper**
 
 **The one failure that is not clearly backend-side.**
 
@@ -577,6 +577,42 @@ Ruled out already: TOTP correctness and code reuse. The same
 backend accepts the **same** code twice inside one 30-second window (verified:
 two sequential `POST /auth/login` calls with an identical `mfa_code` both
 returned 200), so nothing about single-use replay protection is involved.
+
+### Resolution (2026-10-05): hypothesis 1, the helper's race
+
+Note first that most of the ~20 failures once credited here were Bugs 8 and 9.
+Candidate and senior sign-in has no MFA step at all. What was left was the
+admin-only MFA step, and a Playwright trace of `admin-accounts.spec.ts` settles it:
+
+```
+ 8049 ms  click   login-submit
+ 8171 ms  isVisible mfa-code-step  → false   (11 ms after the call)
+          POST /auth/login → 401 mfa_required   (arrives after the check)
+ 8201 ms  expect toHaveURL /admin/accounts      (no code typed, no second POST)
+```
+
+`isVisible()` does not wait. It ran before the `mfa_required` response had
+rendered the step, so the helper skipped the MFA branch entirely. `MfaCodeStep`
+never lost state; hypothesis 2 was not needed.
+
+**Fix.** The four sign-in sites now `await expect(mfaStep).toBeVisible()` and then
+enter the code unconditionally:
+- `admin-accounts.spec.ts` (`loginAsAdminThroughUi`)
+- `audit.spec.ts` ×2
+- `reports.spec.ts`
+
+The seeded Admin is MFA-enrolled by precondition, so the step always follows the
+credentials. The two other `isVisible().catch` uses, a pagination loop and an
+export-ready check, run against already-rendered content and are unchanged.
+
+**Verified.** Run alone, all five admin journeys now pass MFA and reach their
+screens. Three of them then fail further on, for reasons that are not Bug 4:
+- `reports`: Bug 3, with the exact signatures (`AmbiguousParameterError` on `$1`,
+  and the `:jd_id::uuid` syntax error) on `/admin/reports/activity` and
+  `/candidate-progress`.
+- `audit`: the entry's action is `Account.updated`, but the test expects
+  `/approve/i`.
+- `admin-accounts` suspend: the account's card is not in the filtered list.
 
 ---
 
@@ -855,7 +891,8 @@ There were no 5xx responses in the whole run. Each failure is attributed from it
    and it is the whole blocker for 9 tests, none of which depend on Bug 4.~~
    **Done** (2026-10-05). `FetchedValue` + deferred `TSVECTOR` mapping, direct
    `@@` match in `list_open_jds`, plus unit and integration guards. Verified e2e.
-4. Bug 4 — now 5 failures, all on the admin MFA step (most of the original ~20 were
+4. ~~Bug 4~~ **Done** (2026-10-05): the helper's `isVisible()` race; see its
+   section. Previously: 5 failures, all on the admin MFA step (most of the original ~20 were
    Bugs 8 and 9, both done). Start with the one-line journey-helper fix, then look
    at `MfaCodeStep`. The state-reset or remount hypothesis in Bug 4's section is
    still unconfirmed.
