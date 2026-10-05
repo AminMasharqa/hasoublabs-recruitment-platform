@@ -1048,6 +1048,53 @@ There were two races in the specs:
 
 **Verification:** 5/5, then 10/10 with `--repeat-each=2`.
 
+## Bug 12 — every `*.created` audit entry has `entity_id = 'unknown'` — **FIXED 2026-10-05**
+
+Found while attributing the `audit` journey failure, and checked directly on the
+dev database.
+
+**Scale:** all 2,633 `.created` entries, across 13 entity types, recorded
+`entity_id = 'unknown'`. So:
+- a creation could not be found by entity identifier (R8 AC4);
+- an entity's history could not be replayed from its first entry (R8 AC6).
+
+**Cause (`platform/audit/hook.py`).** The hook runs in `before_flush`, and two
+things failed there:
+- **The id was read from `InstanceState.identity`.** The flush establishes the
+  identity, so it is `None` for every pending object. That is true even when the
+  id was assigned explicitly.
+- **The generated id didn't exist yet.** `UuidPkMixin`'s Python-side
+  `default=uuid.uuid4` is applied only during the flush, after the hook has run.
+
+**Fix:**
+- `_entity_id` reads the primary-key attributes.
+- A new `_assign_pending_primary_key` applies a pending row's Python-side PK
+  default before the `.created` entry is built. The INSERT then uses that same
+  value.
+
+**Guard:** `tests/integration/test_audit_created_entity_id.py` covers a
+generated id and an explicit id. Both cases **fail before the fix** with
+`'unknown'`.
+
+**Verified:**
+- Backend unit and integration suites pass.
+- Live: new `Account.created`, `EmailVerification.created`, and similar entries
+  now carry real ids.
+
+**Not backfilled.** The 2,633 existing entries keep `'unknown'`. The log is
+append-only and hash-chained, so they can't be rewritten without breaking it.
+Like Bug 5, this needs a team decision on pre-fix history.
+
+### The `audit` journey failure itself was a test defect
+
+The spec expected the approval entry's action to match `/approve/i`. The
+backend names modifications `<Entity>.updated`, and R8 AC2 asks for the action
+plus the before/after values, not a verb. The entry was correct: `Account.updated`
+with `status: PendingApproval → Approved`.
+
+The spec now asserts `Account.updated`, opens the comparison, and checks that
+the `status` row shows `PendingApproval` and `Approved`. It passes 2/2.
+
 ---
 
 ## Failure attribution
@@ -1117,7 +1164,7 @@ review group as possibly flaky until it is investigated.
 | 5 | Bug 11 (since fixed: the specs raced their own navigation) | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
 | 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3: `422 application_not_ready`, `missing_fields: ["cv"]` |
 | 2 | Environment: MinIO | `cv` ×2 |
-| 1 | Unattributed: audit action naming | `audit`: action is `Account.updated`; the test expects `/approve/i`. |
+| 1 | Test defect (since fixed; see Bug 12's section) | `audit`: action is `Account.updated`; the test expected `/approve/i`. |
 | 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
 | 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
 | 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |

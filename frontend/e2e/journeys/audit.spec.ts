@@ -51,21 +51,20 @@ test.describe('audit browse', () => {
     await expect(page.getByTestId('audit-screen')).toBeVisible()
     await expect(page.getByTestId('audit-list')).toBeVisible({ timeout: 15_000 })
 
-    // Req 17 AC1: filtered to this account's own entity_id, so every row on
-    // screen already pertains to the seeded action — the first one is enough.
+    // Req 17 AC1: filtered to this account's own entity_id, newest first, so the
+    // first row is the approval. The Audit_Log names a modification
+    // `<Entity>.updated` and records what changed (R8 AC2: the before and after
+    // values, not a verb), so the approval is identified by its status change.
     const matched = page.locator('[data-testid^="audit-entry-"]').first()
     await expect(matched).toBeVisible()
-    await expect(matched).toContainText(/approve/i)
+    await expect(matched).toContainText('Account.updated')
 
-    // Req 17 AC5: opening the comparison shows the before/after fields (or the
-    // explicit "no snapshots"/"no changes" surface — either is a valid answer
-    // for AC5, since this journey does not control which snapshots were kept).
+    // Req 17 AC5: opening the comparison shows the before/after fields.
     await matched.getByRole('button', { name: /compare/i }).click()
-    const comparison = page
-      .getByTestId('audit-comparison-table')
-      .or(page.getByTestId('audit-comparison-unchanged'))
-      .or(page.getByTestId('audit-comparison-empty'))
-    await expect(comparison).toBeVisible()
+    await expect(page.getByTestId('audit-comparison-table')).toBeVisible()
+    const status = page.getByTestId('audit-comparison-row-status')
+    await expect(status).toContainText('PendingApproval')
+    await expect(status).toContainText('Approved')
   })
 
   test('the chain-verify control reports ok, first_bad_id, checked_from_id and max_id', async ({
