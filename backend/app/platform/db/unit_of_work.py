@@ -125,7 +125,9 @@ class UnitOfWork:
             )
 
             engine = get_engine()
-            engine_url = str(engine.url)
+            # str(URL) masks the password as "***"; the separate connection
+            # needs the real one or it fails authentication (silently, below).
+            engine_url = engine.url.render_as_string(hide_password=False)
 
             await append_failure_entry(
                 engine_url=engine_url,

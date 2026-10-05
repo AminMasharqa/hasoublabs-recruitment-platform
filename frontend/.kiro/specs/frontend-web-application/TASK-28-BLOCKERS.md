@@ -710,7 +710,7 @@ as a side effect of Bug 1.
 
 ---
 
-## Bug 6 — failure audit entries are never written: the rollback path passes a masked password
+## Bug 6 — failure audit entries are never written: the rollback path passes a masked password — **FIXED 2026-10-05**
 
 **Also surfaced by the worker running.** R8 AC5 requires exactly one failure entry
 per failed operation; none are being recorded.
@@ -733,6 +733,23 @@ Fix is one line: `engine.url.render_as_string(hide_password=False)`.
 Note the entry this was trying to write was itself a consequence of Bug 2, so the
 two appeared together in the worker log. With Bug 2 fixed nothing is failing, so
 this is currently silent again rather than resolved.
+
+### What was changed — **FIXED 2026-10-05**
+
+- **Fix:** `UnitOfWork._write_failure_entry` now passes
+  `engine.url.render_as_string(hide_password=False)`.
+- **Guard:** `tests/unit/test_uow_failure_entry_url.py` rolls back a real
+  `UnitOfWork` and captures the failure-entry write. It asserts exactly one entry,
+  with the unmasked password. It **fails before the fix** (`'***'` in the URL)
+  and passes after.
+- **Live on the dev database:** rolling back a `UnitOfWork` took the
+  `operation.failed` count from 0 to 1. That probe entry stays in the
+  append-only log.
+- **Suites:** backend unit and integration pass. The API and worker were
+  restarted on the fix.
+- **Not covered:** `tests/integration/test_audit` is still excluded because of
+  its fixture ScopeMismatch, so the failure entry's chain linkage is not exercised
+  there yet.
 
 ---
 
@@ -1112,8 +1129,8 @@ The other suites:
    the `:jd_id::uuid` syntax error while in there.~~ **Done** (2026-10-05), along
    with the candidate-progress `has_next` bug it was hiding. The `reports` e2e
    journey passes.
-6. Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5
-   failure auditing.
+6. ~~Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5
+   failure auditing.~~ **Done** (2026-10-05), with a unit guard and a live check.
 7. Bug 5 — needs the history decision recorded in its section before the code
    change is worth making.
 
