@@ -1019,6 +1019,35 @@ Wiring the platform handlers changes the error body for the whole API, including
 the `RequestValidationError` shape: `fields` replaces FastAPI's raw `details`
 list. So it is left for a team decision rather than folded into a test fix.
 
+## Bug 11 — the review journeys raced their own navigation — **FIXED 2026-10-05 (tests)**
+
+This bug is behind the 5 "review timeline" failures (`reviews` ×2, `tri-locale`
+review ×3). The app was correct: `POST /candidates/{id}/reviews` returned 201
+every time. The failure page snapshot showed "My reviews" with an **empty**
+Candidate field and its "Name a candidate account" prompt, and no timeline
+`GET` was ever issued.
+
+There were two races in the specs:
+
+1. **Filling the wrong input.**
+   - `/senior/reviews/new` and `/senior/reviews` both render a `CandidateSelector`
+     with the same `review-candidate-input` test id.
+   - The spec filled it straight after `navigateInApp`, so the fill could land
+     on the *outgoing* screen.
+   - The new screen then mounted with an empty draft, and "Show reviews"
+     submitted `''`.
+2. **Navigating before the submit finished.** The spec left for the timeline the
+   moment the submit button was clicked, so the timeline read could precede the
+   `POST`.
+
+**Fix:**
+- The specs now wait for `senior-reviews-screen` / `senior-review-new-screen`
+  before filling.
+- They submit through `e2e/support/reviews.ts::submitReview`, which waits for the
+  `POST` and asserts 201.
+
+**Verification:** 5/5, then 10/10 with `--repeat-each=2`.
+
 ---
 
 ## Failure attribution
@@ -1085,7 +1114,7 @@ review group as possibly flaky until it is investigated.
 
 | Count | Blocker | Evidence |
 | --- | --- | --- |
-| 5 | Unattributed: review timeline | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
+| 5 | Bug 11 (since fixed: the specs raced their own navigation) | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
 | 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3: `422 application_not_ready`, `missing_fields: ["cv"]` |
 | 2 | Environment: MinIO | `cv` ×2 |
 | 1 | Unattributed: audit action naming | `audit`: action is `Account.updated`; the test expects `/approve/i`. |

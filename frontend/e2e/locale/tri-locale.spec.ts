@@ -38,6 +38,7 @@ import {
   registerVerifiedApprovedAccount,
 } from '../support/backend'
 import { navigateInApp } from '../support/navigation'
+import { submitReview } from '../support/reviews'
 
 type SupportedLocale = 'ar' | 'he' | 'en'
 
@@ -328,6 +329,7 @@ test.describe('tri-locale coverage', () => {
       await page.getByTestId('login-submit').click()
 
       await navigateInApp(page, '/senior/reviews/new')
+      await expect(page.getByTestId('senior-review-new-screen')).toBeVisible()
       await page.getByTestId('review-candidate-input').fill(candidate.id)
       await page.getByTestId('review-candidate-submit').click()
 
@@ -343,9 +345,10 @@ test.describe('tri-locale coverage', () => {
       await page.getByTestId('review-new-rating_culture_fit').fill('4')
       await page.getByTestId('review-new-rating_overall').fill('4')
       await page.getByTestId('review-new-assessment').fill(assessment)
-      await page.getByTestId('review-new-submit').click()
+      await submitReview(page)
 
       await navigateInApp(page, '/senior/reviews')
+      await expect(page.getByTestId('senior-reviews-screen')).toBeVisible()
       await page.getByTestId('review-candidate-input').fill(candidate.id)
       await page.getByTestId('review-candidate-submit').click()
 
