@@ -19,10 +19,19 @@ import {
 } from '../support/backend'
 import { navigateInApp } from '../support/navigation'
 
-/** Fills the four fields the Backend_Api's Complete rule requires beyond the core ones. */
-async function completeMinimalProfile(page: import('@playwright/test').Page): Promise<void> {
+/**
+ * Fills every field the Backend_Api's Complete rule (R4 AC6) requires: name,
+ * email, E.164 phone, city, one education entry and one skill. The skill must be
+ * in the Skill_Taxonomy (`0011_seed_skill_taxonomy`); an unmatched term is
+ * flagged for review and does not count toward completeness.
+ */
+async function completeMinimalProfile(
+  page: import('@playwright/test').Page,
+  email: string,
+): Promise<void> {
   await navigateInApp(page, '/candidate/profile')
   await page.locator('#full_name').fill('E2E Apply Candidate')
+  await page.locator('#email').fill(email)
   await page.locator('#phone').fill('+972502345671')
   await page.locator('#city').fill('Haifa')
   await page.getByTestId('profile-add-education').click()
@@ -32,7 +41,7 @@ async function completeMinimalProfile(page: import('@playwright/test').Page): Pr
   await page.getByRole('listbox').getByRole('option').first().click()
   await page.locator('#education-0-start_year').fill('2019')
   await page.getByTestId('profile-add-skills').click()
-  await page.getByTestId('skill-term-skills.0.term').fill('Communication')
+  await page.getByTestId('skill-term-skills.0.term').fill('SQL')
   await page.getByTestId('profile-save').click()
   await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
 }
@@ -66,7 +75,7 @@ test.describe('job browse -> apply -> track', () => {
     // CV_Variant — both seeded here so this journey's own assertions are about
     // browsing and applying, not about profile/CV completion (see
     // `journeys/profile.spec.ts` and `journeys/cv.spec.ts` for those).
-    await completeMinimalProfile(page)
+    await completeMinimalProfile(page, candidate.email)
     await createCvVariant(page)
 
     // Req 12 AC1-AC2: the published role is findable through the browse filters —

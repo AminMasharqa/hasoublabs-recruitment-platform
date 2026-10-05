@@ -262,6 +262,7 @@ test.describe('tri-locale coverage', () => {
       // direction and layout, not re-proving profile/CV completion.
       await navigateInApp(page, '/candidate/profile')
       await page.locator('#full_name').fill('Locale Apply Candidate')
+      await page.locator('#email').fill(candidate.email)
       await page.locator('#phone').fill('+972502345680')
       await page.locator('#city').fill('Jerusalem')
       await page.getByTestId('profile-add-education').click()
@@ -271,7 +272,7 @@ test.describe('tri-locale coverage', () => {
       await page.getByRole('listbox').getByRole('option').first().click()
       await page.locator('#education-0-start_year').fill('2018')
       await page.getByTestId('profile-add-skills').click()
-      await page.getByTestId('skill-term-skills.0.term').fill('Testing')
+      await page.getByTestId('skill-term-skills.0.term').fill('QA Automation')
       await page.getByTestId('profile-save').click()
       await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
 
@@ -286,6 +287,9 @@ test.describe('tri-locale coverage', () => {
       const card = page.locator('[data-testid^="job-card-"]', { hasText: job.title })
       await expect(card).toBeVisible({ timeout: 15_000 })
       await card.getByRole('link').first().click()
+      // Wait for the detail view: the browse cards carry their own `job-apply`
+      // buttons, so clicking it while the list is still rendered is ambiguous.
+      await expect(page.getByTestId('job-detail-title')).toContainText(job.title)
 
       await page.getByTestId('job-apply').click()
       await expect(page.getByTestId('apply-dialog')).toBeVisible()
