@@ -307,20 +307,34 @@ function violationSource(envelope: ErrorEnvelope, rawBody: unknown): readonly un
  * FastAPI `loc` array, else from the element's position. `code` comes from a
  * `code` member, else from a FastAPI `type` member, else from
  * {@link UNKNOWN_VIOLATION_CODE}. Returns an empty list for any response that
- * is not a 422 carrying a {@link VALIDATION_ERROR_KEYS} `error` key.
+ * is not a 422.
  *
- * @param rawBody Optional raw body, consulted only for a sibling `fields` list
- *   when `details` is not an array.
+ * A 422 with a {@link VALIDATION_ERROR_KEYS} `error` key reads its violations
+ * from `details` or a sibling `fields` list (AC9). A 422 with any other `error`
+ * key — a domain refusal such as `profile_validation_failed` — reads only the
+ * envelope's dedicated `fields` member: for those keys `details` carries other
+ * context (e.g. `missing_fields`), never violations. Without this, a domain
+ * error that names its invalid fields would place nothing on its inputs
+ * (Requirement 22 AC9).
+ *
+ * @param rawBody Optional raw body, consulted for a sibling `fields` list.
  */
 export function toFieldViolations(
   status: number,
   envelope: ErrorEnvelope,
   rawBody?: unknown,
 ): readonly FieldViolation[] {
-  if (status !== 422 || !isValidationErrorKey(envelope.error)) {
+  if (status !== 422) {
     return []
   }
-  return violationSource(envelope, rawBody).map(toFieldViolation)
+  if (isValidationErrorKey(envelope.error)) {
+    return violationSource(envelope, rawBody).map(toFieldViolation)
+  }
+  const parsed = parseErrorBody(rawBody)
+  if (isRecord(parsed) && Array.isArray(parsed.fields)) {
+    return (parsed.fields as readonly unknown[]).map(toFieldViolation)
+  }
+  return []
 }
 
 /**

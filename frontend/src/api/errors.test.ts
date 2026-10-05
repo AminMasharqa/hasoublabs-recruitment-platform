@@ -167,6 +167,26 @@ describe('toFieldViolations', () => {
     expect(toFieldViolations(422, other)).toEqual([])
   })
 
+  it('reads the fields list of a domain 422, never its details (Req 22 AC9)', () => {
+    // A domain refusal that names its invalid fields, as the platform envelope
+    // renders it: violations in `fields`, unrelated context in `details`.
+    const body = {
+      error: 'profile_validation_failed',
+      message: 'Some profile fields are not valid.',
+      fields: [
+        { path: 'phone', code: 'invalid_e164_phone', message: 'Not a valid phone number' },
+        { path: 'education[0].end_year', code: 'end_before_start' },
+      ],
+      details: [{ path: 'not-a-violation', code: 'ignored' }],
+    }
+    expect(toFieldViolations(422, decodeErrorEnvelope(body), body)).toEqual([
+      { path: 'phone', code: 'invalid_e164_phone', message: 'Not a valid phone number' },
+      { path: 'education[0].end_year', code: 'end_before_start', message: null },
+    ])
+    // The same body at another status still yields nothing.
+    expect(toFieldViolations(409, decodeErrorEnvelope(body), body)).toEqual([])
+  })
+
   it('recognizes both validation error keys', () => {
     expect(isValidationErrorKey('validation_error')).toBe(true)
     expect(isValidationErrorKey('validation_failed')).toBe(true)

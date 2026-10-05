@@ -394,57 +394,20 @@ def create_app() -> FastAPI:
 
 
 def _register_exception_handlers(app: FastAPI) -> None:
-    """Register the one error-envelope exception handlers."""
-    from fastapi import status  # noqa: PLC0415
-    from fastapi.exceptions import RequestValidationError  # noqa: PLC0415
-    from app.platform.errors.base import PlatformError  # noqa: PLC0415
+    """Register the one error-envelope exception handlers.
 
-    # Security errors — order matters: most specific first.
+    Everything renders through ``platform/errors``' envelope: field violations in
+    ``fields`` (R4 AC11 and every other "field-level error" criterion), a
+    localized ``message``, and the request id. The two security errors keep their
+    own handlers; FastAPI resolves handlers along the exception's MRO, so these
+    more specific ones win over the generic ``PlatformError`` handler and the
+    fixed-latency denial path stays intact.
+    """
+    from app.platform.errors.handlers import register_error_handlers  # noqa: PLC0415
+
+    register_error_handlers(app)
     app.add_exception_handler(AuthorizationDenied, authorization_denied_handler)
     app.add_exception_handler(AuthenticationRequired, authentication_required_handler)
-
-    @app.exception_handler(PlatformError)
-    async def platform_error_handler(
-        request: Request, exc: PlatformError
-    ) -> ORJSONResponse:
-        return ORJSONResponse(
-            status_code=exc.status_code,
-            content={
-                "error": exc.error_key,
-                "message": exc.message_key,
-                "details": exc.details if exc.details else None,
-                "request_id": getattr(request.state, "request_id", None),
-            },
-            headers=dict(exc.headers) if exc.headers else None,
-        )
-
-    @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(
-        request: Request, exc: RequestValidationError
-    ) -> ORJSONResponse:
-        return ORJSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content={
-                "error": "validation_error",
-                "message": "Request validation failed",
-                "details": exc.errors(),
-                "request_id": getattr(request.state, "request_id", None),
-            },
-        )
-
-    @app.exception_handler(Exception)
-    async def unhandled_error_handler(
-        request: Request, exc: Exception
-    ) -> ORJSONResponse:
-        logging.getLogger(__name__).exception("Unhandled error", exc_info=exc)
-        return ORJSONResponse(
-            status_code=500,
-            content={
-                "error": "internal_server_error",
-                "message": "An unexpected error occurred",
-                "request_id": getattr(request.state, "request_id", None),
-            },
-        )
 
 
 def _register_routers(app: FastAPI) -> None:

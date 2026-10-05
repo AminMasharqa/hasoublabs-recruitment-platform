@@ -8,7 +8,14 @@ and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
 defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
 code paths that reach them; all three are recorded below.
 
-Update 2026-10-05 (latest): **Bug 7 fixed and verified end to end.** The e2e run
+Update 2026-10-05 (latest): **Bugs 3, 4 and most of Bug 10 fixed**, plus the
+error-envelope wiring (field-level 422s now reach the client). A starter
+Skill_Taxonomy is seeded (migration `0011`), and the apply endpoint no longer
+500s. E2E is now **64 passed / 15 failed**. The remaining apply journeys are blocked
+only by MinIO being unavailable (an apply needs a CV). See "Re-run after the
+envelope fix" for the current attribution.
+
+Update 2026-10-05 (earlier): **Bug 7 fixed and verified end to end.** The e2e run
 also exposed two defects that were hiding behind "Bug 4": **Bug 8**, where the
 journeys reload the page after signing in, and **Bug 9**, where the Route_Guard
 hangs on its status read under StrictMode. Both are fixed. E2E went from 48
@@ -908,8 +915,21 @@ exposed the next.
    - Guard: `tests/integration/test_candidate_profile_update.py`, which **fails
      before the fix and passes after**.
    - Live: the save response now carries the saved education.
-4. **Open, needs a decision: skills not in the Skill_Taxonomy are dropped from
-   the profile.** The dev database's `skills` table is **empty**, and nothing in
+4. **Mitigated with option (a), 2026-10-05: skills not in the Skill_Taxonomy are dropped from
+   the profile.**
+   - **Done:** `alembic/versions/0011_seed_skill_taxonomy.py` seeds 55 common skills
+     (en/ar/he names) and 16 aliases, using `ON CONFLICT DO NOTHING`.
+   - **Downgrade:** removes only seeded skills that nothing references.
+   - **C, C++ and C# are deliberately not seeded.** `normalize_skill_term` strips
+     `+` and `#`, so all three normalise to `"c"` and would collide. That
+     normaliser defect is still open.
+   - **Guard:** `tests/unit/test_skill_taxonomy_seed.py`.
+   - **The journeys now enter seeded skills** (`SQL`, `QA Automation`), and the
+     `profile` journey passes.
+   - **Option (b) is still open** for a team decision: an unknown skill still
+     vanishes from the profile.
+
+   The original analysis: The dev database's `skills` table is **empty**, and nothing in
    the repo seeds it. Every entered skill is therefore unmatched. `SkillResolver`
    records it in `unmatched_skill_terms` for Admin review (R4 AC3), but
    `CandidateProfileService.update` keeps only terms that resolve to a
@@ -922,8 +942,46 @@ exposed the next.
    - **(b) Keep pending skills on the profile:** a nullable `skill_id` plus a link
      to the unmatched term, and decide whether a pending skill counts toward AC6.
      This is a schema change and a spec-interpretation call for R4 AC3/AC6.
+5. **Fixed (backend): every apply returned 500.** `ApplicationService` was
+   written against a provisional dict contract (`jd_data.get("status")`,
+   `.get("external_careers_url")`). `JobsApi.get_jd` returns a Pydantic
+   `JobDescriptionDTO`, so every apply raised `AttributeError`.
+   - **Fix:** the service now uses the DTO's attributes (`status`,
+     `application_channel`, `external_url`, `title`, `company`,
+     `creator_account_id`). The module is mypy-clean.
+   - **Guard:** `tests/unit/test_application_jd_contract.py`.
+   - **Result:** the apply journeys now reach `POST /apply` and get a correct
+     `422 application_not_ready` with `missing_fields: ["cv"]`.
+   - **Still blocked by MinIO:** a CV version needs MinIO, which can't run in
+     this environment. With a CV, these journeys are expected to pass.
 
-### Related, also needs a decision: field-level errors never reach the client
+### Related: field-level errors never reach the client — **FIXED 2026-10-05**
+
+**Resolution.** Both halves were fixed, as decided (backend and frontend together):
+
+- **Backend.** `app/main.py::_register_exception_handlers` now calls
+  `register_error_handlers(app)`, then re-registers the more specific
+  `AuthorizationDenied` / `AuthenticationRequired` handlers, keeping the
+  fixed-latency denial. Every error now renders as
+  `{error, message (localized), fields?, details?, request_id, retryable}`.
+  - **Guard:** `tests/unit/test_error_envelope_wiring.py`, which fails 4/4
+    before the fix and passes 4/4 after. It covers:
+    - handler identity;
+    - a domain 422's `fields` and `request_id`;
+    - the request-body 422 (`validation_failed` with `fields`);
+    - a 404 envelope.
+- **Frontend.** `api/errors.ts::toFieldViolations` also reads the `fields` list
+  of *any* 422 (Req 22 AC9). It never reads a domain error's `details`, which
+  carries unrelated context.
+  - **Guard:** a new case in `api/errors.test.ts`.
+- **Verified live:** `POST /auth/login {}` → 422 `validation_failed` with
+  `fields` for `email`, `password` and `role`, and a localized message.
+  - **Profile e2e:** the "422 placed on the offending input" case passes.
+- **Follow-up:** the backend `.po` catalogs lack entries for many domain error
+  keys. `translate` falls back to the key itself, so those messages are still
+  raw keys.
+
+The original analysis:
 
 Found while diagnosing layer 2: the 422 said `profile_validation_failed` with
 `details: null`, so nothing could name the invalid field. Two causes:
@@ -1006,6 +1064,33 @@ Bug 4 accounts for none of these: every admin journey now passes the MFA step.
 `reviews.spec.ts:63` passed in the previous run and failed in this one. Treat the
 review group as possibly flaky until it is investigated.
 
+### Re-run 2026-10-05 after Bug 10, the taxonomy seed, the apply fix and the envelope fix — 64 passed, 15 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Unattributed: review timeline | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
+| 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3: `422 application_not_ready`, `missing_fields: ["cv"]` |
+| 2 | Environment: MinIO | `cv` ×2 |
+| 1 | Unattributed: audit action naming | `audit`: action is `Account.updated`; the test expects `/approve/i`. |
+| 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
+| 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
+| 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
+
+`profile` and `reports` now pass.
+
+The other suites:
+- **Backend:** unit and integration pass. `test_audit` is excluded because of its
+  fixture ScopeMismatch.
+- **`verify:api` fails on Windows with `core.autocrlf=true`, but the contract
+  has not drifted.**
+  - The checkout writes `schema.d.ts` with CRLF line endings while `gen:api`
+    emits LF, so the byte comparison fails at line 1.
+  - The regenerated file is identical once CRLF is ignored.
+  - **Fix:** a `.gitattributes` rule (`*.d.ts text eol=lf`), or normalise line
+    endings in `scripts/verify-api.ts`. Not done yet.
+- **Frontend vitest:** 1148/1152 in the full run. The 4 failures are the known
+  `JobNewScreen.test.tsx` timeouts under load; that file passes 5/5 on its own.
+
 ## Suggested order of attack
 
 1. ~~Bug 1 — add `app/modules/audit/tasks.py`, plus handlers for the orphaned
@@ -1037,7 +1122,13 @@ npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
 
 ## Environment left behind
 
-- The dev database is at **`0010_enum_column_alignment` (head)**. All 19 columns
+- 2026-10-05: the dev database is at **`0011_seed_skill_taxonomy` (head)**.
+  - **MinIO is not running.** Its public image is no longer pullable, so a
+    replacement needs a team decision.
+  - **OpenBao runs in dev mode and keeps nothing.** After a container restart,
+    re-create the transit key and re-enrol the e2e admin's MFA. There is no
+    bootstrap script yet.
+- Earlier: the dev database was at **`0010_enum_column_alignment` (head)**. All 19 columns
   are their enum type and `uq_applications_candidate_jd_non_terminal` carries the
   enum predicate. Reversible with `alembic downgrade -1`.
 - Uvicorn is running on `127.0.0.1:8000`, restarted after the migration.

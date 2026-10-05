@@ -105,7 +105,7 @@ All paths in this section are relative to `backend/`.
 
 ### Errors
 
-Domain errors subclass `PlatformError` (`platform/errors/base.py`) and carry a stable `error_key`, an HTTP status and an i18n `message_key`. They all render through one envelope: `{error, message, details, request_id}`. The `X-Request-ID` response header is the support reference. Class names match the design's error table with no `Error` suffix (N818 is waived in `errors.py` files).
+Domain errors subclass `PlatformError` (`platform/errors/base.py`) and carry a stable `error_key`, an HTTP status and an i18n `message_key`. They all render through one envelope, `platform/errors/handlers.py::register_error_handlers` (wired in `app/main.py`): `{error, message (localized), fields?, details?, request_id, retryable}`. Field-level violations go in `fields` (`FieldViolation(path, code)`), never in `details`. The security handlers for `AuthorizationDenied` and `AuthenticationRequired` are registered after the envelope and override it. A domain error key with no `.po` entry is rendered as the raw key. The `X-Request-ID` response header is the support reference. Class names match the design's error table with no `Error` suffix (N818 is waived in `errors.py` files).
 
 ## Frontend architecture
 
