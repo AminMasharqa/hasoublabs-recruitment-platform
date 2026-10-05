@@ -68,11 +68,11 @@ async def list_open_jds(
 
     # ── Filters ───────────────────────────────────────────────────────────────
     if search:
-        # Full-text search against the tsvector column populated by trigger.
+        # Full-text search against the tsvector column populated by trigger. The
+        # column is already a tsvector built with the 'simple' config, so it is
+        # matched directly; the query must use the same config.
         stmt = stmt.where(
-            func.to_tsvector("simple", JobDescription.search_tsv).op("@@")(
-                func.plainto_tsquery("simple", search)
-            )
+            JobDescription.search_tsv.op("@@")(func.plainto_tsquery("simple", search))
         )
     if skills:
         # JD must include ALL requested skills.

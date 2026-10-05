@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.platform.db.base import Base, TimestampMixin, UuidPkMixin, UtcTimestampMs, utc_now
@@ -80,13 +80,18 @@ class JobDescription(UuidPkMixin, TimestampMixin, Base):
     closed_at: Mapped[datetime | None] = mapped_column(UtcTimestampMs, nullable=True)
 
     # ── Full-text search vector ────────────────────────────────────────────────
-    # Not mapped with Mapped[] so SQLAlchemy never tries to write it directly.
-    # The migration creates this as a generated column (or trigger-populated
-    # tsvector) from title || ' ' || company || ' ' || coalesce(description,'').
-    search_tsv = sa.Column(
-        "search_tsv",
-        sa.Text,
+    # Owned by the ``trg_jd_search_tsv`` trigger (migration 0006), which builds it
+    # from title, company and description on every INSERT/UPDATE. The ORM must
+    # never write it: a nullable column with no default is otherwise sent as an
+    # explicit NULL on INSERT. ``FetchedValue`` marks the value as database-
+    # generated, which keeps it out of the INSERT; ``deferred`` keeps the vector
+    # out of every SELECT, since only the search predicate reads it.
+    search_tsv: Mapped[Any] = mapped_column(
+        TSVECTOR,
         nullable=True,
+        server_default=sa.FetchedValue(),
+        server_onupdate=sa.FetchedValue(),
+        deferred=True,
         comment="tsvector populated by migration trigger; do not set in ORM",
     )
 
