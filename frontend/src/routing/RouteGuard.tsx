@@ -58,7 +58,11 @@ import { AuthorizationDeniedNotice, ErrorState, LoadingState } from '../errors/E
 import { useSession } from '../session/sessionState'
 
 import { decideRouteAccess, type RouteAccess } from './access'
-import { useAccountNotApprovedSync, useAccountStatusSync } from './accountStatus'
+import {
+  useAccountNotApprovedSync,
+  useAccountStatusSync,
+  useReportedAccountNotApproved,
+} from './accountStatus'
 import { landingPathFor, loginRedirectState, LOGIN_PATH, STATUS_NOTICE_PATH } from './paths'
 
 export interface RouteGuardProps {
@@ -102,8 +106,11 @@ export function RouteGuard({ access, api, children }: RouteGuardProps) {
   // skipped on a redirect render.
   const statusSync = useAccountStatusSync(api)
   useAccountNotApprovedSync()
+  // Consulted only while no session is held: a login refused as
+  // `account_not_approved` (AC6) issues no tokens.
+  const refused = useReportedAccountNotApproved()
 
-  const outcome = decideRouteAccess(subject, access)
+  const outcome = decideRouteAccess(subject, access, refused?.status ?? null)
 
   switch (outcome) {
     case 'redirect-to-login':

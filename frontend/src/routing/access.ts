@@ -254,14 +254,29 @@ export function decideOnboardingGate(
  * then the Account_Status gate (Req 7 AC2), then role/context/status admission
  * (Req 8 AC3), with refusal surfacing as the uniform denied screen (Req 8 AC4).
  *
+ * ## Without a session, after a login refused as `account_not_approved`
+ *
+ * The Backend_Api refuses `POST /auth/login` for an account that is not yet
+ * `Approved` with an `account_not_approved` envelope carrying the status — after
+ * the password has been verified — and issues no tokens. Requirement 7 AC6 applies
+ * to that request like any other, so the reported status gates navigation the way
+ * a retained one would (AC2): the Onboarding_Screens are admitted and everything
+ * else is redirected to the Status_Notice, still without a session.
+ *
  * @param subject the authenticated subject, or `null` when no Access_Token is held
+ * @param refusedStatus the status of a reported `account_not_approved` refusal,
+ *   consulted only while no session is held
  */
 export function decideRouteAccess(
   subject: AccessSubject | null | undefined,
   access: RouteAccess,
+  refusedStatus: AccountStatus | null = null,
 ): RouteAccessOutcome {
   if (subject == null) {
-    return 'redirect-to-login'
+    if (refusedStatus === null || isApproved(refusedStatus)) {
+      return 'redirect-to-login'
+    }
+    return isOnboardingScreen(access) ? 'admit' : 'redirect-to-status-notice'
   }
   if (subject.status == null) {
     return 'await-status'

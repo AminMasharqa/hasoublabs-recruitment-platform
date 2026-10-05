@@ -8,7 +8,24 @@ and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
 defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
 code paths that reach them; all three are recorded below.
 
-Update 2026-10-05 (latest): **Bugs 3, 4 and most of Bug 10 fixed**, plus the
+Update 2026-10-05 (latest): E2E is **73 passed / 6 failed**, and all 6
+remaining failures are blocked only by MinIO being unavailable.
+
+Since the previous update:
+- **Fixed:** Bug 6 (failure audit entries), Bug 11 (review journey races),
+  Bug 12 (`*.created` audit entries had no entity id) and Bug 13
+  (not-yet-approved sign-in never reached the Status_Notice).
+- **Test defects fixed:** three journey defects (`audit`, `admin-accounts`
+  suspend, the closed role). The closed role was also a conflict between the
+  specs.
+- **`verify:api`:** fixed for CRLF checkouts.
+
+Still open:
+- **Need decisions:** Bug 5, and pre-fix history for Bugs 5 and 12.
+- **Environment:** a MinIO replacement.
+- **Spec owners:** the Req 4 AC12 / Req 7 AC6 note in Bug 13's section.
+
+Update 2026-10-05 (earlier): **Bugs 3, 4 and most of Bug 10 fixed**, plus the
 error-envelope wiring (field-level 422s now reach the client). A starter
 Skill_Taxonomy is seeded (migration `0011`), and the apply endpoint no longer
 500s. E2E is now **64 passed / 15 failed**. The remaining apply journeys are blocked
@@ -1134,6 +1151,62 @@ The Admin UI sign-in moved to `e2e/support/adminLogin.ts`, shared with
 who loaded a role before it closed and still has the stale cache. Decide whether
 it should stay in Req 12.
 
+## Bug 13 — a not-yet-approved account never reaches the Status_Notice — **FIXED 2026-10-05 (frontend)**
+
+This is behind the `registration` gating failure. A `PendingApproval` account
+that signs in should land on `/status` (Req 7 AC1, AC2). Instead, the login
+screen showed the generic rejection.
+
+**Cause: the frontend and backend contracts never meet.**
+- **Backend:** login issues **no tokens** to an account that isn't `Approved`.
+  It answers 403 `account_not_approved` with `details.status` and
+  `details.next_step`. The design describes this envelope as carrying "the
+  current status and next step for the onboarding screens". It is raised only
+  after the password has been verified.
+- **Frontend:** the onboarding flow expected a session and a `GET /me/status`
+  read. It also folded every login 403 into the memberless rejection
+  (Req 4 AC12).
+
+**Decision (2026-10-05): the frontend reads the refusal.** Req 7 AC6 already says
+"IF **any** request returns … `account_not_approved`, THEN replace the retained
+status … and redirect to the Status_Notice". The login request is one of those
+requests. The changes:
+- **`loginOutcome.ts`:** `classifyLoginFailure` distinguishes a 403
+  `account_not_approved` that names a declared status as `not-approved`. Every
+  other 401/403, including an `account_not_approved` whose status isn't readable,
+  is still the memberless rejection.
+- **`LoginScreen.tsx`:** reports the refusal to the existing AC6 store and goes
+  to `/status`. Every attempt, and every mount of the screen, first clears any
+  earlier report. That way a refusal can't outlive its login or reach a session
+  a later login establishes.
+- **`access.ts::decideRouteAccess`:** takes an optional refused status,
+  consulted only while no session is held. Onboarding_Screens are admitted and
+  every other route redirects to the Status_Notice (AC2). Its behaviour with two
+  arguments is unchanged, so the existing property tests still hold.
+- **`RouteGuard.tsx`:** passes the refused status in via the new
+  `useReportedAccountNotApproved`.
+- **`StatusNoticeScreen.tsx`:** falls back to the reported status. Without a
+  session it offers "Back to sign in" (`onboarding:backToSignIn`, in all three
+  locales) instead of the sign-out text, because there is nothing to sign out of.
+
+**Guards:**
+- New cases in `loginOutcome.test.ts` and `access.test.ts`.
+- Three new `LoginScreen.test.tsx` cases:
+  - the session-less Status_Notice and the way back;
+  - the AC2 redirect from a feature route;
+  - no carry-over into a later successful login.
+- The two AC12 screen tests now compare a 401 with another 403.
+
+**Verified:**
+- The `registration` spec passes 3/3.
+- The full vitest, a11y (40/40), build, typecheck and lint gates pass.
+
+**For the spec owners.** Req 4 AC12, read literally ("a 401 or 403 … without
+disclosing whether the address belongs to an account"), conflicts with Req 7 AC6
+for the login request. Non-disclosure is preserved, because the backend sends
+`account_not_approved` only to a caller who supplied the correct password. Even
+so, AC12 should name AC6 (and Req 5 AC1's `mfa_required`) as its exceptions.
+
 ---
 
 ## Failure attribution
@@ -1206,9 +1279,27 @@ review group as possibly flaky until it is investigated.
 | 1 | Test defect (since fixed; see Bug 12's section) | `audit`: action is `Account.updated`; the test expected `/approve/i`. |
 | 1 | Test defect (since fixed) | `admin-accounts` suspend: the account's card is not in the filtered list. |
 | 1 | Spec conflict (since resolved in the test) | `jobs-applications` closed role: the card is not visible. |
-| 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
+| 1 | Bug 13 (since fixed) | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
 
 `profile` and `reports` now pass.
+
+### Re-run 2026-10-05 after Bugs 6, 11, 12 and 13 and the test fixes — 73 passed, 6 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3 |
+| 2 | Environment: MinIO | `cv` ×2 |
+
+**Every remaining e2e failure is MinIO**, whose public image is no longer
+available. There are no code defects among them.
+
+The other gates:
+- **a11y:** 40/40.
+- **Build:** passes.
+- **`verify:api`:** passes.
+- **Frontend vitest:** 1269/1271. The 2 failures are the known `JobNewScreen`
+  load timeouts.
+- **Backend:** unit and integration pass, with `test_audit` still excluded.
 
 The other suites:
 - **Backend:** unit and integration pass. `test_audit` is excluded because of its

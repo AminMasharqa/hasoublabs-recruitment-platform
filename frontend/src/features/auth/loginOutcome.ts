@@ -25,15 +25,26 @@
  * is a frozen singleton carrying **no members at all**: there is no field on it
  * through which the status code, the `error` key, the `details` or the
  * Support_Reference could reach a component, so the rejection surface cannot vary
- * with them even by accident. The one exception is the multi-factor step, which
- * Requirement 5 AC1 requires to be distinguishable — see
- * {@link MFA_REQUIRED_ERROR_KEY} below.
+ * with them even by accident. Two envelopes are exceptions, each because another
+ * requirement names it:
  *
- * Requirements: 4.1, 4.12.
+ * - the multi-factor step, which Requirement 5 AC1 requires to be distinguishable —
+ *   see {@link MFA_REQUIRED_ERROR_KEY} below;
+ * - `account_not_approved`, which Requirement 7 AC6 sends to the Status_Notice
+ *   whatever request it answers — see {@link LOGIN_NOT_APPROVED}.
+ *
+ * Neither weakens what AC12 protects. The Backend_Api sends both only *after* the
+ * password has been verified, so they tell the account's status to someone who
+ * holds its credentials — never whether an address has an account. A wrong
+ * password, or an address with no account, is still the uniform 401.
+ *
+ * Requirements: 4.1, 4.12, 7.6.
  */
 
 import type { Role } from '../../api/enums'
 import { isApiError } from '../../errors/errorMessages'
+import { ACCOUNT_NOT_APPROVED_ERROR, accountNotApprovedStatus } from '../../routing/accountStatus'
+import type { RetainedStatus } from '../../session/sessionState'
 
 // ── The endpoint (AC1) ────────────────────────────────────────────────────────
 
@@ -106,6 +117,12 @@ export type LoginOutcome =
   /** The account needs a multi-factor code (Req 5 AC1); task 14.2 continues here. */
   | { readonly kind: 'mfa-required' }
   /**
+   * The credentials were accepted but the account is not yet `Approved`: the
+   * refusal's status goes to the Status_Notice (Req 7 AC6). See
+   * {@link LOGIN_NOT_APPROVED}.
+   */
+  | { readonly kind: 'not-approved'; readonly retained: RetainedStatus }
+  /**
    * Anything else — a 422, a 429, a 5xx, a timeout, a transport failure — which
    * says nothing about the account and is rendered through the ordinary
    * Error_Presenter (Req 21 AC1, AC2).
@@ -121,16 +138,33 @@ export const LOGIN_MFA_REQUIRED: LoginOutcome = Object.freeze({
 })
 
 /**
- * Classifies a failed login attempt (AC12, Req 5 AC1).
+ * The `error` member of a login refused for an account that is not yet `Approved`
+ * (Req 7 AC6).
  *
- * Every 401 and every 403 collapses to the same {@link LOGIN_REJECTED} value
- * regardless of its `error` key, its `details` or its status, so the two are
- * indistinguishable downstream. The multi-factor case is checked first, because
- * its envelope is itself a 401.
+ * A 403 whose `details` carry the account's `status` and `next_step`. The
+ * Backend_Api answers it only once the password has been verified, and issues no
+ * tokens with it, so the refusal itself is what the Status_Notice renders.
+ */
+export const LOGIN_NOT_APPROVED = ACCOUNT_NOT_APPROVED_ERROR
+
+/**
+ * Classifies a failed login attempt (AC12, Req 5 AC1, Req 7 AC6).
+ *
+ * Every other 401 and 403 collapses to the same {@link LOGIN_REJECTED} value
+ * regardless of its `error` key, its `details` or its status, so they are
+ * indistinguishable downstream. The multi-factor case and the not-approved case
+ * are checked first; a not-approved envelope that names no declared
+ * Account_Status is not trusted and collapses to the rejection too.
  */
 export function classifyLoginFailure(failure: unknown): LoginOutcome {
   if (isApiError(failure) && failure.error === MFA_REQUIRED_ERROR_KEY) {
     return LOGIN_MFA_REQUIRED
+  }
+  if (isApiError(failure) && failure.httpStatus === 403 && failure.error === LOGIN_NOT_APPROVED) {
+    const retained = accountNotApprovedStatus(failure)
+    if (retained !== null) {
+      return Object.freeze({ kind: 'not-approved' as const, retained })
+    }
   }
   if (isApiError(failure) && NON_DISCLOSING_LOGIN_STATUSES.includes(failure.httpStatus)) {
     return LOGIN_REJECTED

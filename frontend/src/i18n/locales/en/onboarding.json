@@ -6,6 +6,7 @@
   "unknownStatus": "Checking your account status…",
   "verifyAction": "Enter the verification code",
   "closedNotice": "Signing out is the only action available on this account.",
+  "backToSignIn": "Back to sign in",
   "status": {
     "PendingVerification": "Awaiting email verification",
     "PendingApproval": "Awaiting administrator review",

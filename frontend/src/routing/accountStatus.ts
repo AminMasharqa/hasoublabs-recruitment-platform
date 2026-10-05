@@ -306,9 +306,11 @@ export function reportAccountNotApproved(failure: unknown): RetainedStatus | nul
 /**
  * Discards a reported replacement.
  *
- * For test isolation only: the store is browsing-context scoped, and a replacement
- * that has been applied to the session is harmless to leave behind because it is
- * only ever applied once.
+ * The login screen calls this before every attempt: a refusal reported for one
+ * login (which gates navigation while no session is held — see
+ * `decideRouteAccess`) must not outlive it, and in particular must not be applied
+ * to the session a later, successful login establishes. Tests use it for
+ * isolation.
  */
 export function clearAccountNotApproved(): void {
   if (latestEntry === null) {
@@ -321,6 +323,18 @@ export function clearAccountNotApproved(): void {
 /** The most recently reported replacement status, or `null` (AC6). */
 export function latestAccountNotApproved(): RetainedStatus | null {
   return latestEntry === null ? null : latestEntry.retained
+}
+
+/**
+ * The most recently reported replacement status, as React state (AC6).
+ *
+ * What the Route_Guard and the Status_Notice read while no session is held: a
+ * login refused as `account_not_approved` issues no tokens, so the refusal itself
+ * is the only source of the status.
+ */
+export function useReportedAccountNotApproved(): RetainedStatus | null {
+  const entry = useSyncExternalStore(subscribe, readLatestEntry, readLatestEntry)
+  return entry === null ? null : entry.retained
 }
 
 /**

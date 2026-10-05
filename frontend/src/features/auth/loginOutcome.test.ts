@@ -3,7 +3,10 @@
  *
  * AC12 is asserted the way it is written — as a statement about *every* 401 and
  * *every* 403, whatever envelope they carry — rather than about the two keys the
- * Backend_Api happens to send today. The rejection value is also asserted to carry
+ * Backend_Api happens to send today. The exceptions are the two envelopes another
+ * requirement names, both sent only for verified credentials: `mfa_required`
+ * (Req 5 AC1) and an `account_not_approved` 403 naming a declared status
+ * (Req 7 AC6). The rejection value is also asserted to carry
  * nothing but its discriminant, because that emptiness is what makes the
  * non-disclosure structural rather than conventional.
  */
@@ -16,6 +19,7 @@ import {
   classifyLoginFailure,
   LOGIN_CONTRACT_PATH,
   LOGIN_MFA_REQUIRED,
+  LOGIN_NOT_APPROVED,
   LOGIN_REJECTED,
   loginRequestBody,
   MFA_REQUIRED_ERROR_KEY,
@@ -56,11 +60,9 @@ describe('the endpoint and the request body (AC1)', () => {
 describe('classifying a refused login (AC12)', () => {
   it('reports one indistinguishable rejection for a 401 and for a 403', () => {
     const wrongCredentials = classifyLoginFailure(envelope(401, 'authentication_required'))
-    const notApproved = classifyLoginFailure(
-      envelope(403, 'account_not_approved', { status: 'PendingApproval', next_step: 'wait' }),
-    )
+    const refused = classifyLoginFailure(envelope(403, 'not_authorized', { account_id: 'a-1' }))
 
-    expect(wrongCredentials).toEqual(notApproved)
+    expect(wrongCredentials).toBe(refused)
     expect(wrongCredentials.kind).toBe('rejected')
   })
 
@@ -84,6 +86,27 @@ describe('classifying a refused login (AC12)', () => {
   it('carries nothing but its discriminant, so nothing can ride along to the surface', () => {
     expect(Object.keys(LOGIN_REJECTED)).toEqual(['kind'])
     expect(Object.isFrozen(LOGIN_REJECTED)).toBe(true)
+  })
+})
+
+describe('classifying a login refused for an account not yet Approved (Req 7 AC6)', () => {
+  it('carries the refusal status and next step to the Status_Notice', () => {
+    expect(
+      classifyLoginFailure(
+        envelope(403, LOGIN_NOT_APPROVED, { status: 'PendingApproval', next_step: 'wait' }),
+      ),
+    ).toEqual({ kind: 'not-approved', retained: { status: 'PendingApproval', nextStep: 'wait' } })
+  })
+
+  it('collapses an envelope naming no declared status to the uniform rejection', () => {
+    for (const details of [null, { account_id: 'a-1' }, { status: 'NotAStatus' }]) {
+      expect(classifyLoginFailure(envelope(403, LOGIN_NOT_APPROVED, details))).toBe(LOGIN_REJECTED)
+    }
+  })
+
+  it('distinguishes the key only on the 403 the Backend_Api sends it with', () => {
+    const on401 = envelope(401, LOGIN_NOT_APPROVED, { status: 'PendingApproval', next_step: null })
+    expect(classifyLoginFailure(on401)).toBe(LOGIN_REJECTED)
   })
 })
 

@@ -119,6 +119,20 @@ describe('decideRouteAccess', () => {
     expect(decideRouteAccess(undefined, ONBOARDING_SCREEN_ACCESS)).toBe('redirect-to-login')
   })
 
+  it('gates a session-less refusal as a retained status would be (Req 7 AC2, AC6)', () => {
+    // A login refused as `account_not_approved` issues no tokens; its status gates.
+    expect(decideRouteAccess(null, ONBOARDING_SCREEN_ACCESS, 'PendingApproval')).toBe('admit')
+    expect(decideRouteAccess(null, candidateProfile, 'PendingApproval')).toBe(
+      'redirect-to-status-notice',
+    )
+    // `Approved` is never a refusal, so it grants nothing without a session.
+    expect(decideRouteAccess(null, ONBOARDING_SCREEN_ACCESS, APPROVED_STATUS)).toBe(
+      'redirect-to-login',
+    )
+    // A session decides from its own retained status, never from a refusal.
+    expect(decideRouteAccess(subject(), candidateProfile, 'PendingApproval')).toBe('admit')
+  })
+
   it('waits for the retained status before deciding', () => {
     expect(decideRouteAccess(subject({ status: null }), candidateProfile)).toBe('await-status')
   })

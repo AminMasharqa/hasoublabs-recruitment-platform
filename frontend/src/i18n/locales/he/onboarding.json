@@ -6,6 +6,7 @@
   "unknownStatus": "בודקים את מצב החשבון שלך…",
   "verifyAction": "הזן את קוד האימות",
   "closedNotice": "יציאה מהחשבון היא הפעולה היחידה שזמינה בחשבון הזה.",
+  "backToSignIn": "חזרה למסך הכניסה",
   "status": {
     "PendingVerification": "ממתין לאימות הדוא\"ל",
     "PendingApproval": "ממתין לבדיקת מנהל",

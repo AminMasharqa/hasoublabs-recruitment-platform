@@ -48,7 +48,8 @@ import { Link } from 'react-router-dom'
 
 import { LoadingState } from '../../errors/ErrorPresenter'
 import { BidiText } from '../../i18n/DirectionProvider'
-import { VERIFICATION_PATH } from '../../routing/paths'
+import { useReportedAccountNotApproved } from '../../routing/accountStatus'
+import { LOGIN_PATH, VERIFICATION_PATH } from '../../routing/paths'
 import { useRetainedStatus } from '../../session/sessionState'
 
 import { statusNoticeSurface } from './statusNotice'
@@ -59,7 +60,12 @@ const NAMESPACES = ['onboarding', 'shell'] as const
 /** The `/status` screen. */
 export function StatusNoticeScreen() {
   const { t, i18n } = useTranslation(NAMESPACES)
-  const retained = useRetainedStatus()
+  const sessionStatus = useRetainedStatus()
+  // Without a session: a login refused as `account_not_approved` (Req 7 AC6)
+  // issues no tokens, so the refusal's own status is the one to render.
+  const reported = useReportedAccountNotApproved()
+  const sessionless = sessionStatus === null && reported !== null
+  const retained = sessionStatus ?? reported
 
   if (retained === null) {
     // Unreachable through the router: the guard renders its own loading state
@@ -143,10 +149,20 @@ export function StatusNoticeScreen() {
          * AC5: text, not an action — it names the one control that is available
          * (the shell's sign-out) so the screen does not read as a dead end.
          */}
-        {surface.terminal ? (
+        {surface.terminal && !sessionless ? (
           <Alert variant="light" color="gray" data-testid="status-notice-closed">
             {t('onboarding:closedNotice')}
           </Alert>
+        ) : null}
+
+        {/*
+         * AC5 without a session: there is nothing to sign out of, so the way back
+         * is the login screen rather than the shell's sign-out control.
+         */}
+        {sessionless ? (
+          <Anchor component={Link} to={LOGIN_PATH} fw={500} data-testid="status-notice-sign-in">
+            {t('onboarding:backToSignIn')}
+          </Anchor>
         ) : null}
       </Stack>
     </Container>

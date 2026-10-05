@@ -6,6 +6,7 @@
   "unknownStatus": "جارٍ التحقق من حالة حسابك…",
   "verifyAction": "أدخل رمز التحقق",
   "closedNotice": "تسجيل الخروج هو الإجراء الوحيد المتاح على هذا الحساب.",
+  "backToSignIn": "العودة إلى تسجيل الدخول",
   "status": {
     "PendingVerification": "بانتظار تأكيد البريد الإلكتروني",
     "PendingApproval": "بانتظار مراجعة المشرف",

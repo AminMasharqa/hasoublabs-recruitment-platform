@@ -21,18 +21,28 @@
  * the landing table, and no token is ever held by a component.
  *
  * The retained Account_Status of Requirement 7 AC1 is read by the Route_Guard on
- * the destination, not here: an account that is not yet `Approved` is redirected
- * from there to the Status_Notice, which is why this screen navigates to the
- * landing destination unconditionally.
+ * the destination, not here: a session whose account is not yet `Approved` is
+ * redirected from there to the Status_Notice, which is why this screen navigates
+ * to the landing destination unconditionally after a 200.
+ *
+ * The Backend_Api, though, issues no session at all to an account that is not
+ * yet `Approved`: it refuses the login with `account_not_approved`, carrying the
+ * status, once the password has been verified. Requirement 7 AC6 applies to that
+ * refusal like any other, so this screen reports it (the Route_Guard then gates on
+ * the reported status without a session) and goes to the Status_Notice. Every
+ * attempt first discards a previous report, so one refusal cannot outlive its own
+ * login or reach a session a later login establishes.
  *
  * ## Why the rejection surface takes no props
  *
  * Requirement 4 AC12 forbids the rendered outcome of a refused login from
  * disclosing whether the submitted address belongs to an account. The Backend_Api
- * *does* distinguish the cases — `authentication_required` on a 401 for wrong
- * credentials or no such account, `account_not_approved` on a 403 for an account
- * awaiting approval — so `classifyLoginFailure` collapses both to one memberless
- * value and {@link LoginRejectedNotice} accepts no parameters. There is no channel
+ * answers wrong credentials and an address with no account alike —
+ * `authentication_required` on a 401 — and `classifyLoginFailure` collapses every
+ * 401 and 403 it is not required to distinguish to one memberless value, so
+ * {@link LoginRejectedNotice} accepts no parameters. (The two it does distinguish,
+ * `mfa_required` and `account_not_approved`, are only sent after the password has
+ * been verified, so neither discloses whether an address has an account.) There is no channel
  * through which a status code, an `error` key, a `details` member or a
  * Support_Reference could reach the surface, so the compiler forbids the variation
  * rather than a reviewer having to spot it. This mirrors
@@ -69,7 +79,7 @@
  */
 
 import { Alert, Button, Container, NativeSelect, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -84,7 +94,8 @@ import {
   type RenderedInput,
   type ViolationPartition,
 } from '../../forms/violations'
-import { postLoginPath } from '../../routing/paths'
+import { clearAccountNotApproved, reportAccountNotApproved } from '../../routing/accountStatus'
+import { postLoginPath, STATUS_NOTICE_PATH } from '../../routing/paths'
 import { clearSessionEnd, useSessionExpired } from '../../session/sessionEndNotice'
 import { tokenPairFrom, type TokenResponseLike } from '../../session/SessionManager'
 import { useSession } from '../../session/sessionState'
@@ -202,6 +213,12 @@ export function LoginScreen() {
    */
   const [challenge, setChallenge] = useState<LoginCredentials | null>(null)
 
+  // Req 7 AC6: returning here from a session-less Status_Notice ends that refusal's
+  // gating; the screen is the way back to an attempt, not a place it persists.
+  useEffect(() => {
+    clearAccountNotApproved()
+  }, [])
+
   // Req 20 AC6: a new failed submission produces a new partition, and focus moves
   // to the first affected input. A form-level-only failure leaves focus alone.
   useViolationFocus(violations)
@@ -235,6 +252,8 @@ export function LoginScreen() {
    * `postLoginPath(state, null)` is the login screen — the honest answer.
    */
   const completeLogin = async (response: TokenResponseLike): Promise<void> => {
+    // A refusal reported for an earlier attempt must not reach this session (Req 7 AC6).
+    clearAccountNotApproved()
     const principal = establishSession(tokenPairFrom(response))
     // The new session has not expired, so the notice must not survive into it.
     clearSessionEnd()
@@ -266,6 +285,7 @@ export function LoginScreen() {
     setSubmitting(true)
     setOutcome(null)
     setViolations(EMPTY_PARTITION)
+    clearAccountNotApproved()
     try {
       const { data } = await api.request('post', LOGIN_CONTRACT_PATH, {
         body: loginRequestBody(credentials),
@@ -275,8 +295,16 @@ export function LoginScreen() {
       return
     } catch (thrown) {
       // AC12: a 401 and a 403 both become the same memberless rejection here, so
-      // nothing downstream can tell them apart.
+      // nothing downstream can tell them apart — except the two outcomes another
+      // requirement names, which the Backend_Api sends only for verified credentials.
       const classified = classifyLoginFailure(thrown)
+      if (classified.kind === 'not-approved') {
+        // Req 7 AC6: the refusal's status gates navigation and is what the
+        // Status_Notice renders; no session exists to retain it in.
+        reportAccountNotApproved(thrown)
+        await navigate(STATUS_NOTICE_PATH, { replace: true })
+        return
+      }
       setOutcome(classified)
       if (classified.kind === 'mfa-required') {
         // Req 5 AC1: the code step resubmits these credentials with the code.

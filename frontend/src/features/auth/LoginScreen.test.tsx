@@ -12,7 +12,9 @@
  * AC12 is asserted as indistinguishability rather than as wording: the surface
  * rendered for a 401 and the surface rendered for a 403 are compared as markup,
  * so any future variation — a status code, an `error` key, a Support_Reference —
- * fails here.
+ * fails here. The one 403 that is distinguished is `account_not_approved` naming
+ * a declared status, which Requirement 7 AC6 sends to the Status_Notice; the
+ * Backend_Api answers it only for verified credentials.
  */
 
 import { render, screen, waitFor } from '@testing-library/react'
@@ -20,11 +22,13 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import type { Role } from '../../api/enums'
-import { clearAccountNotApproved } from '../../routing/accountStatus'
-import { LANDING_PATHS, LOGIN_PATH } from '../../routing/paths'
+import { clearAccountNotApproved, latestAccountNotApproved } from '../../routing/accountStatus'
+import { LANDING_PATHS, LOGIN_PATH, STATUS_NOTICE_PATH } from '../../routing/paths'
 import { clearSessionEnd } from '../../session/sessionEndNotice'
 import { createAppRuntime, resetSharedAppRuntime, type AppRuntime } from '../../shell/appRuntime'
 import { AppShell, AppShellLayout } from '../../shell/AppShell'
+
+import { StatusNoticeScreen } from '../onboarding/StatusNoticeScreen'
 
 import { LoginScreen } from './LoginScreen'
 
@@ -107,7 +111,7 @@ let api: Backend
 function signedOutRuntime(): AppRuntime {
   const runtime = createAppRuntime({
     shellElement: <AppShellLayout />,
-    elements: { login: <LoginScreen /> },
+    elements: { login: <LoginScreen />, statusNotice: <StatusNoticeScreen /> },
     apiRuntime: {
       baseUrl: 'https://backend.test/api/v1',
       locale: () => 'en',
@@ -275,24 +279,26 @@ describe('a refused sign-in (AC12)', () => {
     async () => {
       const wrongCredentials = await refusalMarkup(401, 'authentication_required', null)
 
-      const notApproved = await refusalMarkup(403, 'account_not_approved', {
-        status: 'PendingApproval',
-        next_step: 'Wait for an administrator to approve your account.',
+      const refused = await refusalMarkup(403, 'not_authorized', {
+        account_id: 'account-1',
+        reason: 'Account person@example.com is locked',
       })
 
       // Byte-identical: nothing about which refusal occurred reached the surface.
-      expect(notApproved).toBe(wrongCredentials)
+      expect(refused).toBe(wrongCredentials)
     },
     20_000,
   )
 
   it('discloses neither the account nor the reason, and keeps the entered values', async () => {
+    // An `account_not_approved` envelope naming no declared status is not trusted
+    // as Req 7 AC6's refusal, so it gets the uniform surface like any other 403.
     api.answerLoginWith(() =>
       jsonResponse(
         {
           error: 'account_not_approved',
           message: 'Account person@example.com is pending approval',
-          details: { status: 'PendingApproval', next_step: 'wait' },
+          details: { status: 'pending approval', next_step: 'wait' },
         },
         403,
       ),
@@ -326,6 +332,77 @@ describe('a refused sign-in (AC12)', () => {
     expect(await screen.findByTestId('mfa-code-step')).toBeInTheDocument()
     expect(screen.queryByTestId('login-form')).not.toBeInTheDocument()
     expect(screen.queryByTestId('login-rejected')).not.toBeInTheDocument()
+  })
+})
+
+// ── Refused as not yet Approved (Req 7 AC6) ───────────────────────────────────
+
+describe('a sign-in refused as account_not_approved (Req 7 AC6)', () => {
+  function answerNotApproved(): void {
+    api.answerLoginWith(() =>
+      jsonResponse(
+        {
+          error: 'account_not_approved',
+          message: 'Your account is not approved yet.',
+          details: { status: 'PendingApproval', next_step: 'Awaiting admin review' },
+        },
+        403,
+      ),
+    )
+  }
+
+  it('lands on the Status_Notice without a session, and offers the way back', async () => {
+    answerNotApproved()
+    const runtime = signedOutRuntime()
+    render(<AppShell runtime={runtime} />)
+
+    await signIn()
+
+    expect(await screen.findByTestId('status-notice-screen')).toBeInTheDocument()
+    expect(runtime.router.state.location.pathname).toBe(STATUS_NOTICE_PATH)
+    expect(screen.getByTestId('status-notice-status')).not.toBeEmptyDOMElement()
+    expect(runtime.session.getAccessToken()).toBeNull()
+    expect(screen.queryByTestId('login-rejected')).not.toBeInTheDocument()
+
+    // Nothing to sign out of: the way back is the login screen, which ends the
+    // refusal's gating.
+    await userEvent.click(screen.getByTestId('status-notice-sign-in'))
+    expect(await screen.findByTestId('login-screen')).toBeInTheDocument()
+    expect(latestAccountNotApproved()).toBeNull()
+  })
+
+  it('redirects a feature route to the Status_Notice while the refusal stands (Req 7 AC2)', async () => {
+    answerNotApproved()
+    const runtime = signedOutRuntime()
+    render(<AppShell runtime={runtime} />)
+
+    await signIn()
+    await screen.findByTestId('status-notice-screen')
+
+    await runtime.router.navigate(LANDING_PATHS.CANDIDATE)
+    await waitFor(() => {
+      expect(runtime.router.state.location.pathname).toBe(STATUS_NOTICE_PATH)
+    })
+  })
+
+  it('does not carry the refusal into a later, successful sign-in', async () => {
+    answerNotApproved()
+    const runtime = signedOutRuntime()
+    render(<AppShell runtime={runtime} />)
+
+    await signIn()
+    await screen.findByTestId('status-notice-screen')
+    await userEvent.click(screen.getByTestId('status-notice-sign-in'))
+    await screen.findByTestId('login-screen')
+
+    // Now approved: the default answer is a 200 for an Approved candidate.
+    api = backend()
+    await signIn()
+
+    await waitFor(() => {
+      expect(runtime.router.state.location.pathname).toBe(LANDING_PATHS.CANDIDATE)
+    })
+    expect(runtime.session.getAccessToken()).toBe(CANDIDATE_ACCESS_TOKEN)
   })
 })
 
