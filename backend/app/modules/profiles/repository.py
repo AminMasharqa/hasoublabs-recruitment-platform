@@ -89,6 +89,12 @@ async def get_candidate_profile_with_relations(
             selectinload(CandidateProfile.skills),
             selectinload(CandidateProfile.languages),
         )
+        # The service re-reads the profile in the same session right after the
+        # ``replace_*`` helpers rewrite its children with bulk DELETE/INSERT, which
+        # the identity map does not see. Without ``populate_existing`` the re-read
+        # returns the already-loaded, pre-save collections, so completeness is
+        # evaluated (and persisted) on stale data.
+        .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
 
@@ -321,6 +327,9 @@ async def get_senior_profile(
         select(SeniorProfile)
         .where(SeniorProfile.account_id == account_id)
         .options(selectinload(SeniorProfile.expertise_skills))
+        # Re-read after ``replace_senior_expertise_skills`` in the same session:
+        # see ``get_candidate_profile_with_relations``.
+        .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
 

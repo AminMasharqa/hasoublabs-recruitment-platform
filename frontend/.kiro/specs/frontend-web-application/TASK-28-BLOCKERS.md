@@ -875,6 +875,75 @@ It **fails before the fix and passes after**, and asserts that the read is still
 issued exactly once. The full frontend unit suite has 1258 passing; the 2 failures
 are the pre-existing `JobNewScreen.test.tsx` timeouts on slow machines.
 
+## Bug 10 — candidate profile save: never `Complete`, in four layers — **partly fixed 2026-10-05**
+
+Behind the 5 "candidate profile save" e2e failures (`profile`,
+`jobs-applications` apply, `tri-locale` application ×3). Each layer, once fixed,
+exposed the next.
+
+1. **Fixed (test): the enrolment-status option locator hit the header.**
+   `page.getByRole('option').first()` was meant to pick the first option of the
+   Mantine `Select`. But the header's language picker is a native `<select>`, and
+   its hidden `<option>`s matched first, so the click waited forever. The locator
+   is now scoped to `getByRole('listbox')`, in 3 specs.
+2. **Fixed (test): the profile phone was not E.164.** The journeys entered
+   `0501234570`; R4 AC6 and AC11 require E.164, so the backend was right to reject
+   it. The plausible-looking `+972501234570` is also invalid to `phonenumbers`,
+   because the range is unallocated. The specs now use allocated numbers
+   (`+97250234567x`). Residency-proof phones stay local-format, as R2 AC2
+   specifies.
+3. **Fixed (backend): the save evaluated and persisted completeness on stale
+   data.** `CandidateProfileService.update` replaces the child collections, then
+   re-reads the profile in the same session to evaluate AC6. Two things made that
+   re-read stale:
+   - The session has `autoflush=False`, so the newly added child rows were not
+     yet written.
+   - The identity map returned the already-loaded, pre-save collections.
+
+   As a result the save returned `education: []` and **wrote `state = Draft` to
+   the database** even for a profile meeting every AC6 condition. The fix is a
+   flush before the re-read plus `populate_existing` on the relations fetch; both
+   are needed (verified by removing each). The same pattern in the senior-profile
+   update is fixed the same way.
+   - Guard: `tests/integration/test_candidate_profile_update.py`, which **fails
+     before the fix and passes after**.
+   - Live: the save response now carries the saved education.
+4. **Open, needs a decision: skills not in the Skill_Taxonomy are dropped from
+   the profile.** The dev database's `skills` table is **empty**, and nothing in
+   the repo seeds it. Every entered skill is therefore unmatched. `SkillResolver`
+   records it in `unmatched_skill_terms` for Admin review (R4 AC3), but
+   `CandidateProfileService.update` keeps only terms that resolve to a
+   `skill_id`, and `candidate_skills.skill_id` is `NOT NULL`. So the candidate's
+   profile has no skills and can never be `Complete` (R4 AC6 needs ≥ 1 skill).
+   The options are:
+   - **(a) Seed a starter Skill_Taxonomy** (a migration or seed script). This
+     unblocks the common skills, but an unknown skill still vanishes from the
+     profile.
+   - **(b) Keep pending skills on the profile:** a nullable `skill_id` plus a link
+     to the unmatched term, and decide whether a pending skill counts toward AC6.
+     This is a schema change and a spec-interpretation call for R4 AC3/AC6.
+
+### Related, also needs a decision: field-level errors never reach the client
+
+Found while diagnosing layer 2: the 422 said `profile_validation_failed` with
+`details: null`, so nothing could name the invalid field. Two causes:
+
+- **Backend.** `app/main.py` registers its own `PlatformError` /
+  `RequestValidationError` / `Exception` handlers. These drop
+  `PlatformError.fields` and send the raw `message_key` instead of a localized
+  message. The platform's real envelope, `platform/errors/handlers.py::register_error_handlers`,
+  renders `fields` and localizes `message`, but **it is never called**. This
+  breaks R4 AC11 ("a field-level error naming each invalid field") and, likely,
+  every other domain 422 that carries fields.
+- **Frontend.** `api/errors.ts::toFieldViolations` extracts violations only for
+  the `validation_error` / `validation_failed` keys. Even with the backend fixed,
+  a domain key such as `profile_validation_failed` would place nothing on its
+  inputs.
+
+Wiring the platform handlers changes the error body for the whole API, including
+the `RequestValidationError` shape: `fields` replaces FastAPI's raw `details`
+list. So it is left for a team decision rather than folded into a test fix.
+
 ---
 
 ## Failure attribution

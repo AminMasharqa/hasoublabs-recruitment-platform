@@ -503,7 +503,10 @@ class CandidateProfileService:
                 ]
                 await repo.replace_languages(uow.session, profile.id, account_id, lang_dicts)
 
-            # Re-evaluate completeness on the freshly mutated profile.
+            # Re-evaluate completeness on the freshly mutated profile. The session
+            # does not autoflush, so the children ``replace_*`` just added must be
+            # flushed or the re-read evaluates (and persists) the pre-save state.
+            await uow.session.flush()
             profile = await repo.get_candidate_profile_with_relations(
                 uow.session, account_id
             )
@@ -695,6 +698,8 @@ class SeniorProfileService:
                 await repo.replace_senior_expertise_skills(
                     uow.session, account_id, resolved_skill_ids
                 )
+                # No autoflush: write the new rows before re-reading them.
+                await uow.session.flush()
                 reloaded = await repo.get_senior_profile(uow.session, account_id)
                 if reloaded is not None:
                     profile = reloaded
