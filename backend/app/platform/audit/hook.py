@@ -163,15 +163,46 @@ def _changed_attrs(instance: object, table: str) -> tuple[dict[str, Any], dict[s
 
 
 def _entity_id(instance: object) -> str:
-    """Return a string representation of the entity's primary key."""
+    """Return a string representation of the entity's primary key.
+
+    Read from the primary-key attributes, not ``InstanceState.identity``: the
+    identity is only established by the flush, so it is ``None`` for every
+    pending (``session.new``) object this hook sees.
+    """
     try:
-        mapper = inspect(instance)
-        pk = mapper.identity  # type: ignore[union-attr]
-        if pk and len(pk) == 1:
-            return str(pk[0])
-        return str(pk) if pk else "unknown"
+        mapper = inspect(instance).mapper  # type: ignore[union-attr]
+        pk = [
+            getattr(instance, mapper.get_property_by_column(column).key)
+            for column in mapper.primary_key
+        ]
+        if any(value is None for value in pk):
+            return "unknown"
+        return str(pk[0]) if len(pk) == 1 else str(tuple(pk))
     except Exception:  # noqa: BLE001
         return "unknown"
+
+
+def _assign_pending_primary_key(instance: object) -> None:
+    """Fill a pending row's unset primary key from its Python-side default.
+
+    ``UuidPkMixin`` declares ``default=uuid.uuid4``, which SQLAlchemy would apply
+    during the flush — after this ``before_flush`` hook has already recorded the
+    ``.created`` entry. Applying the same default here, earlier, lets the entry
+    name the entity it created; the INSERT then uses the assigned value. A key
+    with no Python-side default (e.g. a server-generated sequence) is left alone.
+    """
+    mapper = inspect(instance).mapper  # type: ignore[union-attr]
+    for column in mapper.primary_key:
+        key = mapper.get_property_by_column(column).key
+        default = column.default
+        if getattr(instance, key) is not None or default is None:
+            continue
+        if default.is_callable:
+            # SQLAlchemy wraps a zero-argument callable to accept the
+            # execution context, which no default used here reads.
+            setattr(instance, key, default.arg(None))
+        elif default.is_scalar:
+            setattr(instance, key, default.arg)
 
 
 def _entity_type(instance: object) -> str:
@@ -242,6 +273,7 @@ def register_audit_capture(target: object) -> None:  # noqa: ARG001
             tbl = _table_name(obj)
             if not tbl or tbl in _EXCLUDED_TABLES:
                 continue
+            _assign_pending_primary_key(obj)
             entries_to_write.append(
                 {
                     "action": f"{_entity_type(obj)}.created",
