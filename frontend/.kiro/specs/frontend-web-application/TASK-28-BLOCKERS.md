@@ -8,9 +8,13 @@ and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
 defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
 code paths that reach them; all three are recorded below.
 
-Update 2026-10-05: **Bug 7 fixed** (see its section). The fix is verified by unit
-tests, but the integration and e2e runs are pending, because the machine used had
-no Docker. Open: Bugs 3, 4, 5 and 6.
+Update 2026-10-05 (latest): **Bug 7 fixed and verified end to end.** The e2e run
+also exposed two defects that were hiding behind "Bug 4": **Bug 8**, where the
+journeys reload the page after signing in, and **Bug 9**, where the Route_Guard
+hangs on its status read under StrictMode. Both are fixed. E2E went from 48
+passed / 31 failed to **61 passed / 18 failed**; see the re-measured attribution.
+Open: Bugs 3, 4 (narrowed to the admin MFA step), 5 and 6, plus the new
+unattributed groups in that table.
 
 ## Summary
 
@@ -733,6 +737,66 @@ same `simple` config the trigger builds the vector with.
 - **E2E: not re-run**, for the same reason. The 9 failures attributed to this bug
   in the table below are expected to clear. Confirm with `npm run test:e2e`
   against a live backend.
+- **Later the same day, with Docker:**
+  - The integration test passes. Against the pre-fix code it fails with exactly
+    the `search_tsv` `DatatypeMismatchError` above.
+  - On the live stack, `POST /api/v1/jobs` returned 201 on every call, with no 5xx
+    anywhere in the run.
+  - The 9 job tests then failed at a later step, which was Bugs 8 and 9.
+
+---
+
+## Bug 8 — the journeys reload the page after signing in, which signs them out — **FIXED 2026-10-05**
+
+**The largest part of what was attributed to Bug 4.** The candidate and senior
+journeys have no MFA step, yet they all ended on `/login`.
+
+The Session_Manager keeps the session in memory only. `SessionManager.ts` says a
+page reload "starts with no session", by design (Requirement 4 AC3, AC11). The
+journeys signed in through the UI correctly; the `/jobs` URL assertion passed. They
+then moved to the next screen with `page.goto('/candidate/profile')`, which is a
+full page load. That discarded the session, and the Route_Guard sent the browser
+back to `/login`. This is a test-suite defect, not an application one.
+
+**Fix.**
+- **New helper, `e2e/support/navigation.ts::navigateInApp`.** It pushes the target
+  onto the history and fires `popstate`, which `createBrowserRouter` handles as a
+  client-side navigation through the same guard. It first waits for a UI sign-in
+  to leave `/login`.
+- **27 post-sign-in `page.goto` calls** across 10 specs now use the helper.
+- **Left as page loads on purpose:** `page.goto` stays for `/login`, for
+  Registration_Links, and for the two assertions that a reload or a signed-out
+  visit lands on `/login` (`auth-session.spec.ts`, `reports.spec.ts`).
+
+## Bug 9 — the Route_Guard hangs on "Loading…" when its status read races an effect cleanup — **FIXED 2026-10-05**
+
+**An application bug, exposed once Bug 8 was fixed.** Signed in and navigating
+in-app, the guarded screens rendered "Loading…" forever. `GET /me/status` returned
+200, and nothing after it was ever requested.
+
+`useAccountStatusSync` (`src/routing/accountStatus.ts`) latched the in-flight read
+in a ref and skipped any effect run whose key was already latched. React
+StrictMode, which `main.tsx` uses, runs each effect, cleans it up, and runs it
+again:
+1. The first run issued the read and set the latch.
+2. Its cleanup marked that run cancelled.
+3. The second run saw the latch and returned without subscribing.
+4. When the read resolved, its only subscriber was the cancelled run, so the result
+   was discarded. Nothing ever re-ran the effect, so the guard waited forever.
+
+The same deadlock happens in production whenever the effect's dependencies change
+while the read is outstanding.
+
+**Fix.**
+- **Every effect run subscribes to the read.** `requestAccountStatus` already
+  shares one in-flight read per account, so this never issues a second request.
+- **The ref now records only a key whose read *failed*.** That keeps the
+  "no automatic re-request after a failure" behaviour, and retry stays explicit.
+
+**Guard.** A new `RouteGuard.test.tsx` case renders the guard under `<StrictMode>`.
+It **fails before the fix and passes after**, and asserts that the read is still
+issued exactly once. The full frontend unit suite has 1258 passing; the 2 failures
+are the pre-existing `JobNewScreen.test.tsx` timeouts on slow machines.
 
 ---
 
@@ -764,6 +828,21 @@ The counts in the second table are read off the failure list and the backend log
 rather than tallied per-assertion, so treat ~20 / 9 as the shape of the remaining
 work rather than an exact split.
 
+### Re-run 2026-10-05 after the Bug 7, 8 and 9 fixes — 61 passed, 18 failed
+
+MinIO is not running in this environment; its public image is no longer available.
+There were no 5xx responses in the whole run. Each failure is attributed from its
+`error-context.md` page snapshot.
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Bug 4, now just the admin MFA step | `admin-accounts` ×2, `audit` ×2, `reports`: still on "Sign in" after the MFA code. Candidate and senior sign-in works. |
+| 6 | Unattributed: candidate profile save | `profile`, `jobs-applications` (via `completeMinimalProfile`), `tri-locale` application ×3 and profile ×1. A click on the "My profile" screen times out. |
+| 4 | Unattributed: review timeline | `reviews`, `tri-locale` review ×3. No `review-card-*` appears on "My reviews" after submitting. |
+| 2 | Environment: MinIO | `cv` ×2. `setInputFiles` times out on the CV screen. |
+| 1 | Unattributed | `jobs-applications` closed role: the closed job's card is not visible in the list. |
+| 1 | Unattributed | `registration` gating: signing in as a not-yet-approved account is refused (`POST /auth/login` → 403) instead of landing on `/status`. |
+
 ## Suggested order of attack
 
 1. ~~Bug 1 — add `app/modules/audit/tasks.py`, plus handlers for the orphaned
@@ -775,9 +854,11 @@ work rather than an exact split.
 3. ~~Bug 7 — exclude `search_tsv` from ORM persistence and type it `TSVECTOR`. Small,
    and it is the whole blocker for 9 tests, none of which depend on Bug 4.~~
    **Done** (2026-10-05). `FetchedValue` + deferred `TSVECTOR` mapping, direct
-   `@@` match in `list_open_jds`, plus unit and integration guards. E2E re-run still pending.
-4. Bug 4 — now the largest single item by a wide margin (~20 failures). Start with
-   the one-line journey-helper fix, then look at `MfaCodeStep`.
+   `@@` match in `list_open_jds`, plus unit and integration guards. Verified e2e.
+4. Bug 4 — now 5 failures, all on the admin MFA step (most of the original ~20 were
+   Bugs 8 and 9, both done). Start with the one-line journey-helper fix, then look
+   at `MfaCodeStep`. The state-reset or remount hypothesis in Bug 4's section is
+   still unconfirmed.
 5. Bug 3 — cast the timestamp parameters in the activity-report queries, and fix
    the `:jd_id::uuid` syntax error while in there.
 6. Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5

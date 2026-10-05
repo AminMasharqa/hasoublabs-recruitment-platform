@@ -155,19 +155,25 @@ export function useAccountStatusSync(api: ApiClient | null | undefined): Account
   const [error, setError] = useState<unknown>(null)
   const [attempt, setAttempt] = useState(0)
   /**
-   * The `sub`-and-attempt of the read this hook instance currently has
-   * outstanding, so a re-render — including the one caused by the failure it just
-   * recorded — does not issue a second.
+   * The `sub`-and-attempt whose read *failed*, so the re-render caused by
+   * recording that failure does not issue it again; only {@link retry} (a new
+   * attempt key) does.
    *
-   * Released once the read settles, and that matters: the retained status can be
+   * An outstanding read needs no latch of its own: every effect run subscribes
+   * through `requestAccountStatus`, which shares one in-flight read per account,
+   * so a second subscription never issues a second request. And every run *must*
+   * subscribe. A run that is cleaned up — StrictMode's mount/unmount/mount in
+   * development, or a dependency change while the read is outstanding — discards
+   * its result, so a latch that let the next run skip subscribing would leave the
+   * read with no live subscriber and the guard loading indefinitely.
+   *
+   * A successful read records nothing, which matters: the retained status can be
    * discarded again while this instance stays mounted (a context switch does
    * exactly that, Req 8 AC11, and React reuses the `RouteGuard` element across two
-   * guarded groups at the same tree position). A latch that remembered the read
-   * forever would leave the next `await-status` window with nothing to resolve it,
-   * i.e. a screen loading indefinitely. Concurrent reads are still deduplicated
-   * across instances by `inFlightStatusReads`.
+   * guarded groups at the same tree position), and that window must issue a fresh
+   * read.
    */
-  const issued = useRef<string | null>(null)
+  const failedKey = useRef<string | null>(null)
 
   const needed = api != null && authenticated && sub !== null && status === null
   const attemptKey = sub === null ? null : `${sub}#${attempt}`
@@ -176,43 +182,36 @@ export function useAccountStatusSync(api: ApiClient | null | undefined): Account
     if (!needed || api == null || sub === null || attemptKey === null) {
       return
     }
-    if (issued.current === attemptKey) {
+    if (failedKey.current === attemptKey) {
       return
     }
-    issued.current = attemptKey
 
     let cancelled = false
-    void requestAccountStatus(api, sub)
-      .then(
-        (retained) => {
-          if (cancelled) {
-            return
-          }
-          if (retained === null) {
-            setError(UNREADABLE_STATUS_FAILURE)
-            return
-          }
-          retainStatus(retained)
-        },
-        (failure: unknown) => {
-          if (cancelled) {
-            return
-          }
-          // AC6: the refusal itself carries the status, so it is a status answer
-          // rather than a failed read.
-          if (reportAccountNotApproved(failure) !== null) {
-            return
-          }
-          setError(failure)
-        },
-      )
-      .finally(() => {
-        // Only release the latch this effect run took: a newer run has already
-        // claimed it for its own key.
-        if (issued.current === attemptKey) {
-          issued.current = null
+    void requestAccountStatus(api, sub).then(
+      (retained) => {
+        if (cancelled) {
+          return
         }
-      })
+        if (retained === null) {
+          failedKey.current = attemptKey
+          setError(UNREADABLE_STATUS_FAILURE)
+          return
+        }
+        retainStatus(retained)
+      },
+      (failure: unknown) => {
+        if (cancelled) {
+          return
+        }
+        // AC6: the refusal itself carries the status, so it is a status answer
+        // rather than a failed read.
+        if (reportAccountNotApproved(failure) !== null) {
+          return
+        }
+        failedKey.current = attemptKey
+        setError(failure)
+      },
+    )
 
     return () => {
       cancelled = true

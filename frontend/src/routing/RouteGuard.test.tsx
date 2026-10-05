@@ -40,7 +40,7 @@ import { MantineProvider } from '@mantine/core'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { i18n as I18nextInstance } from 'i18next'
-import { useEffect } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import {
   createMemoryRouter,
@@ -461,6 +461,42 @@ describe('RouteGuard status read (Requirement 7 AC1)', () => {
     })
 
     expect(await screen.findByTestId('target-screen')).toBeInTheDocument()
+    expect(requests.filter((entry) => entry === STATUS_READ)).toHaveLength(1)
+  })
+
+  it('admits once the read resolves under StrictMode, where the first effect run is cancelled', async () => {
+    // `main.tsx` mounts the app in <StrictMode>, which runs every effect, cleans it
+    // up and runs it again. The cleaned-up run's result is discarded, so the
+    // surviving run must still be subscribed to the (shared, deduplicated) read —
+    // otherwise the guard stays in the loading state forever.
+    const gate = deferred<StatusBody>()
+    const { api, requests } = recordingApi(() => gate.promise)
+    const router = createMemoryRouter(guardedRoutes(CANDIDATE_ACCESS, api), {
+      initialEntries: [TARGET_ENTRY],
+    })
+    render(
+      <StrictMode>
+        <MantineProvider>
+          <I18nextProvider i18n={i18n}>
+            <SessionProvider
+              manager={signedIn(['CANDIDATE'], 'CANDIDATE', '3f2504e0-4f89-41d3-9a0c-0305e82c3301')}
+            >
+              <RouterProvider router={router} />
+            </SessionProvider>
+          </I18nextProvider>
+        </MantineProvider>
+      </StrictMode>,
+    )
+
+    expect(await screen.findByTestId('loading-state')).toBeInTheDocument()
+
+    await act(async () => {
+      gate.resolve({ status: 'Approved', next_step: null })
+      await gate.promise
+    })
+
+    expect(await screen.findByTestId('target-screen')).toBeInTheDocument()
+    // Re-subscribing shares the in-flight read; it never issues a second one.
     expect(requests.filter((entry) => entry === STATUS_READ)).toHaveLength(1)
   })
 
