@@ -11,6 +11,7 @@
 
 import { expect, test } from '@playwright/test'
 
+import { loginAsAdminThroughUi } from '../support/adminLogin'
 import {
   createOpenJob,
   establishAdminSession,
@@ -109,10 +110,16 @@ test.describe('job browse -> apply -> track', () => {
     await expect(page.getByTestId('applications-list')).toContainText(job.title)
   })
 
-  test('a Closed role disables the apply control in both the list and the detail view', async ({
+  test('a Closed role carries its closed indicator in the list and the detail, with apply disabled', async ({
     page,
   }) => {
     const admin = await establishAdminSession()
+    const secret = process.env.E2E_ADMIN_TOTP_SECRET
+    test.skip(secret === undefined, 'E2E_ADMIN_TOTP_SECRET is required to sign in as the seeded Admin through the UI')
+    if (secret === undefined) {
+      return
+    }
+
     const senior = await registerVerifiedApprovedAccount(admin.access_token, 'SENIOR', 'jobs-closed-senior')
     const seniorTokens = await login(senior.email, senior.password, 'SENIOR')
     const job = await createOpenJob(seniorTokens.access_token, {
@@ -120,9 +127,9 @@ test.describe('job browse -> apply -> track', () => {
     })
 
     // Closes it directly against the Backend_Api — this journey's subject is the
-    // Candidate-side rendering of a Closed role, not the Senior-side lifecycle
-    // control itself (see the design's Requirement 13 coverage for that).
-    await fetch(
+    // rendering of a Closed role, not the Senior-side lifecycle control itself
+    // (see the design's Requirement 13 coverage for that).
+    const closed = await fetch(
       `${process.env.E2E_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/jobs/${job.id}:close`,
       {
         method: 'POST',
@@ -133,24 +140,31 @@ test.describe('job browse -> apply -> track', () => {
         body: '{}',
       },
     )
+    expect(closed.ok).toBe(true)
 
-    const candidate = await registerVerifiedApprovedAccount(admin.access_token, 'CANDIDATE', 'jobs-closed-candidate')
+    // Who can load a Closed role at all: never a Candidate — browsing lists only
+    // `Open` postings (backend R6 AC9) and the detail read refuses a Closed role to
+    // a Candidate — but its creating Senior (the detail) and an Admin (the
+    // all-status list of Req 13 AC17). Req 12 AC7 is asserted on those surfaces.
+
+    // Req 12 AC7, the list entry: the Admin listing, filtered to Closed, newest first.
+    await loginAsAdminThroughUi(page, secret)
+    await navigateInApp(page, '/admin/jobs?status=Closed')
+    const entry = page.getByTestId(`admin-job-${job.id}`)
+    await expect(entry).toBeVisible({ timeout: 15_000 })
+    await expect(entry.getByTestId('job-status-closed')).toBeVisible()
+
+    // Req 12 AC7, the detail view: the closed notice and a disabled apply control.
+    // A fresh /login load drops the in-memory Admin session.
     await page.goto('/login')
-    await page.locator('#login-email').fill(candidate.email)
-    await page.locator('#login-password').fill(candidate.password)
-    await page.locator('#login-role').selectOption('CANDIDATE')
+    await page.locator('#login-email').fill(senior.email)
+    await page.locator('#login-password').fill(senior.password)
+    await page.locator('#login-role').selectOption('SENIOR')
     await page.getByTestId('login-submit').click()
 
-    await navigateInApp(page, '/jobs')
-    await page.getByTestId('job-filter-search').fill(job.title)
-    await page.getByTestId('job-filters-apply').click()
-    const card = page.locator('[data-testid^="job-card-"]', { hasText: job.title })
-    await expect(card).toBeVisible({ timeout: 15_000 })
-    // Req 12 AC7: the closed indicator and the disabled apply control, in the list.
-    await expect(card.getByTestId('job-status-closed')).toBeVisible()
-
-    await card.getByRole('link').first().click()
+    await navigateInApp(page, `/jobs/${job.id}`)
     await expect(page.getByTestId('job-detail-closed-notice')).toBeVisible()
+    await expect(page.getByTestId('job-status-closed')).toBeVisible()
     await expect(page.getByTestId('job-apply')).toBeDisabled()
   })
 })

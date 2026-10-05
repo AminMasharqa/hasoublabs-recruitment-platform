@@ -1095,6 +1095,45 @@ with `status: PendingApproval → Approved`.
 The spec now asserts `Account.updated`, opens the comparison, and checks that
 the `status` row shows `PendingApproval` and `Approved`. It passes 2/2.
 
+### `admin-accounts` suspend — test defect, fixed 2026-10-05
+
+The journey walks the oldest-first account list page by page until its seeded
+account appears.
+- **Cause:** each page change renders the pending state, which unmounts the list
+  and its next control. The loop read the next control mid-load, saw it as
+  hidden, and ended the walk early.
+- **Fix:** a step now waits until the first card has changed, and the walk ends
+  only when the settled page has no next control.
+- **Limit:** the walk grows with the dev database. The 50-page cap covers about
+  1,000 Approved candidates.
+- **Verified:** passes 2/2.
+
+### `jobs-applications` closed role — a spec conflict, resolved in the test, 2026-10-05
+
+The journey looked for a Closed role in the **Candidate**'s browse list. The
+backend can never show it there:
+- browse returns only `Open` postings (backend R6 AC9, `list_open_jds`);
+- `GET /jobs/{id}` refuses a non-Open role to a Candidate.
+
+So frontend Req 12 AC7 ("WHERE a loaded Job_Description holds `Closed`") is not
+reachable for a Candidate on a backend that meets its spec. Two surfaces can
+load a Closed role:
+- the Admin all-status list (Req 13 AC17);
+- the creating Senior's detail view.
+
+The journey now asserts AC7 on both:
+- the closed badge on `/admin/jobs?status=Closed`;
+- the closed notice and badge, and a disabled `job-apply`, on `/jobs/{id}` as
+  the creator.
+
+It also now checks that the `:close` call succeeded, which it previously ignored.
+The Admin UI sign-in moved to `e2e/support/adminLogin.ts`, shared with
+`admin-accounts.spec.ts`. The test passes.
+
+**For the spec owners:** AC7's apply-control clause only matters to a Candidate
+who loaded a role before it closed and still has the stale cache. Decide whether
+it should stay in Req 12.
+
 ---
 
 ## Failure attribution
@@ -1165,8 +1204,8 @@ review group as possibly flaky until it is investigated.
 | 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3: `422 application_not_ready`, `missing_fields: ["cv"]` |
 | 2 | Environment: MinIO | `cv` ×2 |
 | 1 | Test defect (since fixed; see Bug 12's section) | `audit`: action is `Account.updated`; the test expected `/approve/i`. |
-| 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
-| 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
+| 1 | Test defect (since fixed) | `admin-accounts` suspend: the account's card is not in the filtered list. |
+| 1 | Spec conflict (since resolved in the test) | `jobs-applications` closed role: the card is not visible. |
 | 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
 
 `profile` and `reports` now pass.
