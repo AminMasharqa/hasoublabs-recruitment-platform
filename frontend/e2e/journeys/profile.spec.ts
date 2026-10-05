@@ -38,7 +38,7 @@ test.describe('candidate profile completion', () => {
 
     await page.locator('#full_name').fill('E2E Profile Candidate')
     await page.locator('#email').fill(candidate.email)
-    await page.locator('#phone').fill('0501234570')
+    await page.locator('#phone').fill('+972502345670')
     await page.locator('#city').fill('Tel Aviv')
     await page.locator('#summary').fill('A summary long enough to be a real profile summary.')
 
@@ -51,7 +51,7 @@ test.describe('candidate profile completion', () => {
     // A Mantine `Select` (Requirement 20 AC2's keyboard-operable combobox, not a
     // native `<select>`): open it and choose the first offered option.
     await page.locator('#education-0-enrolment_status').click()
-    await page.getByRole('option').first().click()
+    await page.getByRole('listbox').getByRole('option').first().click()
     await page.locator('#education-0-start_year').fill('2018')
 
     await page.getByTestId('profile-add-skills').click()
