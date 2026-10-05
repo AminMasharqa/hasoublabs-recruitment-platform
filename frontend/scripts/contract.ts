@@ -169,14 +169,17 @@ export interface LineDifference {
  * Returns `null` when they are identical. Otherwise it trims the shared prefix
  * and suffix and reports the divergent block, which is enough for a developer to
  * see what the Backend_Api changed without pulling in a diff dependency.
+ *
+ * Line endings are not part of the contract: a Windows checkout with
+ * `core.autocrlf` holds the committed file with CRLF while the generator emits
+ * LF, so both sides are compared with CRLF folded to LF.
  */
 export function diffDeclarations(committed: string, regenerated: string): LineDifference | null {
-  if (committed === regenerated) {
+  const left = toLf(committed).split('\n')
+  const right = toLf(regenerated).split('\n')
+  if (left.length === right.length && left.every((line, index) => line === right[index])) {
     return null
   }
-
-  const left = committed.split('\n')
-  const right = regenerated.split('\n')
 
   let prefix = 0
   while (prefix < left.length && prefix < right.length && left[prefix] === right[prefix]) {
@@ -197,6 +200,10 @@ export function diffDeclarations(committed: string, regenerated: string): LineDi
     committed: left.slice(prefix, left.length - suffix),
     regenerated: right.slice(prefix, right.length - suffix),
   }
+}
+
+function toLf(text: string): string {
+  return text.replace(/\r\n/g, '\n')
 }
 
 const MAX_REPORTED_LINES = 20

@@ -1103,8 +1103,10 @@ The other suites:
   - The checkout writes `schema.d.ts` with CRLF line endings while `gen:api`
     emits LF, so the byte comparison fails at line 1.
   - The regenerated file is identical once CRLF is ignored.
-  - **Fix:** a `.gitattributes` rule (`*.d.ts text eol=lf`), or normalise line
-    endings in `scripts/verify-api.ts`. Not done yet.
+  - **FIXED 2026-10-05:** `scripts/contract.ts::diffDeclarations` now compares
+    with CRLF folded to LF.
+    - **Guard:** `scripts/contract.test.ts`, which fails before the fix.
+    - **Live:** `verify:api` now reports a match.
 - **Frontend vitest:** 1148/1152 in the full run. The 4 failures are the known
   `JobNewScreen.test.tsx` timeouts under load; that file passes 5/5 on its own.
 
