@@ -30,6 +30,8 @@ from app.modules.applications.schemas import ApplicationDTO, ApplicationResultDT
 if TYPE_CHECKING:
     from app.modules.cvs.api import CvsApi
     from app.modules.identity.api import IdentityApi
+    from app.modules.jobs.api import JobsApi
+    from app.modules.jobs.schemas import JobDescriptionDTO
     from app.modules.profiles.api import ProfilesApi
     from app.modules.profiles.schemas import ApplicantCardDTO
     from app.platform.security.principal import Principal
@@ -89,13 +91,13 @@ class ApplicationService:
         profiles_api: ProfilesApi,
         cvs_api: CvsApi,
         identity_api: IdentityApi,
-        jobs_api: Any,  # Loosely typed to avoid circular imports during Wave C
+        jobs_api: JobsApi | None,
     ) -> None:
         self._uow_factory = uow_factory
         self._profiles_api = profiles_api
         self._cvs_api = cvs_api
         self._identity_api = identity_api
-        self._jobs_api = jobs_api  # JobsApi protocol — will be typed once jobs module lands
+        self._jobs_api = jobs_api
 
     # ── apply() ───────────────────────────────────────────────────────────
 
@@ -131,7 +133,7 @@ class ApplicationService:
 
         # ── Step 1: Verify JD exists and is Open ──────────────────────────
         jd_data = await self._get_jd(jd_id)
-        if jd_data is None or jd_data.get("status") != JdStatus.OPEN.value:
+        if jd_data is None or jd_data.status != JdStatus.OPEN:
             raise JdNotOpen()
 
         # ── Step 2: Verify Application-Ready ──────────────────────────────
@@ -157,15 +159,12 @@ class ApplicationService:
             raise RateLimited(retry_after_seconds=3600, scope="application_submission")
 
         # ── Step 5-11: Transactional block ────────────────────────────────
-        channel_str = jd_data.get("application_channel", ApplicationChannel.SENIOR_DASHBOARD.value)
-        try:
-            routed_channel = ApplicationChannel(channel_str)
-        except ValueError:
-            routed_channel = ApplicationChannel.SENIOR_DASHBOARD
+        # A JD with no channel set routes to the Senior dashboard.
+        routed_channel = jd_data.application_channel or ApplicationChannel.SENIOR_DASHBOARD
 
         # R7 AC8: External channel → redirect, no Application row
         if routed_channel == ApplicationChannel.EXTERNAL_CAREERS_URL:
-            redirect_url = jd_data.get("external_careers_url", "")
+            redirect_url = jd_data.external_url or ""
             return ApplicationResultDTO(
                 channel=routed_channel.value,
                 application=None,
@@ -176,8 +175,8 @@ class ApplicationService:
         cv_ref = await self._cvs_api.resolve_active_version(candidate_id, cv_variant_id)
 
         # Steps 6-10: All inside one UoW (R7 AC12 — notification + email in same tx)
-        jd_title = jd_data.get("title", "")
-        jd_company = jd_data.get("company", "")
+        jd_title = jd_data.title
+        jd_company = jd_data.company
 
         # Fetch the candidate's email and language for the outbox email
         candidate_account = await self._identity_api.get_account(candidate_id)
@@ -268,8 +267,8 @@ class ApplicationService:
         result: list[ApplicationDTO] = []
         for application in applications:
             jd_data = await self._get_jd(application.jd_id)
-            jd_title = jd_data.get("title", "") if jd_data else ""
-            jd_company = jd_data.get("company", "") if jd_data else ""
+            jd_title = jd_data.title if jd_data else ""
+            jd_company = jd_data.company if jd_data else ""
             result.append(
                 _application_to_dto(application, jd_title=jd_title, jd_company=jd_company)
             )
@@ -305,13 +304,13 @@ class ApplicationService:
             jd_data = await self._get_jd(jd_id)
             if jd_data is None:
                 raise AuthorizationDenied()
-            if str(jd_data.get("creator_account_id", "")) != str(principal.account_id):
+            if jd_data.creator_account_id != principal.account_id:
                 raise AuthorizationDenied()
         elif principal.active_context != Role.ADMIN and Role.ADMIN not in principal.roles:
             raise AuthorizationDenied()
 
         jd_data = jd_data if principal.active_context == Role.SENIOR else await self._get_jd(jd_id)
-        jd_title = jd_data.get("title", "") if jd_data else ""
+        jd_title = jd_data.title if jd_data else ""
 
         async with self._uow_factory() as uow:
             applications = await repo.list_jd_applicants(
@@ -373,18 +372,18 @@ class ApplicationService:
             raise AuthorizationDenied()
 
         jd_data = await self._get_jd(application.jd_id)
-        jd_title = jd_data.get("title", "") if jd_data else ""
-        jd_company = jd_data.get("company", "") if jd_data else ""
+        jd_title = jd_data.title if jd_data else ""
+        jd_company = jd_data.company if jd_data else ""
         return _application_to_dto(application, jd_title=jd_title, jd_company=jd_company)
 
     # ── Internal helpers ──────────────────────────────────────────────────
 
-    async def _get_jd(self, jd_id: UUID) -> dict | None:
-        """Fetch JD data via the injected jobs_api.
+    async def _get_jd(self, jd_id: UUID) -> JobDescriptionDTO | None:
+        """Fetch the JD through the injected ``JobsApi``.
 
-        Returns a dict with at least: status, title, company, application_channel,
-        creator_account_id, external_careers_url (if applicable). Returns None
-        if the JD does not exist or the jobs_api is not yet wired.
+        Returns the jobs module's ``JobDescriptionDTO`` (its published contract,
+        not a dict), or ``None`` if the JD does not exist or the jobs_api is not
+        wired.
         """
         if self._jobs_api is None:
             return None
