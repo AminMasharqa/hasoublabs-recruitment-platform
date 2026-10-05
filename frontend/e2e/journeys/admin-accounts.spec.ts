@@ -10,33 +10,9 @@
 
 import { expect, test } from '@playwright/test'
 
-import {
-  establishAdminSession,
-  registerVerifiedApprovedAccount,
-  SEED_ADMIN,
-} from '../support/backend'
+import { loginAsAdminThroughUi } from '../support/adminLogin'
+import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
 import { navigateInApp } from '../support/navigation'
-import { currentTotpCode } from '../support/totp'
-
-/** Signs in as the seeded Admin through the real UI, including the MFA step. */
-async function loginAsAdminThroughUi(
-  page: import('@playwright/test').Page,
-  totpSecret: string,
-): Promise<void> {
-  await page.goto('/login')
-  await page.locator('#login-email').fill(SEED_ADMIN.email)
-  await page.locator('#login-password').fill(SEED_ADMIN.password)
-  await page.locator('#login-role').selectOption('ADMIN')
-  await page.getByTestId('login-submit').click()
-
-  const mfaStep = page.getByTestId('mfa-code-step')
-  // The seeded Admin is MFA-enrolled, so the step always follows the credentials.
-  // Wait for it: an immediate isVisible() check races the 401 mfa_required
-  // response and silently skips the code (TASK-28 Bug 4).
-  await expect(mfaStep).toBeVisible()
-  await page.getByTestId('mfa-code-input').fill(currentTotpCode(totpSecret))
-  await page.getByTestId('mfa-code-submit').click()
-}
 
 test.describe('admin account lifecycle', () => {
   test('minting a Registration_Link shows the token once, as copyable text', async ({ page }) => {
@@ -91,14 +67,22 @@ test.describe('admin account lifecycle', () => {
     await navigateInApp(page, '/admin/accounts?status=Approved&role=CANDIDATE')
     await expect(page.getByTestId('accounts-list')).toBeVisible()
 
+    // The list is oldest first, so the seeded account is on the last page. Each
+    // page change renders the pending state (the list and its next control
+    // unmount) before the new rows, so a step is complete only once the first
+    // card has changed; reading the next control mid-load would end the walk
+    // early.
     const card = page.locator(`[data-testid="account-card-${account.id}"]`)
-    for (let attempt = 0; attempt < 20 && (await card.count()) === 0; attempt += 1) {
+    const firstCard = page.locator('[data-testid^="account-card-"]').first()
+    await expect(firstCard).toBeVisible()
+    for (let attempt = 0; attempt < 50 && (await card.count()) === 0; attempt += 1) {
       const nextPage = page.getByTestId('accounts-next-page')
-      if (!(await nextPage.isVisible().catch(() => false))) {
+      if ((await nextPage.count()) === 0) {
         break
       }
+      const previousFirst = (await firstCard.getAttribute('data-testid')) ?? ''
       await nextPage.click()
-      await expect(page.getByTestId('accounts-list')).toBeVisible()
+      await expect(firstCard).not.toHaveAttribute('data-testid', previousFirst)
     }
     await expect(card).toHaveAttribute('data-account-status', 'Approved')
 
