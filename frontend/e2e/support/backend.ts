@@ -356,3 +356,43 @@ export async function login(
 ): Promise<TokenPair> {
   return request<TokenPair>('POST', '/auth/login', { body: { email, password, role } })
 }
+
+/**
+ * The `after_id` cursor that opens the Admin account list (Requirement 16 AC3)
+ * on a page whose first row is `accountId`, or `null` when it is already first.
+ *
+ * The list is oldest first, so an account a journey just seeded is on the last
+ * page, and every run adds accounts in front of it. Walking there through the UI
+ * a page at a time grew past the test timeout; reading the same keyset order
+ * from the Backend_Api, 100 rows a request, does not. The cursor is the account
+ * immediately before `accountId`, because the next page starts right after it.
+ */
+export async function accountListCursorBefore(
+  adminToken: string,
+  filters: { readonly status: string; readonly role: RegistrationLinkRole },
+  accountId: string,
+): Promise<string | null> {
+  let previous: string | null = null
+  let afterId: string | null = null
+  for (;;) {
+    const query = new URLSearchParams({ status: filters.status, role: filters.role, limit: '100' })
+    if (afterId !== null) {
+      query.set('after_id', afterId)
+    }
+    const page = await request<readonly { readonly id: string }[]>(
+      'GET',
+      `/admin/accounts?${query.toString()}`,
+      { token: adminToken },
+    )
+    for (const row of page) {
+      if (row.id === accountId) {
+        return previous
+      }
+      previous = row.id
+    }
+    if (page.length < 100) {
+      throw new Error(`account ${accountId} is not in the ${filters.status} ${filters.role} list`)
+    }
+    afterId = previous
+  }
+}

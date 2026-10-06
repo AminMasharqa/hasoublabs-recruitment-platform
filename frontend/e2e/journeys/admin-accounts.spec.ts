@@ -11,7 +11,11 @@
 import { expect, test } from '@playwright/test'
 
 import { loginAsAdminThroughUi } from '../support/adminLogin'
-import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
+import {
+  accountListCursorBefore,
+  establishAdminSession,
+  registerVerifiedApprovedAccount,
+} from '../support/backend'
 import { navigateInApp } from '../support/navigation'
 
 test.describe('admin account lifecycle', () => {
@@ -60,30 +64,21 @@ test.describe('admin account lifecycle', () => {
       'lifecycle',
     )
 
+    // AccountFiltersPanel offers status/role only, no free-text search, and the
+    // list is oldest first, so the seeded account is on the last page. The
+    // cursor in the address bar (AC3) opens the list right on it; walking there
+    // a page at a time outgrew the test timeout as runs added accounts.
+    const cursor = await accountListCursorBefore(
+      admin.access_token,
+      { status: 'Approved', role: 'CANDIDATE' },
+      account.id,
+    )
+    const listPath = '/admin/accounts?status=Approved&role=CANDIDATE'
     await loginAsAdminThroughUi(page, secret)
-    // AccountFiltersPanel offers status/role only, no free-text search — filter
-    // to CANDIDATE + Approved to narrow the walk, then page forward (AC3) until
-    // this test's own seeded account is on screen.
-    await navigateInApp(page, '/admin/accounts?status=Approved&role=CANDIDATE')
+    await navigateInApp(page, cursor === null ? listPath : `${listPath}&after_id=${cursor}`)
     await expect(page.getByTestId('accounts-list')).toBeVisible()
 
-    // The list is oldest first, so the seeded account is on the last page. Each
-    // page change renders the pending state (the list and its next control
-    // unmount) before the new rows, so a step is complete only once the first
-    // card has changed; reading the next control mid-load would end the walk
-    // early.
     const card = page.locator(`[data-testid="account-card-${account.id}"]`)
-    const firstCard = page.locator('[data-testid^="account-card-"]').first()
-    await expect(firstCard).toBeVisible()
-    for (let attempt = 0; attempt < 50 && (await card.count()) === 0; attempt += 1) {
-      const nextPage = page.getByTestId('accounts-next-page')
-      if ((await nextPage.count()) === 0) {
-        break
-      }
-      const previousFirst = (await firstCard.getAttribute('data-testid')) ?? ''
-      await nextPage.click()
-      await expect(firstCard).not.toHaveAttribute('data-testid', previousFirst)
-    }
     await expect(card).toHaveAttribute('data-account-status', 'Approved')
 
     // Req 16 AC10, AC16: suspend requires a reason and a confirmation dialog —

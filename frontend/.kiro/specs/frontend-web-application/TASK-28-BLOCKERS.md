@@ -19,9 +19,18 @@ Since the previous update:
   suspend, the closed role). The closed role was also a conflict between the
   specs.
 - **`verify:api`:** fixed for CRLF checkouts.
+- **2026-10-06, `admin-accounts` suspend (test defect, regressed):** the walk to
+  the seeded account went through the UI one 20-row page at a time. The list is
+  oldest first and every run adds Approved Candidates (260 by now), so the walk
+  outgrew the 30 s test timeout. Now `e2e/support/backend.ts::accountListCursorBefore`
+  reads the same keyset order from the API, 100 rows a request, and the test
+  opens the list with `after_id` in the address bar (AC3). The seeded account is
+  then the first row. It passes again.
 
 Still open:
-- **Need decisions:** Bug 5, and pre-fix history for Bugs 5 and 12.
+- ~~**Need decisions:** Bug 5, and pre-fix history for Bugs 5 and 12.~~ Bug 5 is
+  fixed (2026-10-06). The decision was to accept the break: pre-fix rows stay
+  as written.
 - **Environment:** a MinIO replacement.
 - **Spec owners:** the Req 4 AC12 / Req 7 AC6 note in Bug 13's section.
 
@@ -681,7 +690,7 @@ screens. Three of them then fail further on, for reasons that are not Bug 4:
 
 ---
 
-## Bug 5 — the audit hash chain fails verification on every entry (µs hashed, ms stored)
+## Bug 5 — the audit hash chain fails verification on every entry (µs hashed, ms stored) — **FIXED 2026-10-06**
 
 **Found by fixing Bug 1: the first real run of `verify_audit_chain` reported a
 tamper.** It is not a tamper. It does mean R8 AC8's tamper detection is currently
@@ -724,6 +733,34 @@ happens, so someone has to choose between seeding
 `hasoub:audit:chain_verify_cursor` past them and accepting a permanent reported
 break at id 1. That is a tamper-evidence call, which is why the fix was not made
 as a side effect of Bug 1.
+
+### What was changed — **FIXED 2026-10-06**
+
+- **History decision (Karim, 2026-10-06): accept the break.** Rows written
+  before the fix stay byte-identical. Nothing re-hashes them, and the verify
+  cursor is not seeded past them. The verifier and the Admin UI will keep
+  reporting the chain as broken at id 1 on the dev database, and the hourly job
+  keeps logging it. An environment whose log starts after this fix verifies
+  clean.
+- **Fix:** all three writers now truncate the timestamp to milliseconds before it
+  is both hashed and inserted, so the writer hashes exactly what PostgreSQL
+  stores. The writers are the `before_flush` hook (`platform/audit/hook.py`),
+  `append_audit_entry` and `append_failure_entry` (`modules/audit/repository.py`).
+  A caller-supplied `occurred_at` is truncated too. The helper is
+  `truncate_to_ms` in `platform/db/base.py`, and `utc_now` now uses it.
+  Truncating, rather than letting PostgreSQL convert, matters because PostgreSQL
+  *rounds* sub-millisecond input.
+- **Guard:** `tests/integration/test_audit_chain_ms_precision.py` writes through
+  each of the three paths on a real database, then runs `verify_chain_window`
+  over what they wrote. It **failed before the fix** (`(False, 1)`) and passes
+  after.
+- **Live on the dev database:** the audit tail was id 5103 when the fix went in.
+  After a full e2e run, ids 5104–5718 (615 entries) verify `(True, None)`. A
+  window of pre-fix rows (5000–5103) still fails at its first row, as decided.
+- **Bug 12's pre-fix rows** need nothing more. They hashed `'unknown'` exactly as
+  they stored it, so the timestamp was the only thing breaking verification.
+- **Suites:** backend unit 346 passed, integration 17 passed (`test_audit` still
+  excluded).
 
 ---
 
@@ -1100,7 +1137,8 @@ generated id and an explicit id. Both cases **fail before the fix** with
 
 **Not backfilled.** The 2,633 existing entries keep `'unknown'`. The log is
 append-only and hash-chained, so they can't be rewritten without breaking it.
-Like Bug 5, this needs a team decision on pre-fix history.
+They don't break the chain, because `'unknown'` was hashed as stored. Bug 5's
+decision (2026-10-06) covers them: pre-fix rows are left as written.
 
 ### The `audit` journey failure itself was a test defect
 
@@ -1339,8 +1377,9 @@ The other suites:
    journey passes.
 6. ~~Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5
    failure auditing.~~ **Done** (2026-10-05), with a unit guard and a live check.
-7. Bug 5 — needs the history decision recorded in its section before the code
-   change is worth making.
+7. ~~Bug 5 — needs the history decision recorded in its section before the code
+   change is worth making.~~ **Done** (2026-10-06). Accept the break; writers
+   hash at ms precision.
 
 Then re-run, in `frontend/`: `npm run typecheck; npm run lint; npm run verify:api;
 npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
