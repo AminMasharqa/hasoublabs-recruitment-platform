@@ -2,3 +2,6 @@ mfa_uri.txt
 
 # Local logs written by dev.sh
 .dev-logs/
+
+# Local admin credentials and TOTP secret written by backend/scripts/seed_admin.py
+.dev-secrets/

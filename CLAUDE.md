@@ -61,7 +61,9 @@ npm run test:e2e               # all of e2e/ (journeys + locale + a11y) against 
 
 `gen:api` and `verify:api` run `.ts` files directly with `node`, so they need a Node version with built-in type stripping. They read `BACKEND_ORIGIN` or `OPENAPI_URL` (see `frontend/.env.example`).
 
-**E2E preconditions** (details in `frontend/e2e/README.md`): the backend API and the ARQ worker must both be running. The database needs a seeded Approved Admin with enrolled MFA, because the API has no way to create the first Admin. Set `E2E_API_BASE_URL`, `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` and `E2E_ADMIN_TOTP_SECRET`, plus `E2E_MAILPIT_BASE_URL` if it isn't the default. TOTP secrets are never committed. Playwright starts the dev server itself unless `E2E_BASE_URL` is set.
+**E2E preconditions** (details in `frontend/e2e/README.md`): the backend API and the ARQ worker must both be running. The database needs a seeded Approved Admin with enrolled MFA, because the API has no way to create the first Admin: `backend/scripts/seed_admin.py` (or `./dev.sh --seed-admin`) creates one and writes the `E2E_*` variables to the gitignored `.dev-secrets/admin.env.{sh,ps1}`. Otherwise set `E2E_API_BASE_URL`, `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` and `E2E_ADMIN_TOTP_SECRET`, plus `E2E_MAILPIT_BASE_URL` if it isn't the default. TOTP secrets are never committed.
+
+**Local stack:** `./dev.sh` at the repo root starts the compose services, recreates OpenBao's transit key if needed, migrates, and runs the API, worker and Vite (logs in `.dev-logs/`). Playwright starts the dev server itself unless `E2E_BASE_URL` is set.
 
 The full pipeline gate, in order: `npm run typecheck; npm run lint; npm run verify:api; npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
 

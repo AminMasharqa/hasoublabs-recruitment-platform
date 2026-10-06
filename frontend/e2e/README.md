@@ -38,11 +38,12 @@ variable or CLI command that creates the *first* Admin account (see
 deliberate backend-side omission this frontend spec does not reach, so the
 journey suite cannot provision it itself.
 
-Before running `test:e2e` against a fresh database, create one Admin account by
-whatever means your environment provides (a one-off SQL insert, a backend
-management command if one is added later, or a manual walk through the Web_Client
-against a database seeded with a Registration_Link inserted by hand) and enrol
-its multi-factor secret once. Then point the suite at it:
+Before running `test:e2e` against a fresh database, seed one with
+`backend/scripts/seed_admin.py` (or `./dev.sh --seed-admin` from the repository
+root). It creates an Approved Admin, enrols its MFA through the running API, and
+writes every variable below to the gitignored `.dev-secrets/admin.env.sh` and
+`.dev-secrets/admin.env.ps1`. Load one of those, or point the suite at another
+Admin by hand:
 
 ```powershell
 $env:E2E_ADMIN_EMAIL = "admin@example.test"

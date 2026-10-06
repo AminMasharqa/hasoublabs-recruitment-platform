@@ -4,6 +4,8 @@
 #   ./dev.sh               start everything; Ctrl+C stops the three app processes
 #   ./dev.sh --skip-deps   skip `uv sync` and `npm install`
 #   ./dev.sh --no-frontend start the backend only
+#   ./dev.sh --seed-admin  also create/reset the local Admin and enrol its MFA
+#                          (backend/scripts/seed_admin.py; secrets go to .dev-secrets/)
 #
 # Runs in Git Bash on Windows, and on macOS and Linux. Needs docker, uv and npm.
 # Docker containers keep running after Ctrl+C; stop them with
@@ -23,11 +25,13 @@ WEB_URL="http://localhost:5173"
 
 SKIP_DEPS=0
 WITH_FRONTEND=1
+SEED_ADMIN=0
 for arg in "$@"; do
   case "$arg" in
     --skip-deps) SKIP_DEPS=1 ;;
     --no-frontend) WITH_FRONTEND=0 ;;
-    -h | --help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --seed-admin) SEED_ADMIN=1 ;;
+    -h | --help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $arg (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -148,7 +152,7 @@ if bao read "transit/keys/$TRANSIT_KEY" >/dev/null 2>&1; then
 else
   bao write -f "transit/keys/$TRANSIT_KEY" >/dev/null
   warn "Created a NEW transit key $TRANSIT_KEY. Data encrypted under the old one (MFA"
-  warn "secrets, national IDs) can't be decrypted: re-seed the admin and re-enrol MFA."
+  warn "secrets, national IDs) can't be decrypted. Re-enrol the admin with --seed-admin."
 fi
 
 # ── 3. Backend ────────────────────────────────────────────────────────────────
@@ -165,6 +169,11 @@ start api "$BACKEND" uv run uvicorn app.main:app --reload --host 127.0.0.1 --por
 start worker "$BACKEND" uv run arq app.worker.WorkerSettings
 wait_for_url api "$API_URL/api/docs" "$PID_api" 120
 echo "API is up"
+
+if [[ $SEED_ADMIN -eq 1 ]]; then
+  step "Seeding the local Admin (backend/scripts/seed_admin.py)"
+  (cd "$BACKEND" && uv run python scripts/seed_admin.py)
+fi
 
 # ── 4. Frontend ───────────────────────────────────────────────────────────────
 if [[ $WITH_FRONTEND -eq 1 ]]; then

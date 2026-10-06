@@ -21,6 +21,14 @@ ARQ worker and the Vite dev server. It prints the URLs when ready, and Ctrl+C
 stops the three app processes. Run `./dev.sh --help` for options. Logs are in
 `.dev-logs/`.
 
+The API cannot create the first Admin, so seed one with `./dev.sh --seed-admin`
+(or `uv run python scripts/seed_admin.py` from `backend/` while the API runs).
+It defaults to `e2e-admin@example.com` / `correct-horse-battery-staple`, and
+writes the TOTP secret to the gitignored `.dev-secrets/`. Add
+`.dev-secrets/admin-mfa-uri.txt` to an authenticator app to sign in by hand, or
+`source .dev-secrets/admin.env.sh` before running the e2e suite. Re-run it after
+OpenBao restarts, because the old MFA secret can no longer be decrypted.
+
 ## Backend
 
 ```powershell
