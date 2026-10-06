@@ -61,20 +61,27 @@ services:
     restart: unless-stopped
 
   # ── MinIO — S3-compatible object storage for CVs (Wave B) ──────────────────
+  # The public image is gone, so this builds a pinned release from source
+  # (docker/minio/Dockerfile). The first `docker compose up` compiles it.
   minio:
-    image: minio/minio:latest
+    build: ./docker/minio
+    image: hasoub-minio:RELEASE.2025-10-15T17-29-55Z
     container_name: hasoub-minio
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      # DEV ONLY: a static KMS key so SSE-KMS works without KES. Every CV write
+      # requests SSE-KMS with key id OPENBAO_TRANSIT_KEY (R5 AC16), so the key
+      # name before the colon must match it. Production uses KES backed by OpenBao.
+      MINIO_KMS_SECRET_KEY: "hasoub-data-key:Tx8XEo31KEVX64cb+dqorH5P3s/PtC8NTejqQBuWD1Y="
     ports:
       - "9000:9000" # S3 API (matches MINIO_ENDPOINT in .env)
-      - "9001:9001" # Web console
+      - "${MINIO_CONSOLE_PORT:-9001}:9001" # Web console. Override where Windows reserves 9001
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 10
