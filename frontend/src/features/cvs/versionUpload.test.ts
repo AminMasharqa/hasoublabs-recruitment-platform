@@ -17,6 +17,7 @@ import type { ApiClient, ApiSuccess } from '../../api/client'
 
 import type { CvUploadAccepted, UploadProgress } from './versionRules'
 import {
+  apiConnectionCarriesStreams,
   CV_VERSIONS_PATH,
   escapeMultipartFilename,
   multipartParts,
@@ -249,5 +250,62 @@ describe('uploadCvVersion (Req 11 AC10, AC11)', () => {
 
     const serialize = stub.calls[0]?.init.bodySerializer as () => unknown
     expect(serialize()).not.toBe(serialize())
+  })
+})
+
+// ── The transport choice ──────────────────────────────────────────────────────
+
+/** Resource-timing entries as `performance.getEntriesByType('resource')` lists them. */
+function timingsOf(...entries: readonly [initiatorType: string, nextHopProtocol: string][]) {
+  return () => entries.map(([initiatorType, nextHopProtocol]) => ({ initiatorType, nextHopProtocol }))
+}
+
+describe('apiConnectionCarriesStreams (Req 11 AC10)', () => {
+  it('is true only when the latest Backend_Api request travelled over HTTP/2 or later', () => {
+    expect(apiConnectionCarriesStreams(timingsOf(['fetch', 'h2']))).toBe(true)
+    expect(apiConnectionCarriesStreams(timingsOf(['fetch', 'h3']))).toBe(true)
+    expect(apiConnectionCarriesStreams(timingsOf(['fetch', 'h2'], ['fetch', 'http/1.1']))).toBe(false)
+  })
+
+  it('is false when the protocol is unproven', () => {
+    // No request yet, or a cross-origin response without Timing-Allow-Origin,
+    // which the platform reports as an empty protocol.
+    expect(apiConnectionCarriesStreams(timingsOf())).toBe(false)
+    expect(apiConnectionCarriesStreams(timingsOf(['fetch', '']))).toBe(false)
+    // A stylesheet over h2 says nothing about the Backend_Api connection.
+    expect(apiConnectionCarriesStreams(timingsOf(['link', 'h2']))).toBe(false)
+  })
+})
+
+describe('uploadCvVersion transport (Req 11 AC10)', () => {
+  // Chromium supports request streams but refuses one over HTTP/1.1 before a
+  // byte is sent (ERR_H2_OR_QUIC_REQUIRED), so every upload failed there.
+  it('sends FormData over HTTP/1.1 even where the platform supports request streams', async () => {
+    const stub = backend()
+    await uploadCvVersion(stub.api, {
+      variantId: 'v1',
+      file: fileOf(16),
+      timings: timingsOf(['fetch', 'http/1.1']),
+    })
+
+    const serialize = stub.calls[0]?.init.bodySerializer as () => unknown
+    expect(serialize()).toBeInstanceOf(FormData)
+    expect(stub.calls[0]?.init).not.toHaveProperty('duplex')
+  })
+
+  it('streams the body, with its own boundary, over HTTP/2', async () => {
+    const stub = backend()
+    await uploadCvVersion(stub.api, {
+      variantId: 'v1',
+      file: fileOf(16),
+      timings: timingsOf(['fetch', 'h2']),
+    })
+
+    const serialize = stub.calls[0]?.init.bodySerializer as () => unknown
+    expect(serialize()).toBeInstanceOf(ReadableStream)
+    expect(stub.calls[0]?.init).toMatchObject({ duplex: 'half' })
+    expect(stub.calls[0]?.init.headers).toMatchObject({
+      'Content-Type': expect.stringMatching(/^multipart\/form-data; boundary=/),
+    })
   })
 })

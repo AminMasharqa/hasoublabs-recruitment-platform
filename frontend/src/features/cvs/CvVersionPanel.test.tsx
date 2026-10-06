@@ -215,6 +215,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
 })
 
 function renderPanel(api: ApiClient) {
@@ -250,6 +251,11 @@ function reportedPercentage(): number {
 
 describe('the upload progress indicator (Req 11 AC10)', () => {
   it('reports the transferred byte percentage as the transport takes the body', async () => {
+    // The body streams only over a connection proven to be HTTP/2 or later, read
+    // from the Api_Client's earlier requests; jsdom records none, so say so here.
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([
+      { initiatorType: 'fetch', nextHopProtocol: 'h2' } as PerformanceResourceTiming,
+    ])
     const user = userEvent.setup()
     const stub = backend()
     const { container } = renderPanel(stub.api)

@@ -17,19 +17,25 @@
  * over as a stream that counts what the transport takes
  * ({@link streamedMultipartBody}).
  *
- * Request streaming is a Chromium-only capability at the time of writing, and a
- * browser without it rejects a stream body outright — so the transport is chosen
- * per platform ({@link supportsRequestStreaming}): where streaming is
- * unavailable the body is a plain `FormData`, which every browser encodes
+ * Request streaming is a Chromium-only capability at the time of writing, a
+ * browser without it rejects a stream body outright, and Chromium itself sends one
+ * only over HTTP/2 or later: over HTTP/1.1 it fails the request before a byte
+ * leaves (`ERR_H2_OR_QUIC_REQUIRED`). So the body streams only when both are
+ * known: the platform accepts a stream ({@link supportsRequestStreaming}) and the
+ * Backend_Api connection is proven to carry one ({@link apiConnectionCarriesStreams}).
+ * Otherwise the body is a plain `FormData`, which every browser encodes
  * natively, and progress then reports the two counts that platform does make
  * observable — nothing transferred before the request, everything transferred
  * when the Backend_Api accepts it. No figure between them is invented, because a
  * progress bar that moves on a timer rather than on bytes tells the Candidate
  * something untrue about a 10 MB upload on a slow connection.
  *
- * The capability is decided by reading `duplex` off `Request.prototype`, which
- * allocates nothing, issues nothing and reads no `Response` — this module makes
- * no HTTP call of its own (Requirement 3 AC1).
+ * Both are read from what the platform already holds: `duplex` on
+ * `Request.prototype`, and the protocol resource timing recorded for the
+ * Api_Client's earlier requests. Neither allocates a request or reads a
+ * `Response`, so this module still makes no HTTP call of its own
+ * (Requirement 3 AC1). An unproven protocol, including a cross-origin response
+ * without `Timing-Allow-Origin` (reported as an empty string), means `FormData`.
  *
  * ## Why the body is built by a serializer rather than passed as a value
  *
@@ -202,6 +208,36 @@ export function supportsRequestStreaming(): boolean {
   )
 }
 
+/** The resource-timing fields the protocol check reads. */
+export type ResourceTimingLike = Pick<PerformanceResourceTiming, 'initiatorType' | 'nextHopProtocol'>
+
+/** A source of resource-timing entries, oldest first. */
+export type TimingSource = () => readonly ResourceTimingLike[]
+
+/** The protocols Chromium sends a request stream over. */
+const STREAMING_PROTOCOLS: ReadonlySet<string> = new Set(['h2', 'h3'])
+
+/** The entries `performance` holds, or none where the platform has no timeline. */
+export function performanceTimings(): readonly ResourceTimingLike[] {
+  if (typeof performance === 'undefined' || typeof performance.getEntriesByType !== 'function') {
+    return []
+  }
+  return performance.getEntriesByType('resource') as PerformanceResourceTiming[]
+}
+
+/**
+ * Whether the latest Backend_Api request travelled over HTTP/2 or later (AC10).
+ *
+ * The Api_Client is the only caller of `fetch` (Requirement 3 AC1), so the
+ * `fetch`-initiated entries are its requests.
+ */
+export function apiConnectionCarriesStreams(timings: TimingSource = performanceTimings): boolean {
+  const latest = timings()
+    .filter((entry) => entry.initiatorType === 'fetch')
+    .at(-1)
+  return latest !== undefined && STREAMING_PROTOCOLS.has(latest.nextHopProtocol)
+}
+
 /** What one upload names. */
 export interface UploadVersionRequest {
   readonly variantId: string
@@ -215,6 +251,8 @@ export interface UploadVersionRequest {
    * unavailable — a test, or a platform probe that was answered elsewhere.
    */
   readonly withoutStreaming?: boolean
+  /** Where the connection's protocol is read from; `performance` by default. */
+  readonly timings?: TimingSource
 }
 
 /** The init the Api_Client accepts for this operation. */
@@ -232,9 +270,10 @@ export async function uploadCvVersion(
   api: ApiClient,
   request: UploadVersionRequest,
 ): Promise<CvUploadAccepted> {
-  const { variantId, file, onProgress, signal, withoutStreaming = false } = request
+  const { variantId, file, onProgress, signal, withoutStreaming = false, timings } = request
   const report: UploadProgressListener = onProgress ?? (() => undefined)
-  const streaming = !withoutStreaming && supportsRequestStreaming()
+  const streaming =
+    !withoutStreaming && supportsRequestStreaming() && apiConnectionCarriesStreams(timings)
   const parts = multipartParts(file)
 
   /**
