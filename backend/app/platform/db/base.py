@@ -36,10 +36,18 @@ NAMING_CONVENTION: dict[str, str] = {
 UtcTimestampMs = TIMESTAMP(timezone=True, precision=3)
 
 
+def truncate_to_ms(value: datetime) -> datetime:
+    """Return ``value`` truncated to the millisecond precision ``timestamptz(3)`` keeps.
+
+    PostgreSQL *rounds* sub-millisecond input, so anything hashed or compared
+    against a stored timestamp must be truncated here before it is written.
+    """
+    return value.replace(microsecond=(value.microsecond // 1000) * 1000)
+
+
 def utc_now() -> datetime:
     """Return the current UTC instant truncated to millisecond precision."""
-    now = datetime.now(UTC)
-    return now.replace(microsecond=(now.microsecond // 1000) * 1000)
+    return truncate_to_ms(datetime.now(UTC))
 
 
 class Base(DeclarativeBase):

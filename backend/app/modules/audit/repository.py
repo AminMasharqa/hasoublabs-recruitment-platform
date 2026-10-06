@@ -36,6 +36,7 @@ from app.modules.audit.models import (
     AuditActorIdentity,
     AuditLogEntry,
 )
+from app.platform.db.base import truncate_to_ms, utc_now
 
 if TYPE_CHECKING:
 
@@ -233,8 +234,10 @@ async def append_audit_entry(
         .with_for_update(skip_locked=False)  # waits; the advisory lock above guards us
     )
 
-    # 3. Build the entry fields used for hashing (no hash columns yet).
-    ts = occurred_at or datetime.now(UTC)
+    # 3. Build the entry fields used for hashing (no hash columns yet). The
+    #    timestamp is hashed as stored, at ms precision, or the verifier
+    #    re-hashes a different value (Bug 5).
+    ts = truncate_to_ms(occurred_at) if occurred_at else utc_now()
     entry_fields: dict[str, Any] = {
         "actor_identity_id": str(actor_identity_id),
         "action": action,
@@ -315,7 +318,7 @@ async def append_failure_entry(
             ).one_or_none()
             tail_hash = tail_row[0] if tail_row else None
 
-            ts = occurred_at or datetime.now(UTC)
+            ts = truncate_to_ms(occurred_at) if occurred_at else utc_now()
             entry_fields: dict[str, Any] = {
                 "actor_identity_id": str(actor_identity_id),
                 "action": action,

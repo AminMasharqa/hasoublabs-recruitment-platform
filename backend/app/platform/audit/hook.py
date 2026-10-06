@@ -37,7 +37,6 @@ Excluded from capture
 from __future__ import annotations
 
 import contextlib
-from datetime import UTC, datetime
 import enum
 import logging
 from typing import TYPE_CHECKING, Any
@@ -46,6 +45,8 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy import event, inspect, text
 from sqlalchemy.orm import Session as SyncSession
+
+from app.platform.db.base import utc_now
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -344,7 +345,8 @@ def register_audit_capture(target: object) -> None:  # noqa: ARG001
             ).one_or_none()
             prev_hash: bytes | None = tail_row[0] if tail_row else None
 
-            now = datetime.now(UTC)
+            # Hashed as stored: occurred_at is timestamptz(3) (Bug 5).
+            now = utc_now()
 
             for entry_data in entries_to_write:
                 entry_fields: dict[str, Any] = {
