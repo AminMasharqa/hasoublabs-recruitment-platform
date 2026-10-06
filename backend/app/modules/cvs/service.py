@@ -460,7 +460,7 @@ class CvUploadService:
                 # Promote: server-side copy quarantine → available
                 dest_key = version.object_key  # same key, different bucket
                 try:
-                    await self._object_store.copy_object(
+                    promoted = await self._object_store.copy_object(
                         source_bucket=self._quarantine_bucket,
                         source_key=version.object_key,
                         dest_bucket=self._available_bucket,
@@ -483,12 +483,15 @@ class CvUploadService:
                     scan_result=scan_result,
                     scanned_at=scanned_at,
                 )
-                # Bucket update (not covered by update_version_scan)
+                # Bucket update (not covered by update_version_scan). The copy has
+                # its own store-assigned version id; the quarantine one does not
+                # exist in the available bucket.
                 await repo.promote_version(
                     uow.session,
                     version,
                     object_key=dest_key,
                     bucket=self._available_bucket,
+                    object_version_id=promoted.version_id,
                 )
             else:
                 await repo.update_version_scan(

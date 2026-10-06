@@ -31,7 +31,46 @@ from app.platform.security.guards import (
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
+    from app.config import Settings
+    from app.platform.jobs.queue import ArqTaskQueue
+    from app.platform.storage.minio_store import MinioObjectStore
+
 _LOG = logging.getLogger(__name__)
+
+
+async def _setup_object_store(settings: Settings) -> MinioObjectStore:
+    """Build the CV object store, creating and checking its buckets first.
+
+    The buckets are created with object lock on first boot. An existing bucket
+    without object lock fails boot, because the lock cannot be added later
+    (R5 AC4).
+    """
+    from app.platform.storage.minio_store import (  # noqa: PLC0415
+        MinioObjectStore,
+        build_minio_client,
+        ensure_cv_buckets,
+        minio_settings_from_config,
+    )
+
+    minio_settings = minio_settings_from_config(settings)
+    minio_client = build_minio_client(minio_settings)
+    await ensure_cv_buckets(minio_client, minio_settings)
+    return MinioObjectStore(minio_client, minio_settings)
+
+
+async def _setup_task_queue(application: FastAPI, settings: Settings) -> ArqTaskQueue:
+    """Open the ARQ pool and wrap it in the ``TaskQueue`` producers depend on.
+
+    Producers call ``TaskQueue.enqueue``; the raw pool only has ``enqueue_job``.
+    The pool stays on ``app.state`` so shutdown can close it.
+    """
+    import arq  # noqa: PLC0415
+
+    from app.platform.jobs.queue import ArqTaskQueue  # noqa: PLC0415
+
+    pool = await arq.create_pool(arq.connections.RedisSettings.from_dsn(str(settings.valkey_url)))
+    application.state.arq_pool = pool
+    return ArqTaskQueue(pool)
 
 
 async def _setup_services(application: FastAPI) -> None:
@@ -158,38 +197,26 @@ async def _setup_services(application: FastAPI) -> None:
     application.state.auth_service = auth_service
 
     # ── CV services ───────────────────────────────────────────────────────────
-    from app.platform.storage.minio_store import MinioObjectStore  # noqa: PLC0415
     from app.modules.cvs.service import (  # noqa: PLC0415
         CvVariantService,
         CvUploadService,
         CvIntegrityService,
     )
 
-    from app.platform.storage.minio_store import (  # noqa: PLC0415
-        build_minio_client,
-        minio_settings_from_config,
-    )
-    minio_settings = minio_settings_from_config(settings)
-    minio_client = build_minio_client(minio_settings)
-    object_store = MinioObjectStore(minio_client, minio_settings)
+    object_store = await _setup_object_store(settings)
     application.state.object_store = object_store
 
     cv_variant_service = CvVariantService(uow_factory)
     application.state.cv_variant_service = cv_variant_service
 
-    # ARQ queue stub — the real ARQ context is available only in the worker;
-    # in the web process we use a simple enqueue wrapper that dispatches via Valkey.
-    import arq  # noqa: PLC0415
-
-    arq_pool = await arq.create_pool(arq.connections.RedisSettings.from_dsn(str(settings.valkey_url)))
-    application.state.arq_pool = arq_pool
+    task_queue = await _setup_task_queue(application, settings)
 
     cv_upload_service = CvUploadService(
         uow_factory,
         object_store=object_store,
         available_bucket=settings.minio_cv_bucket,
         quarantine_bucket=settings.minio_cv_quarantine_bucket,
-        arq_queue=arq_pool,
+        arq_queue=task_queue,
     )
     application.state.cv_upload_service = cv_upload_service
 
@@ -300,7 +327,7 @@ async def _setup_services(application: FastAPI) -> None:
     report_service = ReportService(uow_factory)
     application.state.report_service = report_service
 
-    export_service = ExportService(uow_factory, arq_queue=arq_pool)
+    export_service = ExportService(uow_factory, arq_queue=task_queue)
     application.state.export_service = export_service
 
     reporting_api = DefaultReportingApi(uow_factory)
@@ -382,6 +409,11 @@ def create_app() -> FastAPI:
         )
         response: Response = await call_next(request)  # type: ignore[operator]
         response.headers["X-Request-ID"] = request.state.request_id
+        if settings.is_development:
+            # Matches the CORS policy above. The Web_Client streams a CV upload
+            # only once it can read an HTTP/2+ protocol from its requests'
+            # resource timing, which a browser hides cross-origin without this.
+            response.headers["Timing-Allow-Origin"] = "*"
         return response
 
     # ── Exception handlers ────────────────────────────────────────────────────

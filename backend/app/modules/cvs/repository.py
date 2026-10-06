@@ -301,8 +301,13 @@ async def promote_version(
     *,
     object_key: str,
     bucket: str,
+    object_version_id: str,
 ) -> None:
-    """Mark a version as Available and update its bucket after scan clearance."""
+    """Mark a version as Available and point it at its promoted copy.
+
+    ``object_version_id`` is the version the available bucket assigned to the
+    copy, so a download pins that exact snapshot.
+    """
     await session.execute(
         update(CvVersion)
         .where(CvVersion.id == version.id)
@@ -310,11 +315,13 @@ async def promote_version(
             state=CvVersionState.AVAILABLE,
             bucket=bucket,
             object_key=object_key,
+            object_version_id=object_version_id,
         )
     )
     # Keep in-memory object consistent
     version.state = CvVersionState.AVAILABLE
     version.bucket = bucket
+    version.object_version_id = object_version_id
     # object_key is immutable after insert; the promotion key should be the same
     await session.flush()
 
