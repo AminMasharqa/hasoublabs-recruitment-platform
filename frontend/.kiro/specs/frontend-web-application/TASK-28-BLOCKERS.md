@@ -8,8 +8,38 @@ and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
 defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
 code paths that reach them; all three are recorded below.
 
-Update 2026-10-05 (latest): E2E is **73 passed / 6 failed**, and all 6
-remaining failures are blocked only by MinIO being unavailable.
+Update 2026-10-06 (latest): **E2E is 79 passed / 0 failed.** The full gate is
+green except the known baseline: the 2 slow `JobNewScreen` vitest tests
+(1273/1275), and `tests/integration/test_audit` still excluded.
+
+- **MinIO:** compose now builds a pinned release from source
+  (`backend/docker/minio/Dockerfile`). Images and binaries are no longer
+  published. See "Environment left behind".
+- **Unblocking the CV path exposed seven defects in a row.** They are Bugs 14–20.
+  Nothing on that path had ever run end to end: buckets never created, uploads
+  never sent, the API frozen, the scan never queued, the worker crashing, ClamAV
+  never called, and downloads never served.
+- **Test defects fixed:** the CV file-input locator, PDF fixtures pikepdf
+  rejects, apply journeys without an Available CV, and a wait on English-only
+  text. Shared helpers are in `e2e/support/cvs.ts`.
+- **Bug 5** fixed (accept the break), and the `admin-accounts` walk (below).
+
+Open follow-ups from this round:
+- **R5 AC16 SSE-KMS is not wired.** Neither the upload nor the promotion passes an
+  `SseSpec`, so CVs are stored unencrypted at rest. Compose's static dev KMS key
+  is ready for it.
+- **`semgrep/module-boundaries.yml` is invalid** (duplicate `paths:` key), so
+  `uvx semgrep --config semgrep/` exits 7 and the module-boundary rules have never
+  run. `auth-dependency.yml` alone passes.
+- **mypy's 74 errors are worth triaging.** One of them (`main.py:208`,
+  `ArqRedis` passed as `TaskQueue`) was Bug 17.
+- `repo.promote_version` mutates with a bulk `UPDATE`, which the audit
+  `before_flush` hook does not see.
+- Versions dead-lettered while Bug 18 was live stay PendingScan in the dev
+  database (test data only).
+
+Update 2026-10-05: E2E is **73 passed / 6 failed**, and all 6 remaining failures
+are blocked only by MinIO being unavailable.
 
 Since the previous update:
 - **Fixed:** Bug 6 (failure audit entries), Bug 11 (review journey races),
@@ -31,7 +61,7 @@ Still open:
 - ~~**Need decisions:** Bug 5, and pre-fix history for Bugs 5 and 12.~~ Bug 5 is
   fixed (2026-10-06). The decision was to accept the break: pre-fix rows stay
   as written.
-- **Environment:** a MinIO replacement.
+- ~~**Environment:** a MinIO replacement.~~ Built from source (2026-10-06).
 - **Spec owners:** the Req 4 AC12 / Req 7 AC6 note in Bug 13's section.
 
 Update 2026-10-05 (earlier): **Bugs 3, 4 and most of Bug 10 fixed**, plus the
@@ -1247,6 +1277,129 @@ so, AC12 should name AC6 (and Req 5 AC1's `mfa_required`) as its exceptions.
 
 ---
 
+## Bug 14 — the CV buckets are never created: `ensure_cv_buckets` has no caller — **FIXED 2026-10-06**
+
+`platform/storage/minio_store.py::ensure_cv_buckets` creates `cvs` and
+`cvs-quarantine` with object lock (COMPLIANCE) and versioning, and refuses an
+existing bucket without object lock (R5 AC4). It was implemented and unit-tested,
+but nothing called it, so a fresh MinIO had no buckets and every upload would
+have failed with NoSuchBucket.
+
+- **Fix:** `app/main.py::_setup_object_store` runs it at startup, as its
+  docstring always said. A misconfigured bucket now fails boot.
+- **Guard:** `tests/unit/test_object_store_startup.py` covers creation and the
+  refusal of an unlocked bucket.
+- **Note:** the API now needs MinIO reachable to boot.
+
+## Bug 15 — every CV upload fails in Chromium over HTTP/1.1: the body is a request stream — **FIXED 2026-10-06 (frontend)**
+
+For R11 AC10's byte progress, `features/cvs/versionUpload.ts` sends the body as a
+`ReadableStream` (`duplex: 'half'`). Chromium only sends a request stream over
+HTTP/2 or later, and fails it before a byte leaves over HTTP/1.1
+(`ERR_H2_OR_QUIC_REQUIRED`). The feature check (`'duplex' in Request.prototype`)
+tests the API, not the connection, so every Chromium upload failed with "The
+server sent a response the application could not read". The server logged only
+the preflight.
+
+- **Decision (Karim, 2026-10-06):** stream only on a proven HTTP/2+ connection.
+- **Fix:** `apiConnectionCarriesStreams` reads `nextHopProtocol` from the
+  resource timing of the Api_Client's latest `fetch`. It streams on `h2` or
+  `h3`, and sends `FormData` otherwise, including when the protocol is unknown.
+  It makes no extra request. On HTTP/1.1 progress reports 0% then 100%.
+- **Backend:** in development, responses carry `Timing-Allow-Origin: *`,
+  mirroring the CORS policy. Without it a cross-origin page sees an empty
+  protocol. Production allows no cross-origin callers, so there the Web_Client
+  is same-origin and needs no header.
+- **Guards:** `versionUpload.test.ts` (an HTTP/1.1 upload sends `FormData` even
+  where streams are supported; h2 streams), `CvVersionPanel.test.tsx` (the
+  progress test now states its h2 connection) and
+  `tests/unit/test_timing_allow_origin.py`.
+
+## Bug 16 — the API freezes on the first CV upload on Windows: python-magic loads an MSYS DLL — **FIXED 2026-10-06 (dev environment)**
+
+Content-based MIME detection does a lazy `import magic` inside the async upload
+handler. On Windows, python-magic's loader tries `msys-magic-1.dll`, which Git
+Bash puts on PATH, and loading that DLL into a native Python hangs. The whole
+event loop froze (py-spy: `magic/loader.py` inside `ctypes.CDLL`). Started from
+PowerShell, the import fails instead and every upload is refused. Either way, no
+Windows developer could upload a CV.
+
+- **Decision (Karim, 2026-10-06):** a Windows-only dependency.
+- **Fix:** `pyproject.toml` uses `python-magic==0.4.27` off Windows and
+  `python-magic-bin==0.4.14` on Windows (same `magic` API, bundled libmagic and
+  database). Linux, CI and production are unchanged.
+
+## Bug 17 — CV uploads 500 and exports never start: producers get the raw ARQ pool — **FIXED 2026-10-06**
+
+`CvUploadService` and `ExportService` call `TaskQueue.enqueue`, but
+`_setup_services` passed them the `ArqRedis` pool, which only has
+`enqueue_job`. Every upload that passed validation stored the file, then raised
+`AttributeError` and answered 500. Every export stayed pending forever, because
+`ExportService` logs and swallows the failure. mypy had flagged it
+(`main.py:208`).
+
+- **Fix:** `app/main.py::_setup_task_queue` wraps the pool in `ArqTaskQueue`, used
+  by both. The pool stays on `app.state` for shutdown.
+- **Guard:** `tests/unit/test_task_queue_wiring.py`.
+
+## Bug 18 — every CV scan job crashes: `cvs/tasks.py` builds the object store wrongly — **FIXED 2026-10-06**
+
+`scan_cv` and `verify_cv_checksums` built `MinioSettings` without its required
+`buckets`, and `MinioObjectStore` without its settings. Both raised `TypeError`
+before doing any work. Scans were dead-lettered after 3 tries, and every version
+stayed PendingScan. `scan_cv` also passed the raw redis pool as its queue
+(Bug 17 again).
+
+- **Fix:** `_object_store(settings)` uses `minio_settings_from_config`, like the
+  web process, and the queue is `ArqTaskQueue(ctx["redis"])`.
+- **Guard:** `tests/unit/test_cv_tasks_object_store.py`.
+
+## Bug 19 — no CV was ever virus-scanned: a missing client meant "clean" — **FIXED 2026-10-06**
+
+`scan_cv` imported `pyclamd`, which is not a dependency. Its `except ImportError`
+branch marked the version clean (logging "dev mode"), so every CV became
+Available unscanned, in every environment. ClamAV ran in compose, but nothing
+called it (R5 AC3).
+
+- **Decision (Karim, 2026-10-06):** a native client that fails closed.
+- **Fix:** `app/platform/security/clamav.py::scan_bytes` speaks clamd's INSTREAM
+  protocol on asyncio streams, with no dependency. Anything other than OK or
+  FOUND (unreachable, timeout, ERROR) raises `UpstreamUnavailable`. The job then
+  retries and dead-letters, and the version stays PendingScan. The ImportError
+  fallback is gone.
+- **Guards:** `tests/unit/test_security/test_clamav.py` (fake clamd: the framing,
+  OK, FOUND, ERROR and unreachable).
+- **Live:** clean data answers OK, and EICAR answers `Eicar-Test-Signature`, from
+  the compose ClamAV. In e2e, every scan logs `status: clean`.
+- **Consequence:** devs need ClamAV running (about 1.5 GB) for CVs to become
+  Available.
+
+## Bug 20 — downloads of Available CVs fail: promotion keeps the quarantine copy's version id — **FIXED 2026-10-06**
+
+A clean scan copies the file to the available bucket, and the copy gets its own
+store-assigned version id. `complete_scan` discarded the `PutResult` and
+`promote_version` never updated `object_version_id`, so every download asked
+the available bucket for a version that only exists in quarantine
+(`NoSuchVersion`). The client reported "The download did not finish".
+
+- **Fix:** `promote_version` takes and stores the copy's `object_version_id`.
+- **Guard:** `tests/unit/test_cv_scan_promotion.py`.
+
+### The CV journeys' own test defects — **FIXED 2026-10-06 (tests)**
+
+- `#cv-version-file` never existed. Mantine's FileInput puts that test id on its
+  button, so files now go to the hidden `input[type="file"]`
+  (`e2e/support/cvs.ts::cvFileInput`).
+- The fixtures were bytes that start with `%PDF`, and pikepdf rejects them.
+  `minimalPdf(marker)` builds a valid one-page PDF with a correct xref table.
+- The apply journeys created an empty variant. Applying needs an *Available*
+  version, so `createVariantWithAvailableCv` uploads one and waits for the scan,
+  and those tests take a longer timeout.
+- That wait first matched the English "Available". It now waits for the download
+  control to be enabled (AC13), which works in every locale.
+
+---
+
 ## Failure attribution
 
 ### Original run — 34 failures
@@ -1385,6 +1538,18 @@ Then re-run, in `frontend/`: `npm run typecheck; npm run lint; npm run verify:ap
 npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
 
 ## Environment left behind
+
+- 2026-10-06:
+  - **MinIO** is `hasoub-minio:RELEASE.2025-10-15T17-29-55Z`, built from source by
+    `docker compose up` / `build` (`backend/docker/minio/Dockerfile`; the first
+    build takes a few minutes). A static dev-only KMS key named
+    `hasoub-data-key` is set for SSE-KMS.
+  - **The console host port is configurable** (`MINIO_CONSOLE_PORT`, default
+    9001). Windows reserves 9001 on this machine, so the local `.env` sets 9011.
+  - **ClamAV must be running** for CVs to become Available (Bug 19 fails closed).
+  - **Restarting the worker:** the new process waits up to the lease TTL before
+    it becomes scheduler leader and drains email, so registration e2e right after
+    a restart can miss its Verification_Code.
 
 - 2026-10-05: the dev database is at **`0011_seed_skill_taxonomy` (head)**.
   - **MinIO is not running.** Its public image is no longer pullable, so a

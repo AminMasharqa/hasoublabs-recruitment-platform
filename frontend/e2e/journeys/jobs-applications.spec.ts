@@ -18,6 +18,7 @@ import {
   login,
   registerVerifiedApprovedAccount,
 } from '../support/backend'
+import { createVariantWithAvailableCv, CV_SCAN_TIMEOUT_MS } from '../support/cvs'
 import { navigateInApp } from '../support/navigation'
 
 /**
@@ -47,18 +48,11 @@ async function completeMinimalProfile(
   await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
 }
 
-async function createCvVariant(page: import('@playwright/test').Page): Promise<void> {
-  await navigateInApp(page, '/candidate/cvs')
-  await page.getByTestId('cv-variant-create-open').click()
-  await page.getByTestId('cv-variant-create-name').fill('E2E Apply CV')
-  await page.getByTestId('cv-variant-create-submit').click()
-  await expect(page.getByTestId('cv-variant-list')).toBeVisible()
-}
-
 test.describe('job browse -> apply -> track', () => {
   test('a Candidate finds a published role, applies, and sees it in their own list', async ({
     page,
   }) => {
+    test.setTimeout(CV_SCAN_TIMEOUT_MS + 60_000)
     const admin = await establishAdminSession()
     const senior = await registerVerifiedApprovedAccount(admin.access_token, 'SENIOR', 'jobs-senior')
     const seniorTokens = await login(senior.email, senior.password, 'SENIOR')
@@ -72,12 +66,12 @@ test.describe('job browse -> apply -> track', () => {
     await page.locator('#login-role').selectOption('CANDIDATE')
     await page.getByTestId('login-submit').click()
 
-    // Req 9 AC13 / Req 12 AC7: apply is gated on a Complete profile plus a
-    // CV_Variant — both seeded here so this journey's own assertions are about
+    // Req 9 AC13 / Req 12 AC7: apply is gated on a Complete profile plus an
+    // Available CV version, which waits on the worker's scan — both seeded here so this journey's own assertions are about
     // browsing and applying, not about profile/CV completion (see
     // `journeys/profile.spec.ts` and `journeys/cv.spec.ts` for those).
     await completeMinimalProfile(page, candidate.email)
-    await createCvVariant(page)
+    await createVariantWithAvailableCv(page, 'E2E Apply CV')
 
     // Req 12 AC1-AC2: the published role is findable through the browse filters —
     // the free-text search narrows the list to the one role this test created.

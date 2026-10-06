@@ -18,12 +18,14 @@ import { createHash } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 import { establishAdminSession, registerVerifiedApprovedAccount } from '../support/backend'
+import { cvFileInput, CV_SCAN_TIMEOUT_MS, minimalPdf } from '../support/cvs'
 import { navigateInApp } from '../support/navigation'
 
 test.describe('CV upload and download', () => {
   test('an uploaded CV becomes downloadable once scanned, under its original filename', async ({
     page,
   }) => {
+    test.setTimeout(CV_SCAN_TIMEOUT_MS + 60_000)
     const admin = await establishAdminSession()
     const candidate = await registerVerifiedApprovedAccount(admin.access_token, 'CANDIDATE', 'cv')
 
@@ -47,13 +49,11 @@ test.describe('CV upload and download', () => {
     await card.getByRole('link').click()
     await expect(page.getByTestId('cv-variant-screen')).toBeVisible()
 
-    // Req 11 AC8-AC10: a real PDF-shaped file, uploaded through the real file
-    // input and multipart request.
+    // Req 11 AC8-AC10: a structurally valid PDF (the Backend_Api opens it before
+    // accepting it), uploaded through the real file input and multipart request.
     const fileName = 'e2e-primary-cv.pdf'
-    const fileContent = Buffer.from(
-      `%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF\ne2e-marker-${Date.now()}`,
-    )
-    await page.locator('#cv-version-file').setInputFiles({
+    const fileContent = minimalPdf(`e2e-marker-${Date.now()}`)
+    await cvFileInput(page).setInputFiles({
       name: fileName,
       mimeType: 'application/pdf',
       buffer: fileContent,
@@ -67,7 +67,7 @@ test.describe('CV upload and download', () => {
     // well past the Backend_Api's own 10-second poll interval to absorb ClamAV's
     // own scan latency (see the module doc on cold-start definitions).
     const versionState = page.getByTestId('cv-version-state-1')
-    await expect(versionState).not.toHaveText(/Pending/i, { timeout: 120_000 })
+    await expect(versionState).not.toHaveText(/Pending/i, { timeout: CV_SCAN_TIMEOUT_MS })
 
     // Req 11 AC16: an Available version downloads under its original filename
     // with the bytes that were uploaded.
@@ -106,10 +106,10 @@ test.describe('CV upload and download', () => {
     const card = page.locator('[data-testid^="variant-card-"]', { hasText: 'E2E Pending CV' })
     await card.getByRole('link').click()
 
-    await page.locator('#cv-version-file').setInputFiles({
+    await cvFileInput(page).setInputFiles({
       name: 'e2e-pending-cv.pdf',
       mimeType: 'application/pdf',
-      buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
+      buffer: minimalPdf(`e2e-pending-${Date.now()}`),
     })
     await page.getByTestId('cv-version-upload-submit').click()
 

@@ -37,6 +37,7 @@ import {
   login,
   registerVerifiedApprovedAccount,
 } from '../support/backend'
+import { createVariantWithAvailableCv, CV_SCAN_TIMEOUT_MS } from '../support/cvs'
 import { navigateInApp } from '../support/navigation'
 import { submitReview } from '../support/reviews'
 
@@ -233,6 +234,7 @@ test.describe('tri-locale coverage', () => {
 
   for (const locale of LOCALES) {
     test(`application submission in ${locale}: dir and mirrored layout`, async ({ page }) => {
+      test.setTimeout(CV_SCAN_TIMEOUT_MS + 60_000)
       const admin = await establishAdminSession()
       const senior = await registerVerifiedApprovedAccount(
         admin.access_token,
@@ -258,8 +260,8 @@ test.describe('tri-locale coverage', () => {
       await page.locator('#login-role').selectOption('CANDIDATE')
       await page.getByTestId('login-submit').click()
 
-      // A minimal Complete profile and one CV_Variant, the preconditions the
-      // apply gate reads (Req 9 AC13) — this block's own subject is the dialog's
+      // A minimal Complete profile and an Available CV version, the
+      // preconditions the apply gate reads (Req 9 AC13) — this block's own subject is the dialog's
       // direction and layout, not re-proving profile/CV completion.
       await navigateInApp(page, '/candidate/profile')
       await page.locator('#full_name').fill('Locale Apply Candidate')
@@ -277,10 +279,7 @@ test.describe('tri-locale coverage', () => {
       await page.getByTestId('profile-save').click()
       await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
 
-      await navigateInApp(page, '/candidate/cvs')
-      await page.getByTestId('cv-variant-create-open').click()
-      await page.getByTestId('cv-variant-create-name').fill('Locale Apply CV')
-      await page.getByTestId('cv-variant-create-submit').click()
+      await createVariantWithAvailableCv(page, 'Locale Apply CV')
 
       await navigateInApp(page, '/jobs')
       await page.getByTestId('job-filter-search').fill(job.title)
