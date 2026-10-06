@@ -45,7 +45,11 @@ dependencies = [
     "aiosmtplib==3.0.2",
 
     # File processing
-    "python-magic==0.4.27",
+    # Content-based MIME detection (R5). python-magic needs a native libmagic, which
+    # Windows lacks (and under Git Bash it loads msys-magic-1.dll, which hangs the
+    # process). python-magic-bin is the same `magic` API with libmagic bundled.
+    "python-magic==0.4.27; sys_platform != 'win32'",
+    "python-magic-bin==0.4.14; sys_platform == 'win32'",
     "pikepdf==9.4.2",
     "pypdf==5.1.0",
 
@@ -176,7 +180,6 @@ module = [
     "xlsxwriter.*",
     "opentelemetry.*",
     "trafilatura.*",
-    "pyclamd.*",
 ]
 ignore_missing_imports = true
 
