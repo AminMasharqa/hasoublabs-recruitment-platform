@@ -99,9 +99,11 @@ def _coerce(val: object) -> object:
 
 def _snapshot(instance: object, table: str) -> dict[str, Any]:
     """Build a full column snapshot of ``instance``, with sensitive fields redacted."""
-    from app.modules.audit.repository import (  # noqa: PLC0415
-        _REDACTED_SENTINEL,
+    from app.platform.audit.chain import (  # noqa: PLC0415
         REDACTED_COLUMNS,
+    )
+    from app.platform.audit.chain import (  # noqa: PLC0415
+        REDACTED_SENTINEL as _REDACTED_SENTINEL,
     )
 
     try:
@@ -125,9 +127,11 @@ def _snapshot(instance: object, table: str) -> dict[str, Any]:
 
 def _changed_attrs(instance: object, table: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return (before, after) dicts containing only the *changed* columns."""
-    from app.modules.audit.repository import (  # noqa: PLC0415
-        _REDACTED_SENTINEL,
+    from app.platform.audit.chain import (  # noqa: PLC0415
         REDACTED_COLUMNS,
+    )
+    from app.platform.audit.chain import (  # noqa: PLC0415
+        REDACTED_SENTINEL as _REDACTED_SENTINEL,
     )
 
     try:
@@ -254,14 +258,16 @@ def register_audit_capture(target: object) -> None:  # noqa: ARG001
         instances: object,  # noqa: ARG001
     ) -> None:
         """Inspect dirty/new/deleted sets and emit one audit row per entity."""
-        from app.modules.audit.models import AuditLogEntry  # noqa: PLC0415
-        from app.modules.audit.repository import (  # noqa: PLC0415
+        from app.platform.audit.chain import (  # noqa: PLC0415
             AUDIT_CHAIN_LOCK_KEY,
+            compute_entry_hash,
+        )
+        from app.platform.audit.context import (  # noqa: PLC0415
             audit_actor_id_var,
             audit_reason_var,
             audit_request_id_var,
-            compute_entry_hash,
         )
+        from app.platform.audit.models import AuditLogEntry  # noqa: PLC0415
 
         actor_id = audit_actor_id_var.get()
         reason = audit_reason_var.get()

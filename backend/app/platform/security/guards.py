@@ -358,8 +358,8 @@ def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None: 
     """
     import asyncio  # noqa: PLC0415
 
-    from app.modules.audit.api import record_denial_async  # noqa: PLC0415
-    from app.modules.audit.repository import audit_actor_id_var  # noqa: PLC0415
+    from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
+    from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
 
     request_id = getattr(request.state, "request_id", None)
     path = request.url.path
@@ -373,13 +373,17 @@ def _schedule_denial_audit(request: Request, exc: AuthorizationDenied) -> None: 
         # a live settings environment don't crash during handler setup.
         try:
             from app.platform.db.engine import get_engine  # noqa: PLC0415
-            engine_url = str(get_engine().url)
-            await record_denial_async(
+            # str(URL) masks the password as "***", and the separate connection
+            # then fails to authenticate (the Bug 6 defect, on this path).
+            engine_url = get_engine().url.render_as_string(hide_password=False)
+            await append_failure_entry(
+                engine_url=engine_url,
                 actor_identity_id=actor_identity_id,
+                action="auth.denied",
                 entity_type="Route",
                 entity_id=f"{method}:{path}",
+                error_type="AuthorizationDenied",
                 request_id=request_id,
-                engine_url=engine_url,
             )
         except Exception:  # noqa: BLE001
             logger.warning(

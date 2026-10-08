@@ -54,12 +54,33 @@ Open follow-ups from this round:
     `from app.modules.x import service`, `from fastapi.responses import ...`).
   - **`platform/db/metadata.py` is excluded.** It is Alembic's model registry.
 
-  The first run found **Bug 21** (below), now fixed. **Still open:** 7
-  `platform-imports-domain` findings, where `platform/audit/hook.py`,
-  `platform/db/unit_of_work.py` and `platform/security/guards.py` import
-  `app.modules.audit.repository`, `.models` and `.api`. Fixing them means moving
-  the audit-chain write primitives into `platform/audit`, which is a refactor in
-  its own right.
+  The first run found **Bug 21** (below), now fixed.
+  - **The 7 `platform-imports-domain` findings are FIXED 2026-10-08.**
+    `platform/audit/hook.py`, `platform/db/unit_of_work.py` and
+    `platform/security/guards.py` imported `app.modules.audit`. The audit
+    write side now lives in `platform/audit`:
+    - `models.py`: `audit_log` and `audit_actor_identities`, moved with
+      `git mv`;
+    - `context.py`: the actor, reason and request-ID context variables;
+    - `chain.py`: lock key, redaction map, hashing and the separate-connection
+      failure entry.
+  - **`modules/audit` keeps search, verification and anonymisation.**
+    `modules/audit/models.py` and `repository.py` re-export the moved names, so
+    callers are unchanged.
+  - **The unused `record_denial_async` is removed.**
+  - **`uvx semgrep --config semgrep/ app/` now reports 0 findings.**
+  - **Verification:**
+    - unit 361/361;
+    - integration 18/18;
+    - E2E 79/79;
+    - mypy unchanged (74);
+    - `alembic check` drift identical before and after the move;
+    - every module imports cleanly from a cold start.
+  - **Import cycle fixed along the way.** It predated the move:
+    `platform.audit.hook` → `platform.db` (`__init__`) → `unit_of_work` → the
+    hook, so importing the hook first failed. `UnitOfWork` now imports the hook
+    lazily.
+  - The move turned up **Bug 22** (fixed) and **Bug 23** (open), below.
 - **mypy's 74 errors are worth triaging.** One of them (`main.py:208`,
   `ArqRedis` passed as `TaskQueue`) was Bug 17.
 - `repo.promote_version` mutates with a bulk `UPDATE`, which the audit
@@ -1473,6 +1494,50 @@ follow-up at the top).
   excluded.
 - **E2E:** 79/79.
 
+## Bug 22 — authorization denials were never audited: the denial path passed a masked password — **FIXED 2026-10-08**
+
+The Bug 6 defect, on the denial path (R3 AC9, R8 AC5).
+- **Cause:** `guards.py::_schedule_denial_audit` passed `str(get_engine().url)`
+  to the failure-entry writer. `URL.__str__` masks the password as `***`, so
+  the separate connection failed authentication, and the best-effort write
+  swallowed the error.
+- **Evidence:** the dev database held 8,214 audit entries and **no**
+  `auth.denied` entry.
+- **Fix:** `render_as_string(hide_password=False)`. The guard now calls
+  `platform.audit.chain.append_failure_entry` directly.
+- **Guard:** `tests/unit/test_denial_audit_url.py`, which fails with
+  `'***' == 's3cret-pw'` when the old line is restored.
+- **Live:** an Admin `GET /jobs/{unknown id}` returned 403 and wrote
+  `auth.denied | Route | GET:/api/v1/jobs/<id> | AuthorizationDenied`, with the
+  response's `X-Request-ID`.
+
+## Bug 23 — every audit entry is attributed to `system`, with no request ID — **OPEN**
+
+R8 requires the actor on every entry. Nothing sets the request-scoped audit
+context:
+- `audit_actor_id_var`, `audit_reason_var` and `audit_request_id_var` (now in
+  `platform/audit/context.py`) are read by the hook, the UoW failure path and
+  the denial path.
+- No middleware or job ever calls `.set()` on them. Their defaults are
+  `SYSTEM_ACTOR_UUID` and `None`.
+
+**Evidence (dev database, 2026-10-08):**
+- All 8,214 entries have `actor_identity_id = 00000000-…` and a NULL
+  `request_id`.
+- `audit_actor_identities` has one row, the system sentinel.
+
+**What a fix needs:**
+- **Request middleware:** after authentication, resolve the Principal to an
+  actor identity (`upsert_actor_identity`: account, active role, display name,
+  email) and set the actor variable. Set the request-ID variable from
+  `request.state.request_id` for every request.
+- **Reasons:** services that take a reason (rejection, suspension) set the
+  reason variable.
+- **Jobs:** keep the system default.
+
+**Open question:** the actor upsert needs the display name and email, which
+live in `identity`. The middleware belongs in a composition root (`app/main.py`)
+or behind an `IdentityApi` call, because `platform` may not import `modules`.
 ## Failure attribution
 
 ### Original run — 34 failures

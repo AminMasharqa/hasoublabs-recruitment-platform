@@ -126,7 +126,6 @@ class TestModulePublicSurface:
         assert hasattr(m, "AuditApi")
         assert hasattr(m, "DefaultAuditApi")
         assert hasattr(m, "audit_api")
-        assert hasattr(m, "record_denial_async")
 
     def test_schemas_exports_dtos(self) -> None:
         from app.modules.audit import schemas as m

@@ -20,14 +20,13 @@ but it documents the dependency structure.
 
 from __future__ import annotations
 
-# ── Domain module tables (added as each module lands) ─────────────────────────
-# Section 9 (Salma) — audit tables registered.
-from app.modules.audit import models as _audit_models  # noqa: F401
 from app.platform.db.base import Base
 
 # ── Platform tables (Section 5, 6, 7) ─────────────────────────────────────────
 # These are already implemented and merged; importing them registers their
 # tables on Base.metadata.
+# Section 9 audit tables: platform-owned, because the before_flush hook writes them.
+from app.platform.audit import models as _audit_models  # noqa: F401
 from app.platform.jobs import models as _jobs_models  # noqa: F401
 from app.platform.mail import models as _mail_models  # noqa: F401
 from app.platform.notifications import models as _notifications_models  # noqa: F401

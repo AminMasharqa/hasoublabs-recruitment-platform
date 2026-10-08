@@ -290,7 +290,7 @@ class TestSensitiveColumnRedaction:
         assert "email_verifications.code_hash" in REDACTED_COLUMNS
 
     def test_redacted_sentinel_is_string(self) -> None:
-        from app.modules.audit.repository import _REDACTED_SENTINEL
+        from app.platform.audit.chain import REDACTED_SENTINEL as _REDACTED_SENTINEL
         assert isinstance(_REDACTED_SENTINEL, str)
         assert "[REDACTED]" in _REDACTED_SENTINEL
 

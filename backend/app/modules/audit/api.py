@@ -118,35 +118,8 @@ class DefaultAuditApi:
 audit_api: DefaultAuditApi = DefaultAuditApi()
 
 
-async def record_denial_async(
-    *,
-    actor_identity_id: uuid.UUID,
-    entity_type: str,
-    entity_id: str,
-    request_id: str | None,
-    engine_url: str,
-) -> None:
-    """Write an auth-denial audit entry on a *separate* connection (fire-and-forget).
-
-    Called from ``platform/security/guards.authorization_denied_handler`` so the
-    denial entry never joins the request's (non-existent at that point) transaction.
-    """
-    from app.modules.audit.repository import append_failure_entry  # noqa: PLC0415
-
-    await append_failure_entry(
-        engine_url=engine_url,
-        actor_identity_id=actor_identity_id,
-        action="auth.denied",
-        entity_type=entity_type,
-        entity_id=entity_id,
-        error_type="AuthorizationDenied",
-        request_id=request_id,
-    )
-
-
 __all__ = [
     "AuditApi",
     "DefaultAuditApi",
     "audit_api",
-    "record_denial_async",
 ]

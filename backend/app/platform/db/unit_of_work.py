@@ -34,7 +34,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from app.platform.audit.hook import register_audit_capture
 from app.platform.db.engine import get_engine, get_sessionmaker
 
 if TYPE_CHECKING:
@@ -70,6 +69,11 @@ class UnitOfWork:
         # Testcontainers engine without touching the process-wide singleton.
         self._sessionmaker = sessionmaker or get_sessionmaker()
         # Attach the audit capture listener once per sessionmaker instance.
+        # Imported here: the hook imports app.platform.db, whose __init__
+        # imports this module, so a module-level import is a cycle whenever the
+        # hook (or anything under app.platform.audit) is imported first.
+        from app.platform.audit.hook import register_audit_capture  # noqa: PLC0415
+
         register_audit_capture(self._sessionmaker)
         self._session: AsyncSession | None = None
 
@@ -117,8 +121,8 @@ class UnitOfWork:
     async def _write_failure_entry(self, exc: BaseException | None) -> None:
         """Write a failure audit entry on a separate short-lived connection."""
         try:
-            from app.modules.audit.repository import (  # noqa: PLC0415
-                append_failure_entry,
+            from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
+            from app.platform.audit.context import (  # noqa: PLC0415
                 audit_actor_id_var,
                 audit_reason_var,
                 audit_request_id_var,

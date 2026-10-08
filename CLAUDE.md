@@ -73,7 +73,7 @@ All paths in this section are relative to `backend/`.
 
 ### Layering (enforced by `semgrep/module-boundaries.yml`)
 
-- `app/platform/*` holds shared infrastructure (db, security, storage, mail, jobs, i18n, taxonomy, pagination, reference data, notifications, the audit hook). It **never imports `app.modules`**.
+- `app/platform/*` holds shared infrastructure (db, security, storage, mail, jobs, i18n, taxonomy, pagination, reference data, notifications, and the audit write side: the hook, the hash chain, the request audit context and the `audit_log` models). It **never imports `app.modules`**; `modules/audit` keeps search, verification and anonymisation.
 - `app/modules/<name>/` holds the domain modules: identity, profiles, cvs, jobs, applications, reviews, audit, reporting. Each has the same files: `router.py` (HTTP only), `api.py` (a Protocol plus a `Default*Api` implementation that other modules use), `service.py`, `repository.py`, `models.py`, `schemas.py`, `errors.py`, and optionally `tasks.py`.
 - A module may import another module **only** through its `api.py` or `schemas.py`.
 - `fastapi` may be imported only in `router.py` (and in `app/main.py`). Services stay transport-agnostic.
