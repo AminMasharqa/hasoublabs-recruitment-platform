@@ -1,80 +1,290 @@
 rules:
   # ─── Rule 1: Platform must not import domain modules ───────────────────────
   - id: platform-imports-domain
-    patterns:
-      - pattern: |
-          from app.modules.$MODULE import $X
-      - pattern-inside: |
-          # app/platform/...
+    pattern-either:
+      - pattern: from app.modules.$M import $X
+      - pattern: from app.modules import $X
+      - pattern: import app.modules.$M
     message: |
       Platform layer (`app/platform/`) must never import from a domain module
       (`app/modules/`). Dependency must be one-way: domain → platform.
-      Violation: importing from app.modules.$MODULE
     languages: [python]
     severity: ERROR
     paths:
       include:
-        - "app/platform/**/*.py"
+        - "app/platform/"
+      exclude:
+        # Alembic's model registry: it must import every module's models.py so
+        # autogenerate sees all tables. A composition root, like app/main.py.
+        - "app/platform/db/metadata.py"
 
   # ─── Rule 2: Domain modules must only import siblings through api.py ────────
-  - id: cross-module-internal-import
-    patterns:
-      - pattern: |
-          from app.modules.$OTHER_MODULE.$INTERNAL import $X
-      - pattern-not: |
-          from app.modules.$OTHER_MODULE.api import $X
-      - pattern-not: |
-          from app.modules.$OTHER_MODULE.schemas import $X
+  # One rule per module: a path glob cannot name "the module this file is in",
+  # so each rule is scoped to one module's directory and lets that module import
+  # its own internals. A new module under app/modules/ needs a rule here.
+  - id: cross-module-internal-import-applications
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!applications\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!applications$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
     message: |
       A module may import from another module ONLY through its `api.py` or
-      `schemas.py`. Importing `$INTERNAL` from `app.modules.$OTHER_MODULE`
-      violates the module-boundary contract.
-      Fix: use `from app.modules.$OTHER_MODULE.api import ...` instead.
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
     languages: [python]
     severity: ERROR
     paths:
       include:
-        - "app/modules/**/*.py"
-    # Exclude the module importing its own internals
+        - "app/modules/applications/"
+
+  - id: cross-module-internal-import-audit
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!audit\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!audit$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
     paths:
-      exclude:
-        - "app/modules/$OTHER_MODULE/**"
+      include:
+        - "app/modules/audit/"
+
+  - id: cross-module-internal-import-cvs
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!cvs\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!cvs$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/cvs/"
+
+  - id: cross-module-internal-import-identity
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!identity\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!identity$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/identity/"
+
+  - id: cross-module-internal-import-jobs
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!jobs\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!jobs$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/jobs/"
+
+  - id: cross-module-internal-import-profiles
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!profiles\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!profiles$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/profiles/"
+
+  - id: cross-module-internal-import-reporting
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!reporting\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!reporting$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/reporting/"
+
+  - id: cross-module-internal-import-reviews
+    # A whole-path regex on $MOD, because `from app.modules.$OTHER import ...`
+    # binds $OTHER to a dotted path (`cvs.errors`). The `[\w.]+$` anchors also
+    # reject a quirk where `import $MOD` matches a from-import and binds the
+    # rest of the line.
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: from $MOD import $X
+              - pattern: import $MOD
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!reviews\.)\w+\.(?!(?:api|schemas)$)[\w.]+$
+      - patterns:
+          - pattern: from $MOD import $X
+          - metavariable-regex:
+              metavariable: $MOD
+              regex: ^app\.modules\.(?!reviews$)\w+$
+          - metavariable-regex:
+              metavariable: $X
+              regex: ^(?!(?:api|schemas)$)
+    message: |
+      A module may import from another module ONLY through its `api.py` or
+      `schemas.py` (`$MOD`). This violates the module-boundary contract.
+      Fix: use what `app.modules.<module>.api` exposes instead.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/reviews/"
 
   # ─── Rule 3: No fastapi import outside router.py ────────────────────────────
   - id: fastapi-outside-router
-    patterns:
-      - pattern: |
-          import fastapi
-      - pattern-not-inside: |
-          # app/modules/.../router.py
+    pattern-either:
+      - pattern: import fastapi
+      - pattern: import fastapi.$S
+      - pattern: from fastapi import $X
+      - pattern: from fastapi.$S import $X
     message: |
-      `import fastapi` (or `from fastapi import ...`) is only allowed in
-      `router.py` files. Domain logic (service.py, repository.py, etc.)
-      must remain transport-agnostic and independently unit-testable.
+      `fastapi` may only be imported in `router.py` files. Domain logic
+      (service.py, repository.py, etc.) must remain transport-agnostic and
+      independently unit-testable.
     languages: [python]
     severity: ERROR
     paths:
       include:
-        - "app/modules/**/*.py"
+        - "app/modules/"
       exclude:
-        - "app/modules/**/router.py"
-        - "app/main.py"
-
-  - id: fastapi-from-import-outside-router
-    patterns:
-      - pattern: |
-          from fastapi import $X
-      - pattern-not-inside: |
-          # app/modules/.../router.py
-    message: |
-      `from fastapi import ...` is only allowed in `router.py` files.
-      Domain logic (service.py, repository.py, etc.) must remain
-      transport-agnostic.
-    languages: [python]
-    severity: ERROR
-    paths:
-      include:
-        - "app/modules/**/*.py"
-      exclude:
-        - "app/modules/**/router.py"
-        - "app/main.py"
+        - "router.py"
