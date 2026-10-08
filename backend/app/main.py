@@ -202,6 +202,7 @@ async def _setup_services(application: FastAPI) -> None:
         CvUploadService,
         CvIntegrityService,
     )
+    from app.platform.storage.sse import cv_sse_spec_from_config  # noqa: PLC0415
 
     object_store = await _setup_object_store(settings)
     application.state.object_store = object_store
@@ -217,6 +218,7 @@ async def _setup_services(application: FastAPI) -> None:
         available_bucket=settings.minio_cv_bucket,
         quarantine_bucket=settings.minio_cv_quarantine_bucket,
         arq_queue=task_queue,
+        sse=cv_sse_spec_from_config(settings),
     )
     application.state.cv_upload_service = cv_upload_service
 

@@ -25,9 +25,21 @@ green except the known baseline: the 2 slow `JobNewScreen` vitest tests
 - **Bug 5** fixed (accept the break), and the `admin-accounts` walk (below).
 
 Open follow-ups from this round:
-- **R5 AC16 SSE-KMS is not wired.** Neither the upload nor the promotion passes an
-  `SseSpec`, so CVs are stored unencrypted at rest. Compose's static dev KMS key
-  is ready for it.
+- ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
+  nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
+  - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on
+    both writes. `app/main.py` and `cvs/tasks.py::scan_cv` build it with
+    `cv_sse_spec_from_config` (key `OPENBAO_TRANSIT_KEY`, which matches compose's
+    static dev KMS key).
+  - **No TLS needed:** minio-py 7.2 and the MinIO server both accept SSE-KMS over
+    plain HTTP. The adapter docstring that said otherwise is corrected.
+  - **Guard:** `tests/unit/test_cv_sse_wiring.py`, which fails before the fix.
+  - **Live:** the `cv` and `jobs-applications` journeys pass. Every object they
+    wrote (3 in `cvs-quarantine`, 3 in `cvs`) stats as `aws:kms` under
+    `hasoub-data-key`.
+  - **Older objects stay plaintext.** The buckets are object-locked in
+    COMPLIANCE mode, so the 45 dev-test objects written before the fix can't be
+    rewritten. This is test data only.
 - **`semgrep/module-boundaries.yml` is invalid** (duplicate `paths:` key), so
   `uvx semgrep --config semgrep/` exits 7 and the module-boundary rules have never
   run. `auth-dependency.yml` alone passes.

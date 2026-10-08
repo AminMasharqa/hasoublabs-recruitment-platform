@@ -34,7 +34,7 @@ from app.modules.cvs.schemas import CvUploadResponse, CvVariantDTO, CvVersionDTO
 if TYPE_CHECKING:
     from app.platform.db.uow import UnitOfWork
     from app.platform.jobs.queue import TaskQueue
-    from app.platform.storage.base import ObjectStore
+    from app.platform.storage.base import ObjectStore, SseSpec
     from app.modules.cvs.models import CvVariant, CvVersion
 
 _LOG = logging.getLogger(__name__)
@@ -277,12 +277,17 @@ class CvUploadService:
         available_bucket: str,
         quarantine_bucket: str,
         arq_queue: TaskQueue,
+        sse: SseSpec | None,
     ) -> None:
         self._uow_factory = uow_factory
         self._object_store = object_store
         self._available_bucket = available_bucket
         self._quarantine_bucket = quarantine_bucket
         self._arq_queue = arq_queue
+        # R5 AC16: both CV writes (the upload and the promotion copy) ask MinIO
+        # to encrypt under this KMS key. Required so no composition root can
+        # forget it; ``None`` is only for tests that don't exercise encryption.
+        self._sse = sse
 
     # ── Upload ─────────────────────────────────────────────────────────────
 
@@ -378,6 +383,7 @@ class CvUploadService:
                     key=object_key,
                     data=data,
                     content_type=detected_mime,
+                    sse=self._sse,
                 )
             except Exception as exc:  # noqa: BLE001
                 _LOG.error(
@@ -466,6 +472,7 @@ class CvUploadService:
                         dest_bucket=self._available_bucket,
                         dest_key=dest_key,
                         source_version_id=version.object_version_id,
+                        sse=self._sse,
                     )
                 except Exception as exc:  # noqa: BLE001
                     _LOG.error(

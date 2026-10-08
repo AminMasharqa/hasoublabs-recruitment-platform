@@ -173,8 +173,8 @@ class ObjectStore(Protocol):
             data: The exact bytes to store.
             content_type: MIME type recorded on the object.
             metadata: User metadata stored alongside the object.
-            sse: Server-side-encryption request. ``None`` in Phase 1 Task 6.1;
-                populated by Task 6.2.
+            sse: Server-side-encryption request. ``None`` requests none; CV
+                writes pass the CV spec (R5 AC16).
 
         Returns:
             The bucket, key, store-assigned ``version_id`` and etag.
@@ -233,8 +233,8 @@ class ObjectStore(Protocol):
             dest_key: Destination object key.
             source_version_id: Exact source version; ``None`` copies the latest.
             metadata: Replacement user metadata for the destination object.
-            sse: Server-side-encryption request for the destination. ``None`` in
-                Task 6.1; populated by Task 6.2.
+            sse: Server-side-encryption request for the destination. ``None``
+                requests none; the CV promotion passes the CV spec (R5 AC16).
 
         Returns:
             The destination bucket, key, version id and etag.

@@ -52,6 +52,7 @@ async def scan_cv(ctx: dict, *, version_id: str, **_kwargs: object) -> dict:
     from app.platform.db.unit_of_work import UnitOfWork  # noqa: PLC0415
     from app.platform.jobs.queue import ArqTaskQueue  # noqa: PLC0415
     from app.platform.jobs.runtime import worker_session_factory  # noqa: PLC0415
+    from app.platform.storage.sse import cv_sse_spec_from_config  # noqa: PLC0415
 
     settings = get_settings()
     session_factory = worker_session_factory()
@@ -66,6 +67,8 @@ async def scan_cv(ctx: dict, *, version_id: str, **_kwargs: object) -> dict:
         quarantine_bucket=settings.minio_cv_quarantine_bucket,
         # ARQ puts its redis pool in ctx; producers need the TaskQueue over it.
         arq_queue=ArqTaskQueue(ctx["redis"]),
+        # The promotion copy is a new object and must be encrypted too (R5 AC16).
+        sse=cv_sse_spec_from_config(settings),
     )
 
     version_uuid = UUID(version_id)

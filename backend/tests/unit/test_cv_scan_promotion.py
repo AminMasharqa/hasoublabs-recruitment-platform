@@ -78,6 +78,7 @@ async def test_promotion_records_the_available_copy_version(
         available_bucket="cvs",
         quarantine_bucket="cvs-quarantine",
         arq_queue=None,  # type: ignore[arg-type]
+        sse=None,
     )
 
     await service.complete_scan(version.id, is_clean=True, scan_result="OK")

@@ -387,9 +387,9 @@ def _to_minio_sse(sse: SseSpec | None) -> Any:
 
     The MinIO client sends this as an ``aws:kms`` request; MinIO resolves the
     named External Key against its configured KMS (OpenBao) and encrypts the
-    object server-side. Note that SSE-KMS requires TLS to the endpoint, so a
-    non-TLS ``minio_secure=False`` endpoint must not be used with a live
-    SseSpec in a real deployment; the SDK enforces this itself.
+    object server-side. Neither the SDK (7.2) nor the server requires TLS for
+    SSE-KMS, so it works against the plain-HTTP dev endpoint; a real deployment
+    should still use ``minio_secure=True`` so the CV bytes are encrypted in transit.
 
     Args:
         sse: The server-side-encryption request, or ``None`` for no encryption.
