@@ -40,6 +40,7 @@ from app.platform.errors.base import (
 )
 from app.platform.mail.outbox import enqueue_email
 from app.platform.mail.templates import EmailTemplate
+from app.platform.middleware.context import use_reason
 from app.platform.notifications.models import NotificationType
 from app.platform.notifications.service import push, push_many
 from app.platform.security.errors import AuthenticationRequired
@@ -635,28 +636,29 @@ class AccountLifecycleService:
 
         Raises IllegalTransition for invalid (from, to) pairs.
         """
-        async with self._uow_factory() as uow:
-            session = uow.session
+        with use_reason(reason):
+            async with self._uow_factory() as uow:
+                session = uow.session
 
-            account = await repo.get_account_by_id(session, account_id)
-            if account is None:
-                from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
-                raise AuthorizationDenied()
+                account = await repo.get_account_by_id(session, account_id)
+                if account is None:
+                    from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
+                    raise AuthorizationDenied()
 
-            _assert_transition(account, to_status)
+                _assert_transition(account, to_status)
 
-            old_status = account.status
-            await repo.update_account_status(session, account, to_status)
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=old_status,
-                to_status=to_status,
-                actor_account_id=actor.account_id,
-                reason=reason,
-            )
+                old_status = account.status
+                await repo.update_account_status(session, account, to_status)
+                await repo.record_status_transition(
+                    session,
+                    account_id=account.id,
+                    from_status=old_status,
+                    to_status=to_status,
+                    actor_account_id=actor.account_id,
+                    reason=reason,
+                )
 
-            dto = _make_account_dto(account)
+                dto = _make_account_dto(account)
 
         return dto
 
@@ -676,69 +678,70 @@ class AccountLifecycleService:
             else AccountStatus.APPROVED_PENDING_MEETING
         )
 
-        async with self._uow_factory() as uow:
-            session = uow.session
+        with use_reason("Admin approval" + (" (fast-track)" if fast_track else "")):
+            async with self._uow_factory() as uow:
+                session = uow.session
 
-            account = await repo.get_account_by_id(session, account_id)
-            if account is None:
-                from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
-                raise AuthorizationDenied()
+                account = await repo.get_account_by_id(session, account_id)
+                if account is None:
+                    from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
+                    raise AuthorizationDenied()
 
-            _assert_transition(account, to_status)
+                _assert_transition(account, to_status)
 
-            old_status = account.status
-            await repo.update_account_status(session, account, to_status)
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=old_status,
-                to_status=to_status,
-                actor_account_id=actor.account_id,
-                reason="Admin approval" + (" (fast-track)" if fast_track else ""),
-            )
+                old_status = account.status
+                await repo.update_account_status(session, account, to_status)
+                await repo.record_status_transition(
+                    session,
+                    account_id=account.id,
+                    from_status=old_status,
+                    to_status=to_status,
+                    actor_account_id=actor.account_id,
+                    reason="Admin approval" + (" (fast-track)" if fast_track else ""),
+                )
 
-            # Push in-app notification to the account holder.
-            push(
-                session,
-                recipient_account_id=account.id,
-                notification_type=NotificationType.ACCOUNT_DECISION_RECORDED,
-                entity_type="Account",
-                entity_id=account.id,
-            )
+                # Push in-app notification to the account holder.
+                push(
+                    session,
+                    recipient_account_id=account.id,
+                    notification_type=NotificationType.ACCOUNT_DECISION_RECORDED,
+                    entity_type="Account",
+                    entity_id=account.id,
+                )
 
-            if to_status == AccountStatus.APPROVED_PENDING_MEETING:
-                # Notify admins that meeting is required.
-                admin_accounts = await repo.get_all_admin_accounts(session)
-                if admin_accounts:
-                    push_many(
+                if to_status == AccountStatus.APPROVED_PENDING_MEETING:
+                    # Notify admins that meeting is required.
+                    admin_accounts = await repo.get_all_admin_accounts(session)
+                    if admin_accounts:
+                        push_many(
+                            session,
+                            recipient_account_ids=[a.id for a in admin_accounts],
+                            notification_type=NotificationType.ONBOARDING_MEETING_REQUIRED,
+                            entity_type="Account",
+                            entity_id=account.id,
+                        )
+                    await enqueue_email(
                         session,
-                        recipient_account_ids=[a.id for a in admin_accounts],
-                        notification_type=NotificationType.ONBOARDING_MEETING_REQUIRED,
-                        entity_type="Account",
-                        entity_id=account.id,
+                        template=EmailTemplate.ONBOARDING_MEETING_REQUIRED,
+                        to_address=account.email,
+                        locale=account.language_preference,
+                        idempotency_key=f"meeting_required:{account.id}",
+                        payload={"full_name": account.email},
+                        recipient_account_id=account.id,
                     )
-                await enqueue_email(
-                    session,
-                    template=EmailTemplate.ONBOARDING_MEETING_REQUIRED,
-                    to_address=account.email,
-                    locale=account.language_preference,
-                    idempotency_key=f"meeting_required:{account.id}",
-                    payload={"full_name": account.email},
-                    recipient_account_id=account.id,
-                )
-            else:
-                # Fully approved.
-                await enqueue_email(
-                    session,
-                    template=EmailTemplate.ACCOUNT_APPROVED,
-                    to_address=account.email,
-                    locale=account.language_preference,
-                    idempotency_key=f"account_approved:{account.id}",
-                    payload={"full_name": account.email},
-                    recipient_account_id=account.id,
-                )
+                else:
+                    # Fully approved.
+                    await enqueue_email(
+                        session,
+                        template=EmailTemplate.ACCOUNT_APPROVED,
+                        to_address=account.email,
+                        locale=account.language_preference,
+                        idempotency_key=f"account_approved:{account.id}",
+                        payload={"full_name": account.email},
+                        recipient_account_id=account.id,
+                    )
 
-            dto = _make_account_dto(account)
+                dto = _make_account_dto(account)
 
         return dto
 
@@ -750,47 +753,48 @@ class AccountLifecycleService:
         reason: str,
     ) -> AccountDTO:
         """Reject an account and release its email slot."""
-        async with self._uow_factory() as uow:
-            session = uow.session
+        with use_reason(reason):
+            async with self._uow_factory() as uow:
+                session = uow.session
 
-            account = await repo.get_account_by_id(session, account_id)
-            if account is None:
-                from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
-                raise AuthorizationDenied()
+                account = await repo.get_account_by_id(session, account_id)
+                if account is None:
+                    from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
+                    raise AuthorizationDenied()
 
-            _assert_transition(account, AccountStatus.REJECTED)
+                _assert_transition(account, AccountStatus.REJECTED)
 
-            old_status = account.status
-            await repo.update_account_status(session, account, AccountStatus.REJECTED)
-            await repo.release_account_email(session, account)
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=old_status,
-                to_status=AccountStatus.REJECTED,
-                actor_account_id=actor.account_id,
-                reason=reason,
-            )
+                old_status = account.status
+                await repo.update_account_status(session, account, AccountStatus.REJECTED)
+                await repo.release_account_email(session, account)
+                await repo.record_status_transition(
+                    session,
+                    account_id=account.id,
+                    from_status=old_status,
+                    to_status=AccountStatus.REJECTED,
+                    actor_account_id=actor.account_id,
+                    reason=reason,
+                )
 
-            push(
-                session,
-                recipient_account_id=account.id,
-                notification_type=NotificationType.ACCOUNT_DECISION_RECORDED,
-                entity_type="Account",
-                entity_id=account.id,
-            )
+                push(
+                    session,
+                    recipient_account_id=account.id,
+                    notification_type=NotificationType.ACCOUNT_DECISION_RECORDED,
+                    entity_type="Account",
+                    entity_id=account.id,
+                )
 
-            await enqueue_email(
-                session,
-                template=EmailTemplate.ACCOUNT_REJECTED,
-                to_address=account.email,
-                locale=account.language_preference,
-                idempotency_key=f"account_rejected:{account.id}",
-                payload={"full_name": account.email, "reason": reason},
-                recipient_account_id=account.id,
-            )
+                await enqueue_email(
+                    session,
+                    template=EmailTemplate.ACCOUNT_REJECTED,
+                    to_address=account.email,
+                    locale=account.language_preference,
+                    idempotency_key=f"account_rejected:{account.id}",
+                    payload={"full_name": account.email, "reason": reason},
+                    recipient_account_id=account.id,
+                )
 
-            dto = _make_account_dto(account)
+                dto = _make_account_dto(account)
 
         return dto
 
@@ -862,29 +866,30 @@ class AccountLifecycleService:
         reason: str,
     ) -> AccountDTO:
         """Deactivate an Approved or Suspended account; release its email."""
-        async with self._uow_factory() as uow:
-            session = uow.session
+        with use_reason(reason):
+            async with self._uow_factory() as uow:
+                session = uow.session
 
-            account = await repo.get_account_by_id(session, account_id)
-            if account is None:
-                from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
-                raise AuthorizationDenied()
+                account = await repo.get_account_by_id(session, account_id)
+                if account is None:
+                    from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
+                    raise AuthorizationDenied()
 
-            _assert_transition(account, AccountStatus.DEACTIVATED)
+                _assert_transition(account, AccountStatus.DEACTIVATED)
 
-            old_status = account.status
-            await repo.update_account_status(session, account, AccountStatus.DEACTIVATED)
-            await repo.release_account_email(session, account)
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=old_status,
-                to_status=AccountStatus.DEACTIVATED,
-                actor_account_id=actor.account_id,
-                reason=reason,
-            )
+                old_status = account.status
+                await repo.update_account_status(session, account, AccountStatus.DEACTIVATED)
+                await repo.release_account_email(session, account)
+                await repo.record_status_transition(
+                    session,
+                    account_id=account.id,
+                    from_status=old_status,
+                    to_status=AccountStatus.DEACTIVATED,
+                    actor_account_id=actor.account_id,
+                    reason=reason,
+                )
 
-            dto = _make_account_dto(account)
+                dto = _make_account_dto(account)
 
         return dto
 

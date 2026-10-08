@@ -16,6 +16,7 @@ from app.platform.db.enums import ApplicationChannel, ApplicationStatus, JdStatu
 from app.platform.errors.base import ConflictingState, PreconditionUnmet, RateLimited
 from app.platform.mail.outbox import enqueue_email
 from app.platform.mail.templates import EmailTemplate
+from app.platform.middleware.context import use_reason
 from app.platform.notifications.models import NotificationType
 from app.platform.notifications.service import push, push_many
 
@@ -439,57 +440,58 @@ class ApplicationStatusService:
         """
         from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
 
-        async with self._uow_factory() as uow:
-            application = await repo.get_application(uow.session, application_id)
-            if application is None:
-                raise AuthorizationDenied()
+        with use_reason(reason):
+            async with self._uow_factory() as uow:
+                application = await repo.get_application(uow.session, application_id)
+                if application is None:
+                    raise AuthorizationDenied()
 
-            previous_status = application.status
-            await repo.update_application_status(uow.session, application, new_status)
-            await repo.record_status_transition(
-                uow.session,
-                application_id=application_id,
-                from_status=previous_status,
-                to_status=new_status,
-                actor_account_id=actor.account_id,
-                reason=reason,
-            )
-
-            # In-app notification → Candidate
-            push(
-                uow.session,
-                recipient_account_id=application.candidate_id,
-                notification_type=NotificationType.APPLICATION_STATUS_CHANGED,
-                entity_type="Application",
-                entity_id=application.id,
-            )
-
-            # Outbox email → Candidate
-            try:
-                candidate_account = await self._identity_api.get_account(
-                    application.candidate_id
-                )
-                await enqueue_email(
+                previous_status = application.status
+                await repo.update_application_status(uow.session, application, new_status)
+                await repo.record_status_transition(
                     uow.session,
-                    template=EmailTemplate.APPLICATION_STATUS_CHANGED,
-                    to_address=candidate_account.email,
-                    locale=candidate_account.language_preference,
-                    idempotency_key=(
-                        f"application-status-changed:{application_id}:{new_status.value}"
-                    ),
-                    payload={
-                        "full_name": candidate_account.email,
-                        "job_title": "",  # Caller enriches if needed; we avoid JD lookup
-                        "status": new_status.value,
-                    },
+                    application_id=application_id,
+                    from_status=previous_status,
+                    to_status=new_status,
+                    actor_account_id=actor.account_id,
+                    reason=reason,
+                )
+
+                # In-app notification → Candidate
+                push(
+                    uow.session,
                     recipient_account_id=application.candidate_id,
+                    notification_type=NotificationType.APPLICATION_STATUS_CHANGED,
+                    entity_type="Application",
+                    entity_id=application.id,
                 )
-            except Exception:  # noqa: BLE001
-                # Email failure should not abort the status update.
-                _LOG.warning(
-                    "applications: failed to enqueue status-changed email for application %s",
-                    application_id,
-                )
+
+                # Outbox email → Candidate
+                try:
+                    candidate_account = await self._identity_api.get_account(
+                        application.candidate_id
+                    )
+                    await enqueue_email(
+                        uow.session,
+                        template=EmailTemplate.APPLICATION_STATUS_CHANGED,
+                        to_address=candidate_account.email,
+                        locale=candidate_account.language_preference,
+                        idempotency_key=(
+                            f"application-status-changed:{application_id}:{new_status.value}"
+                        ),
+                        payload={
+                            "full_name": candidate_account.email,
+                            "job_title": "",  # Caller enriches if needed; we avoid JD lookup
+                            "status": new_status.value,
+                        },
+                        recipient_account_id=application.candidate_id,
+                    )
+                except Exception:  # noqa: BLE001
+                    # Email failure should not abort the status update.
+                    _LOG.warning(
+                        "applications: failed to enqueue status-changed email for application %s",
+                        application_id,
+                    )
 
         return ApplicationDTO(
             id=application.id,

@@ -1576,11 +1576,26 @@ one nothing set:
   They now carry their request ID. Naming the registrant needs a decision: the
   account is created in the same transaction as its first audited rows, so
   resolving its identity row needs different handling.
-- **No service sets a reason.** R8 AC2 wants the reason on entries for actions
-  that require one, such as rejection or suspension. The reasons are stored in
-  `account_status_transitions`, but nothing calls `use_reason(...)`, so audit
-  entries have `reason = NULL`. Services can now set it through
-  `platform.middleware.context.use_reason`.
+- ~~**No service sets a reason.**~~ **FIXED 2026-10-08.** R8 AC2 wants the
+  reason on entries for actions that require one.
+  - **Fix:** every UoW that records a status transition with a reason is
+    wrapped in `use_reason(...)`: `AccountLifecycleService._transition`
+    (suspend, reactivate, reopen, meeting), `approve`, `reject`, `deactivate`,
+    and `ApplicationStatusService.update_status`.
+  - **The scope is the whole UoW block,** because the hook runs when the UoW
+    flushes on exit. It is reset afterwards, so it cannot leak into later
+    writes.
+  - **Guard:** `tests/integration/test_audit_reason.py`. A rejection's
+    `Account.updated` and `AccountStatusTransition.created` entries carry the
+    reason. It fails on the old code with `None == '<reason>'`.
+  - **Live:** after one E2E run, the admin journey's suspension reason and the
+    approvals' reasons are on their audit entries. Unit 361/361, integration
+    21/21, E2E 79/79.
+- **Residency failures at registration are not audited (R8 AC1).**
+  `RegistrationService` raises `ResidencyValidationFailed` before it opens a
+  transaction, so no UoW runs and no failure entry is written. R8 AC1 lists
+  these failures explicitly. A fix would write a failure entry on that path, as
+  the denial handler does.
 
 ## Failure attribution
 
