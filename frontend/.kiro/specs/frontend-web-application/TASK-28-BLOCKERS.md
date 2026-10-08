@@ -40,9 +40,26 @@ Open follow-ups from this round:
   - **Older objects stay plaintext.** The buckets are object-locked in
     COMPLIANCE mode, so the 45 dev-test objects written before the fix can't be
     rewritten. This is test data only.
-- **`semgrep/module-boundaries.yml` is invalid** (duplicate `paths:` key), so
-  `uvx semgrep --config semgrep/` exits 7 and the module-boundary rules have never
-  run. `auth-dependency.yml` alone passes.
+- ~~**`semgrep/module-boundaries.yml` is invalid**~~ **FIXED 2026-10-08: the rules
+  run.** Three defects:
+  - A duplicate `paths:` key.
+  - An `exclude` glob using `$OTHER_MODULE`. Paths can't use metavariables.
+  - Comments used as `pattern-inside`.
+
+  Changes:
+  - **Rule 2 is now one rule per module.** Each matches the whole dotted path
+    with a regex, because `from app.modules.$OTHER import ...` binds `$OTHER`
+    to `cvs.errors`.
+  - **More import forms covered** (`import app.modules.x.y`,
+    `from app.modules.x import service`, `from fastapi.responses import ...`).
+  - **`platform/db/metadata.py` is excluded.** It is Alembic's model registry.
+
+  The first run found **Bug 21** (below), now fixed. **Still open:** 7
+  `platform-imports-domain` findings, where `platform/audit/hook.py`,
+  `platform/db/unit_of_work.py` and `platform/security/guards.py` import
+  `app.modules.audit.repository`, `.models` and `.api`. Fixing them means moving
+  the audit-chain write primitives into `platform/audit`, which is a refactor in
+  its own right.
 - **mypy's 74 errors are worth triaging.** One of them (`main.py:208`,
   `ArqRedis` passed as `TaskQueue`) was Bug 17.
 - `repo.promote_version` mutates with a bulk `UPDATE`, which the audit
@@ -1411,6 +1428,50 @@ the available bucket for a version that only exists in quarantine
   control to be enabled (AC13), which works in every locale.
 
 ---
+
+## Bug 21 — closing a Job_Description never closes its applications (R7 AC11) — **FIXED 2026-10-08**
+
+Found by the first working run of the module-boundary rules (see the semgrep
+follow-up at the top).
+
+### What was wrong
+- `JobDescriptionService.close` is what `POST /jobs/{id}/close` calls, and it
+  only set the JD's status. Its docstring left the cascade to the caller.
+- The cascade lived in `DefaultJobsApi.close_jd_cascade_applications`, which
+  nothing called. It also imported `applications.repository` inside a
+  `try/except ImportError`, which the boundary rule flagged.
+- Two more cascade copies existed:
+  - `ApplicationService.cascade_close_for_jd`, also unused.
+  - `DefaultApplicationsApi.cascade_close_for_jd`, which:
+    - ran in its own UoW, so it wasn't atomic with the JD close;
+    - recorded `from_status=None`;
+    - wrote transitions for *every* Closed application, including ones closed
+      earlier.
+- All of them used a bulk `UPDATE`, which the audit `before_flush` hook does
+  not see.
+- So every Submitted or Under Review application on a closed role stayed open.
+
+### What was changed
+- **`ApplicationsApi.cascade_close_for_jd(session, jd_id, *, actor_id)`** runs
+  on the caller's session, so the cascade commits or rolls back with the JD
+  close. `audit/api.py` already set the precedent for passing a session.
+- **`repository.close_applications_for_jd`** locks the non-terminal rows
+  (`FOR UPDATE`) and closes each one through the ORM, so every change is
+  audited. It returns each `(id, previous status)` so the history rows carry the
+  real `from_status`.
+- **`JobDescriptionService`** takes a required `applications_api` and cascades
+  inside `close()`. `app/main.py` builds `DefaultApplicationsApi` first. It
+  depends only on `IdentityApi`, so there is no cycle.
+- **The three unused or incorrect copies are removed.**
+
+### Verification
+- **Guard:** `tests/integration/test_jd_close_cascade.py` closes a JD with one
+  application in each status. Submitted and Under Review close, with history
+  rows giving their real previous status and the actor; Forwarded and Closed are
+  untouched. Removing the cascade call makes it fail.
+- **Backend:** unit 360/360. Integration 18/18, with `test_audit` still
+  excluded.
+- **E2E:** 79/79.
 
 ## Failure attribution
 

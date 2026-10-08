@@ -275,10 +275,20 @@ async def _setup_services(application: FastAPI) -> None:
     identity_api = DefaultIdentityApi(uow_factory)
     application.state.identity_api = identity_api
 
+    # ── ApplicationsApi (cross-module) ────────────────────────────────────────
+    # Built before the jobs services: closing a JD cascades to its applications
+    # through this API (R7 AC11). It depends only on IdentityApi, so no cycle.
+    from app.modules.applications.api import DefaultApplicationsApi  # noqa: PLC0415
+
+    applications_api = DefaultApplicationsApi(uow_factory, identity_api=identity_api)
+    application.state.applications_api = applications_api
+
     # ── Jobs services ─────────────────────────────────────────────────────────
     from app.modules.jobs.service import JobDescriptionService, JdExtractionService  # noqa: PLC0415
 
-    jd_service = JobDescriptionService(uow_factory, skill_resolver=skill_resolver)
+    jd_service = JobDescriptionService(
+        uow_factory, skill_resolver=skill_resolver, applications_api=applications_api
+    )
     application.state.jd_service = jd_service
 
     jd_extraction_service = JdExtractionService(uow_factory, skill_resolver=skill_resolver)
@@ -292,7 +302,6 @@ async def _setup_services(application: FastAPI) -> None:
 
     # ── Applications services ─────────────────────────────────────────────────
     from app.modules.applications.service import ApplicationService, ApplicationStatusService  # noqa: PLC0415
-    from app.modules.applications.api import DefaultApplicationsApi  # noqa: PLC0415
 
     application_service = ApplicationService(
         uow_factory,
@@ -308,9 +317,6 @@ async def _setup_services(application: FastAPI) -> None:
         identity_api=identity_api,
     )
     application.state.application_status_service = application_status_service
-
-    applications_api = DefaultApplicationsApi(uow_factory, identity_api=identity_api)
-    application.state.applications_api = applications_api
 
     # ── Reviews services ──────────────────────────────────────────────────────
     from app.modules.reviews.service import ReviewService  # noqa: PLC0415

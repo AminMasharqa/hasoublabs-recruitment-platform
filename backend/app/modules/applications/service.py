@@ -503,46 +503,5 @@ class ApplicationStatusService:
             updated_at=application.updated_at,
         )
 
-    async def cascade_close_for_jd(self, jd_id: UUID, *, actor_id: UUID) -> int:
-        """Close all non-terminal applications when a JD is closed (R7 AC11).
-
-        Should be called inside the same UoW that closes the JD so that the
-        cascade is atomic. Because the jobs module calls through ApplicationsApi,
-        which opens its own UoW, the atomicity relies on PostgreSQL's
-        synchronous commit behaviour within the same request.
-
-        Returns the number of applications that were closed.
-        """
-        async with self._uow_factory() as uow:
-            # Fetch the IDs of non-terminal applications before bulk-updating them
-            # so we can insert individual history rows with the correct from_status.
-            from sqlalchemy import select  # noqa: PLC0415
-            from app.modules.applications.models import Application  # noqa: PLC0415
-            from app.platform.db.enums import NON_TERMINAL_APPLICATION_STATUSES  # noqa: PLC0415
-
-            stmt = select(Application.id, Application.status).where(
-                Application.jd_id == jd_id,
-                Application.status.in_(list(NON_TERMINAL_APPLICATION_STATUSES)),
-            )
-            result = await uow.session.execute(stmt)
-            rows = result.fetchall()
-
-            if not rows:
-                return 0
-
-            count = await repo.close_applications_for_jd(uow.session, jd_id)
-
-            for row in rows:
-                await repo.record_status_transition(
-                    uow.session,
-                    application_id=row[0],
-                    from_status=row[1],
-                    to_status=ApplicationStatus.CLOSED,
-                    actor_account_id=actor_id,
-                    reason="JD closed — application auto-closed by cascade",
-                )
-
-        return count
-
 
 __all__ = ["ApplicationService", "ApplicationStatusService"]

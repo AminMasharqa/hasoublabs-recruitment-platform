@@ -69,20 +69,6 @@ class JobsApi(Protocol):
         """
         ...
 
-    async def close_jd_cascade_applications(
-        self, jd_id: UUID, actor_id: UUID
-    ) -> None:
-        """Close the JD and cascade-close all its open applications.
-
-        Called by ApplicationService when a JD is closed so both the JD status
-        change and application status changes commit atomically.
-
-        Args:
-            jd_id: The JD UUID.
-            actor_id: The account that triggered the close action (for audit).
-        """
-        ...
-
 
 # ── Default Implementation ─────────────────────────────────────────────────────
 
@@ -154,47 +140,6 @@ class DefaultJobsApi:
 
         async with self._uow_factory() as uow:
             return await repo.get_jd_skill_ids(uow.session, jd_id)
-
-    async def close_jd_cascade_applications(
-        self, jd_id: UUID, actor_id: UUID
-    ) -> None:
-        """Close a JD and all its open applications atomically.
-
-        This is the transactional boundary: both the JD status change and the
-        application status changes must commit together. The applications module
-        provides the cascade logic via its own repository; we call it here inside
-        a single UoW transaction.
-
-        Args:
-            jd_id: The JD UUID.
-            actor_id: The account triggering the close (for audit context).
-        """
-        from app.modules.jobs import repository as repo  # noqa: PLC0415
-        from app.platform.db.base import utc_now  # noqa: PLC0415
-        from app.platform.db.enums import JdStatus  # noqa: PLC0415
-        from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
-
-        async with self._uow_factory() as uow:
-            jd = await repo.get_jd(uow.session, jd_id)
-            if jd is None:
-                raise AuthorizationDenied()
-
-            if jd.status != JdStatus.CLOSED:
-                await repo.set_jd_status(
-                    uow.session,
-                    jd,
-                    JdStatus.CLOSED,
-                    closed_at=utc_now(),
-                )
-
-            # Attempt to cascade-close applications if the module is available.
-            # This import is conditional so the jobs module has no hard
-            # dependency on the applications module.
-            try:
-                from app.modules.applications import repository as app_repo  # noqa: PLC0415
-                await app_repo.close_applications_for_jd(uow.session, jd_id=jd_id)
-            except ImportError:
-                pass  # Applications module not yet available (staged deployment).
 
 
 __all__ = ["DefaultJobsApi", "JobsApi", "JobDescriptionDTO"]

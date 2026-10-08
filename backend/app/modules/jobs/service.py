@@ -45,6 +45,7 @@ from app.platform.security.principal import Principal
 from app.platform.security.types import Role
 
 if TYPE_CHECKING:
+    from app.modules.applications.api import ApplicationsApi
     from app.modules.jobs.models import JobDescription
     from app.modules.profiles.api import ProfilesApi
     from app.modules.profiles.schemas import JdContactabilityInput, SeniorContactDTO
@@ -189,9 +190,11 @@ class JobDescriptionService:
         uow_factory: Any,
         *,
         skill_resolver: SkillResolver,
+        applications_api: ApplicationsApi,
     ) -> None:
         self._uow_factory = uow_factory
         self._skill_resolver = skill_resolver
+        self._applications_api = applications_api
 
     # ── Internal helpers ───────────────────────────────────────────────────────
 
@@ -419,9 +422,8 @@ class JobDescriptionService:
     ) -> JobDescriptionDTO:
         """Transition a Job Description from OPEN to CLOSED.
 
-        Sets ``closed_at`` to now. Cascading application closure is the
-        caller's responsibility (ApplicationService) and must happen within
-        the same transaction for atomicity.
+        Sets ``closed_at`` to now and closes every Submitted or Under Review
+        application for the JD in the same transaction (R7 AC11).
 
         Args:
             jd_id: Target JD UUID.
@@ -453,6 +455,9 @@ class JobDescriptionService:
                 jd,
                 JdStatus.CLOSED,
                 closed_at=utc_now(),
+            )
+            await self._applications_api.cascade_close_for_jd(
+                uow.session, jd_id, actor_id=principal.account_id
             )
             dto = await self._load_jd_dto(uow.session, jd)
         return dto
@@ -879,9 +884,7 @@ class JdExtractionService:
             if skill_ids:
                 await repo.set_jd_required_skills(uow.session, jd.id, skill_ids)
             await repo.delete_extraction_draft(uow.session, draft)
-            dto = await JobDescriptionService(
-                self._uow_factory, skill_resolver=self._skill_resolver
-            )._load_jd_dto(uow.session, jd)
+            dto = _jd_to_dto(jd, await repo.get_jd_skill_ids(uow.session, jd.id))
         return dto
 
     def _to_dto(self, draft: Any) -> JdExtractionDraftDTO:

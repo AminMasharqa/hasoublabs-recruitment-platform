@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.platform.db.base import utc_now
@@ -238,23 +238,32 @@ async def update_application_status(
 async def close_applications_for_jd(
     session: AsyncSession,
     jd_id: UUID,
-) -> int:
-    """Bulk-close all non-terminal applications for a Job_Description (R7 AC11).
+) -> list[tuple[UUID, ApplicationStatus]]:
+    """Close every non-terminal application for a Job_Description (R7 AC11).
 
-    Runs as a single UPDATE statement, scoped to the non-terminal statuses, and
-    returns the number of rows updated so the caller can log the cascade.
+    Row by row through the ORM, not a bulk UPDATE: the audit ``before_flush``
+    hook only sees ORM changes, so a bulk statement would leave the status
+    changes out of the audit log (R8). The rows are locked so a concurrent
+    status change cannot interleave with the cascade.
+
+    Returns:
+        ``(application_id, previous_status)`` for each application closed, so
+        the caller can record the status transitions.
     """
     result = await session.execute(
-        update(Application)
+        select(Application)
         .where(
             Application.jd_id == jd_id,
             Application.status.in_(list(NON_TERMINAL_APPLICATION_STATUSES)),
         )
-        .values(status=ApplicationStatus.CLOSED, updated_at=utc_now())
-        .returning(Application.id)
+        .with_for_update()
     )
-    rows = result.fetchall()
-    return len(rows)
+    closed: list[tuple[UUID, ApplicationStatus]] = []
+    for application in result.scalars().all():
+        closed.append((application.id, application.status))
+        application.status = ApplicationStatus.CLOSED
+    await session.flush()
+    return closed
 
 
 # ── Status history ────────────────────────────────────────────────────────────
