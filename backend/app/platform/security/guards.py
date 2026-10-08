@@ -110,13 +110,20 @@ async def current_principal(
     except (KeyError, ValueError) as exc:
         raise AuthenticationRequired(f"Session has invalid status: {exc}") from exc
 
-    return Principal(
+    principal = Principal(
         account_id=account_id,
         roles=roles,
         active_context=active_context,
         status=status,
         session_id=session_id,
     )
+    # Before require() checks roles, so a denial is attributed to this actor too
+    # (R3 AC9, R8 AC2). This dependency runs in the request's own task, so the
+    # context it sets reaches the endpoint and the audit hook.
+    from app.platform.audit.actor import bind_principal_actor  # noqa: PLC0415
+
+    await bind_principal_actor(principal)
+    return principal
 
 
 # ── require() guard factory ────────────────────────────────────────────────

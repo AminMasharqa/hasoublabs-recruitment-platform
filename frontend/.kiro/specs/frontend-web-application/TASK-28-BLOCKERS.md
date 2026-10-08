@@ -1511,33 +1511,77 @@ The Bug 6 defect, on the denial path (R3 AC9, R8 AC5).
   `auth.denied | Route | GET:/api/v1/jobs/<id> | AuthorizationDenied`, with the
   response's `X-Request-ID`.
 
-## Bug 23 — every audit entry is attributed to `system`, with no request ID — **OPEN**
+## Bug 23 — every audit entry was attributed to `system`, with no request ID — **FIXED 2026-10-08**
 
-R8 requires the actor on every entry. Nothing sets the request-scoped audit
-context:
-- `audit_actor_id_var`, `audit_reason_var` and `audit_request_id_var` (now in
-  `platform/audit/context.py`) are read by the hook, the UoW failure path and
-  the denial path.
-- No middleware or job ever calls `.set()` on them. Their defaults are
-  `SYSTEM_ACTOR_UUID` and `None`.
+R8 AC2 requires the actor on every entry.
+- **Before the fix (dev database):** all 8,214 entries had
+  `actor_identity_id = 00000000-…` and a NULL `request_id`, and
+  `audit_actor_identities` held only the system sentinel.
 
-**Evidence (dev database, 2026-10-08):**
-- All 8,214 entries have `actor_identity_id = 00000000-…` and a NULL
-  `request_id`.
-- `audit_actor_identities` has one row, the system sentinel.
+### What was wrong
+The platform has two request-context layers, and the audit writers read the
+one nothing set:
+- **`platform/middleware/context.py` + `RequestContextMiddleware`:** pure ASGI,
+  so its context variables reach the endpoint. It was never installed.
+  `app/main.py` used a `@app.middleware("http")` function instead, which runs
+  in a separate task, so variables set there never reach the endpoint. Nothing
+  called `set_actor`. The job runner did bind `system` and the job ID here.
+- **The audit context variables:** actor, reason and request ID, which the
+  hook and the UoW read. Nothing ever called `.set()` on them.
+- **The actor identity row itself** needs the account's email from `identity`,
+  which `platform` may not import.
 
-**What a fix needs:**
-- **Request middleware:** after authentication, resolve the Principal to an
-  actor identity (`upsert_actor_identity`: account, active role, display name,
-  email) and set the actor variable. Set the request-ID variable from
-  `request.state.request_id` for every request.
-- **Reasons:** services that take a reason (rejection, suspension) set the
-  reason variable.
-- **Jobs:** keep the system default.
+### What was changed
+- **`app/main.py` installs `RequestContextMiddleware`**, outermost. It sets
+  `request.state` (request ID, denial-floor start time, locale), echoes
+  `X-Request-ID` and now also `Content-Language`, and binds the context. The
+  old metadata middleware is reduced to the dev-only `Timing-Allow-Origin`
+  header.
+- **New `platform/audit/actor.py`:** `bind_principal_actor` and an injectable
+  `ActorIdentityResolver`.
+  - `guards.current_principal` calls it before `require()` checks roles, so
+    denials are attributed too.
+  - It sets the platform `Actor` and the audit identity ID.
+  - A missing or failing resolver leaves `system`. Auditing never fails the
+    request it describes.
+- **`modules/audit/service.py::AuditActorResolver`:**
+  - takes the email from `IdentityApi.get_account`;
+  - upserts one identity per (account, role), labelled `<email> (<Role>)`;
+  - caches the ID per process (the row never moves; anonymisation scrubs it in
+    place);
+  - is registered in `_setup_services`.
+- **One context source:** the hook and the UoW failure path read the request ID
+  and reason from `platform.middleware.context`. The duplicate
+  `audit_reason_var` and `audit_request_id_var` are removed.
+  `audit_actor_id_var` stays: it holds an audit-table ID, a different concept.
 
-**Open question:** the actor upsert needs the display name and email, which
-live in `identity`. The middleware belongs in a composition root (`app/main.py`)
-or behind an `IdentityApi` call, because `platform` may not import `modules`.
+### Verification
+- **Guards:**
+  - `tests/integration/test_audit_actor_attribution.py`: a hook entry and a
+    rollback failure entry both name the principal, role, label and request ID.
+    Both fail against the old wiring.
+  - `tests/unit/test_audit_actor_binding.py`: binding, no resolver, a failing
+    resolver, and the resolver's label and cache.
+- **Suites:** unit 361/361, integration 20/20, E2E 79/79. mypy unchanged (74).
+  semgrep 0 findings.
+- **Live, one E2E run:**
+  - 134 entries attributed to Admin identities, 64 to Candidate and 23 to
+    Senior;
+  - **every** new entry carries a request ID;
+  - responses carry `X-Request-ID` and `Content-Language`.
+
+### Still open
+- **Pre-authentication flows are attributed to `system`.** Registration, email
+  verification and residency proof run on public routes with no principal.
+  They now carry their request ID. Naming the registrant needs a decision: the
+  account is created in the same transaction as its first audited rows, so
+  resolving its identity row needs different handling.
+- **No service sets a reason.** R8 AC2 wants the reason on entries for actions
+  that require one, such as rejection or suspension. The reasons are stored in
+  `account_status_transitions`, but nothing calls `use_reason(...)`, so audit
+  entries have `reason = NULL`. Services can now set it through
+  `platform.middleware.context.use_reason`.
+
 ## Failure attribution
 
 ### Original run — 34 failures

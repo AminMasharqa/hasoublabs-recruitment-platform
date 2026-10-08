@@ -39,11 +39,14 @@ from app.modules.audit.repository import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     import uuid
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.modules.audit.models import AuditLogEntry
+    from app.modules.identity.api import IdentityApi
+    from app.platform.db.unit_of_work import UnitOfWork
 
 _LOG = logging.getLogger(__name__)
 
@@ -170,6 +173,42 @@ class AuditService:
             after_id=after_id,
             page_size=page_size,
         )
+
+
+class AuditActorResolver:
+    """Resolve an account acting in a role to its audit actor identity (R8 AC2).
+
+    Registered with :mod:`app.platform.audit.actor` at startup, so the auth
+    dependency can attribute every audit entry of a request to its principal.
+    One identity row per (account, role), labelled with the account's email and
+    the role. The id is cached for the life of the process: the row never moves,
+    and anonymisation (R8 AC7) scrubs it in place.
+    """
+
+    def __init__(
+        self, uow_factory: Callable[[], UnitOfWork], *, identity_api: IdentityApi
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._identity_api = identity_api
+        self._cache: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+
+    async def resolve(self, account_id: uuid.UUID, role: str) -> uuid.UUID:
+        """Return the identity id, creating the identity row on first sight."""
+        key = (account_id, role)
+        cached = self._cache.get(key)
+        if cached is not None:
+            return cached
+        account = await self._identity_api.get_account(account_id)
+        async with self._uow_factory() as uow:
+            identity_id = await upsert_actor_identity(
+                uow.session,
+                account_id=account_id,
+                role=role,
+                display_name=f"{account.email} ({role.capitalize()})",
+                email=account.email,
+            )
+        self._cache[key] = identity_id
+        return identity_id
 
 
 class AuditChainVerifier:
@@ -299,6 +338,7 @@ async def ensure_current_partition(session: AsyncSession) -> None:
 
 __all__ = [
     "VERIFY_WINDOW_SIZE",
+    "AuditActorResolver",
     "AuditChainVerifier",
     "AuditService",
     "ensure_current_partition",

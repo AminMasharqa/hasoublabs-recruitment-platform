@@ -32,11 +32,7 @@ from app.platform.audit.chain import (
     append_failure_entry,
     compute_entry_hash,
 )
-from app.platform.audit.context import (
-    audit_actor_id_var,
-    audit_reason_var,
-    audit_request_id_var,
-)
+from app.platform.audit.context import audit_actor_id_var
 from app.platform.audit.models import (
     SYSTEM_ACTOR_UUID,
     AuditActorIdentity,
@@ -374,8 +370,6 @@ __all__ = [
     "append_audit_entry",
     "append_failure_entry",
     "audit_actor_id_var",
-    "audit_reason_var",
-    "audit_request_id_var",
     "compute_entry_hash",
     "ensure_system_actor",
     "get_max_audit_id",

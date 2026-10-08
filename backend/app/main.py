@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 import logging
-import time
 from typing import TYPE_CHECKING
-import uuid
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -275,6 +273,14 @@ async def _setup_services(application: FastAPI) -> None:
     identity_api = DefaultIdentityApi(uow_factory)
     application.state.identity_api = identity_api
 
+    # ── Audit actor attribution (R8 AC2) ──────────────────────────────────────
+    # The auth dependency resolves each request's principal to an audit actor
+    # identity through this, so audit entries name who acted, not `system`.
+    from app.modules.audit.service import AuditActorResolver  # noqa: PLC0415
+    from app.platform.audit.actor import configure_actor_identity_resolver  # noqa: PLC0415
+
+    configure_actor_identity_resolver(AuditActorResolver(uow_factory, identity_api=identity_api))
+
     # ── ApplicationsApi (cross-module) ────────────────────────────────────────
     # Built before the jobs services: closing a JD cascades to its applications
     # through this API (R7 AC11). It depends only on IdentityApi, so no cycle.
@@ -404,25 +410,26 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ── Request-metadata middleware ───────────────────────────────────────────
-    # Sets request.state.start_time (used by the denial-floor timer) and
-    # request.state.request_id (propagated in every response and error body).
+    # ── Development response headers ──────────────────────────────────────────
     @app.middleware("http")
-    async def add_request_metadata(request: Request, call_next: object) -> Response:
-        request.state.start_time = time.monotonic()
-        request.state.request_id = str(uuid.uuid4())
-        # Default locale until Amin wires i18n (Section 5).
-        request.state.locale = (
-            request.headers.get("Accept-Language", "en").split(",")[0].split("-")[0]
-        )
+    async def add_development_headers(request: Request, call_next: object) -> Response:
         response: Response = await call_next(request)  # type: ignore[operator]
-        response.headers["X-Request-ID"] = request.state.request_id
         if settings.is_development:
             # Matches the CORS policy above. The Web_Client streams a CV upload
             # only once it can read an HTTP/2+ protocol from its requests'
             # resource timing, which a browser hides cross-origin without this.
             response.headers["Timing-Allow-Origin"] = "*"
         return response
+
+    # ── Request context ───────────────────────────────────────────────────────
+    # Added last, so it is the outermost middleware: it sets request.state
+    # (request_id, start_time for the denial floor, locale) and echoes
+    # X-Request-ID. It is pure ASGI, so the request id it binds reaches the
+    # endpoint and the audit hook, which a @app.middleware("http") function's
+    # context does not (R8 AC2).
+    from app.platform.middleware import RequestContextMiddleware  # noqa: PLC0415
+
+    app.add_middleware(RequestContextMiddleware)
 
     # ── Exception handlers ────────────────────────────────────────────────────
     _register_exception_handlers(app)

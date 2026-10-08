@@ -262,16 +262,16 @@ def register_audit_capture(target: object) -> None:  # noqa: ARG001
             AUDIT_CHAIN_LOCK_KEY,
             compute_entry_hash,
         )
-        from app.platform.audit.context import (  # noqa: PLC0415
-            audit_actor_id_var,
-            audit_reason_var,
-            audit_request_id_var,
-        )
+        from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
         from app.platform.audit.models import AuditLogEntry  # noqa: PLC0415
+        from app.platform.middleware.context import (  # noqa: PLC0415
+            current_reason,
+            current_request_id,
+        )
 
         actor_id = audit_actor_id_var.get()
-        reason = audit_reason_var.get()
-        request_id = audit_request_id_var.get()
+        reason = current_reason()
+        request_id = current_request_id()
 
         entries_to_write: list[dict[str, Any]] = []
 

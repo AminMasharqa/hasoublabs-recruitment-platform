@@ -122,10 +122,10 @@ class UnitOfWork:
         """Write a failure audit entry on a separate short-lived connection."""
         try:
             from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
-            from app.platform.audit.context import (  # noqa: PLC0415
-                audit_actor_id_var,
-                audit_reason_var,
-                audit_request_id_var,
+            from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
+            from app.platform.middleware.context import (  # noqa: PLC0415
+                current_reason,
+                current_request_id,
             )
 
             engine = get_engine()
@@ -140,8 +140,8 @@ class UnitOfWork:
                 entity_type="Transaction",
                 entity_id="unknown",
                 error_type=type(exc).__name__ if exc is not None else "UnknownError",
-                reason=audit_reason_var.get(),
-                request_id=audit_request_id_var.get(),
+                reason=current_reason(),
+                request_id=current_request_id(),
             )
         except Exception:
             _LOG.exception("UnitOfWork: failed to write failure audit entry")

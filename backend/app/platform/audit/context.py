@@ -1,7 +1,13 @@
-"""Request-scoped audit context: who is acting, why, and under which request (R8).
+"""The audit actor identity of the current request or job (R8 AC2).
 
-The ``before_flush`` hook and the Unit of Work's failure path read these when
-they write an audit entry. Whoever handles a request or runs a job sets them.
+``audit_actor_id_var`` holds the ``audit_actor_identities`` id every audit entry
+written in this context references. :func:`app.platform.audit.actor.bind_principal_actor`
+sets it once a request is authenticated; jobs and unauthenticated requests keep
+the ``system`` default.
+
+The request id and reason are not duplicated here: audit writers read them from
+the request context (:mod:`app.platform.middleware.context`), which the request
+middleware and the job runner bind.
 """
 
 from __future__ import annotations
@@ -18,11 +24,4 @@ if TYPE_CHECKING:
 #: authenticated (background jobs, startup hooks).
 audit_actor_id_var: ContextVar[uuid.UUID] = ContextVar("audit_actor_id", default=SYSTEM_ACTOR_UUID)
 
-#: Free-text reason for the current operation (e.g. rejection reason).
-audit_reason_var: ContextVar[str | None] = ContextVar("audit_reason", default=None)
-
-#: Request ID propagated from the middleware (``request.state.request_id``).
-audit_request_id_var: ContextVar[str | None] = ContextVar("audit_request_id", default=None)
-
-
-__all__ = ["audit_actor_id_var", "audit_reason_var", "audit_request_id_var"]
+__all__ = ["audit_actor_id_var"]

@@ -315,25 +315,3 @@ class TestAuditContextVars:
         from app.modules.audit.models import SYSTEM_ACTOR_UUID
         from app.modules.audit.repository import audit_actor_id_var
         assert audit_actor_id_var.get() == SYSTEM_ACTOR_UUID
-
-    def test_default_reason_is_none(self) -> None:
-        from app.modules.audit.repository import audit_reason_var
-        assert audit_reason_var.get() is None
-
-    def test_default_request_id_is_none(self) -> None:
-        from app.modules.audit.repository import audit_request_id_var
-        assert audit_request_id_var.get() is None
-
-    def test_context_var_can_be_set(self) -> None:
-        from app.modules.audit.repository import audit_reason_var
-        token = audit_reason_var.set("test-reason")
-        try:
-            assert audit_reason_var.get() == "test-reason"
-        finally:
-            audit_reason_var.reset(token)
-
-    def test_context_var_reset_restores_default(self) -> None:
-        from app.modules.audit.repository import audit_reason_var
-        token = audit_reason_var.set("ephemeral")
-        audit_reason_var.reset(token)
-        assert audit_reason_var.get() is None
