@@ -271,6 +271,15 @@ async def authentication_required_handler(
 
 # ── Startup assertion ──────────────────────────────────────────────────────
 
+def is_public_path(path: str) -> bool:
+    """Whether ``path`` is, or is under, a ``PUBLIC_ROUTE_PATHS`` entry.
+
+    Matched by path segment: ``/api/v1/register`` covers
+    ``/api/v1/register/candidate`` but not ``/api/v1/registrations``.
+    """
+    return any(path == public or path.startswith(f"{public}/") for public in PUBLIC_ROUTE_PATHS)
+
+
 def assert_all_routes_have_auth(app: FastAPI) -> None:
     """Fail startup if any non-public route lacks an authorization dependency.
 
@@ -284,6 +293,10 @@ def assert_all_routes_have_auth(app: FastAPI) -> None:
 
     settings = get_settings()
     unguarded: list[str] = []
+    # FastAPI's own documentation routes, where the app enables them (it does
+    # not in production). They serve the schema, not data.
+    docs_urls = (app.docs_url, app.redoc_url, app.openapi_url, app.swagger_ui_oauth2_redirect_url)
+    docs_paths = {url for url in docs_urls if url}
 
     for route in app.routes:
         path: str | None = getattr(route, "path", None)
@@ -291,7 +304,7 @@ def assert_all_routes_have_auth(app: FastAPI) -> None:
             continue
 
         # Skip routes that are explicitly in the public allowlist.
-        if any(path.startswith(p) for p in PUBLIC_ROUTE_PATHS):
+        if path in docs_paths or is_public_path(path):
             continue
 
         # Only check routes that have HTTP methods (API operations).

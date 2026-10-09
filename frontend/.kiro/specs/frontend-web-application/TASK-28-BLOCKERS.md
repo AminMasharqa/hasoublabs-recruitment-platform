@@ -360,6 +360,20 @@ The docs routes are presumably meant to be in `PUBLIC_ROUTE_PATHS`. Harmless in
 development, but an assertion that "fails" and then proceeds is worth deciding
 about.
 
+**FIXED 2026-10-09.** Two changes in `assert_all_routes_have_auth`:
+- **Docs routes:** the app's own documentation URLs (`docs_url`, `redoc_url`,
+  `openapi_url`, `swagger_ui_oauth2_redirect_url`) are exempt where the app
+  enables them. Production disables them. Dev boot now reports nothing, so the
+  log line means something again.
+- **Segment matching:** `PUBLIC_ROUTE_PATHS` was matched by raw string prefix,
+  so a new `/api/v1/registrations/...` or `/healthz` route would have skipped the
+  check. `is_public_path` now matches by path segment (the entry itself, or
+  `entry/...`). All 5 current sub-routes (`/register/candidate`,
+  `/verify/code`, ...) still qualify.
+- **Guard:** `tests/unit/test_security/test_boot_route_assertion.py`. Before the
+  fix, the docs routes tripped production mode and `/api/v1/verify-admin` and
+  `/healthz` passed as public. The assertion had no tests at all.
+
 ---
 
 ## Bug 2 — schema/ORM enum mismatch: `POST /verify/code` returns 500 — **FIXED 2026-09-22**
