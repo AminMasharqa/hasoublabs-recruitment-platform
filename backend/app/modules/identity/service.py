@@ -34,6 +34,7 @@ from app.platform.security.types import (
 from app.platform.errors.base import (
     CodeEntryLocked,
     IllegalTransition,
+    PlatformError,
     PreconditionUnmet,
     ValidationFailed,
     FieldViolation,
@@ -75,6 +76,10 @@ from app.modules.identity.service_residency import ResidencyValidator
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.modules.identity.models import EmailVerification
     from app.platform.security.crypto import EnvelopeEncryption
     from app.platform.security.principal import Principal
     from app.platform.security.tokens import SessionService, TokenPair
@@ -470,72 +475,82 @@ class VerificationService:
                     log_message=f"Verification code for account {account_id} has expired"
                 )
 
-            # Increment attempts *before* checking the code so every wrong
-            # attempt is counted even if the user aborts.
+            # Count the attempt before checking the code, so every wrong attempt is
+            # recorded. A refusal is raised only after this transaction commits:
+            # raised inside it, the rollback would discard the count and the
+            # lockout (R2 AC8) could never engage.
             new_attempt_count = await repo.increment_verification_attempts(session, verification)
 
+            refusal: PlatformError | None = None
+            dto: AccountDTO | None = None
             if new_attempt_count > self._max_attempts:
-                raise CodeEntryLocked(
+                refusal = CodeEntryLocked(
                     log_message=(
                         f"Account {account_id} has exceeded the maximum verification attempts"
                     )
                 )
-
-            # Constant-time HMAC comparison.
-            expected_hash = _hmac_code(code, self._pepper)
-            stored_hash = verification.code_hash or b""
-            if not hmac.compare_digest(expected_hash, stored_hash):
-                raise InvalidVerificationCode(
+            elif not hmac.compare_digest(  # constant-time
+                _hmac_code(code, self._pepper), verification.code_hash or b""
+            ):
+                refusal = InvalidVerificationCode(
                     log_message=f"Wrong verification code for account {account_id}"
                 )
+            else:
+                dto = await self._complete_verification(session, account, verification)
 
-            # Code is correct — mark verified and advance account status.
-            await repo.update_verification_state(
-                session, verification, EmailVerificationState.VERIFIED
-            )
-            old_status = account.status
-            await repo.update_account_status(session, account, AccountStatus.PENDING_APPROVAL)
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=old_status,
-                to_status=AccountStatus.PENDING_APPROVAL,
-                actor_account_id=None,
-                reason="Email verified",
-            )
-
-            # Push notification to the account.
-            push(
-                session,
-                recipient_account_id=account.id,
-                notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
-            )
-
-            # Notify all admins.
-            admin_accounts = await repo.get_all_admin_accounts(session)
-            if admin_accounts:
-                push_many(
-                    session,
-                    recipient_account_ids=[a.id for a in admin_accounts],
-                    notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
-                    entity_type="Account",
-                    entity_id=account.id,
-                )
-
-            # Enqueue awaiting-review email to the registrant.
-            await enqueue_email(
-                session,
-                template=EmailTemplate.REGISTRATION_AWAITING_REVIEW,
-                to_address=account.email,
-                locale=account.language_preference,
-                idempotency_key=f"awaiting_review:{account.id}",
-                payload={"full_name": account.email, "role": account.roles[0].value},
-                recipient_account_id=account.id,
-            )
-
-            dto = _make_account_dto(account)
-
+        if refusal is not None:
+            raise refusal
+        assert dto is not None  # set whenever there is no refusal
         return dto
+
+    async def _complete_verification(
+        self, session: AsyncSession, account: Account, verification: EmailVerification
+    ) -> AccountDTO:
+        """Mark the code verified and move the account to PendingApproval."""
+        await repo.update_verification_state(
+            session, verification, EmailVerificationState.VERIFIED
+        )
+        old_status = account.status
+        await repo.update_account_status(session, account, AccountStatus.PENDING_APPROVAL)
+        await repo.record_status_transition(
+            session,
+            account_id=account.id,
+            from_status=old_status,
+            to_status=AccountStatus.PENDING_APPROVAL,
+            actor_account_id=None,
+            reason="Email verified",
+        )
+
+        # Push notification to the account.
+        push(
+            session,
+            recipient_account_id=account.id,
+            notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
+        )
+
+        # Notify all admins.
+        admin_accounts = await repo.get_all_admin_accounts(session)
+        if admin_accounts:
+            push_many(
+                session,
+                recipient_account_ids=[a.id for a in admin_accounts],
+                notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
+                entity_type="Account",
+                entity_id=account.id,
+            )
+
+        # Enqueue awaiting-review email to the registrant.
+        await enqueue_email(
+            session,
+            template=EmailTemplate.REGISTRATION_AWAITING_REVIEW,
+            to_address=account.email,
+            locale=account.language_preference,
+            idempotency_key=f"awaiting_review:{account.id}",
+            payload={"full_name": account.email, "role": account.roles[0].value},
+            recipient_account_id=account.id,
+        )
+
+        return _make_account_dto(account)
 
     async def resend_code(self, account_id: UUID) -> None:
         """Issue a new 6-digit code and reset the attempt counter.

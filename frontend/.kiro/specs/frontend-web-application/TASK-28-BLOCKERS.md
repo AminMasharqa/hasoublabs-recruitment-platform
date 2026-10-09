@@ -1803,6 +1803,30 @@ Replaying an entity's diffs could therefore not rebuild it (R8 AC6).
 
 ---
 
+## Bug 27 — wrong verification codes were never counted, so code entry never locked — **FIXED 2026-10-09**
+
+**Security.** R2 AC8: after 5 consecutive incorrect Verification_Code attempts,
+code entry locks. `VerificationService.verify_code` incremented
+`attempt_count`, then raised `InvalidVerificationCode` inside the same
+UnitOfWork, which rolls back on any exception. So the increment was never
+stored: a wrong code left no trace, the lockout could never engage, and the
+six-digit code could be guessed without limit (only whatever rate limiting
+sits in front of the route stood in the way). Found while working on
+pre-authentication audit attribution. There were no tests of `verify_code` at
+all.
+
+- **Fix:** the check decides an outcome inside the transaction, the UnitOfWork
+  commits the counted attempt, and the refusal (`InvalidVerificationCode` or
+  `CodeEntryLocked`) is raised after it closes. The success path moved,
+  unchanged, into `_complete_verification`.
+- **Guard:** `tests/integration/test_verification_lockout.py` (marked
+  `security`). Five wrong codes are counted one by one and the right code is
+  then refused, and a right code after fewer wrong ones still verifies. The
+  count stayed 0 before the fix.
+- **Suites:** unit 395/395, integration 58/58, mypy 74.
+
+---
+
 ## Failure attribution
 
 ### Original run — 34 failures
