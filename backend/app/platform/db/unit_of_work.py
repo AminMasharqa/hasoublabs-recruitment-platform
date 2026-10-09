@@ -111,16 +111,25 @@ class UnitOfWork:
                 # Write exactly one failure audit entry on a separate connection
                 # so it survives the rollback (R8 AC5).  Fire-and-forget; we log
                 # but never mask the original exception.
-                await self._write_failure_entry(exc)
+                await self._write_failure_entry(session, exc)
         finally:
             await session.close()
             self._session = None
         # Never suppress the original exception.
         return False
 
-    async def _write_failure_entry(self, exc: BaseException | None) -> None:
-        """Write a failure audit entry on a separate short-lived connection."""
+    async def _write_failure_entry(
+        self, session: AsyncSession, exc: BaseException | None
+    ) -> None:
+        """Write a failure audit entry on a separate short-lived connection.
+
+        The entry goes to the database this UnitOfWork's session is bound to,
+        which is not always the process-wide engine: a UoW built on another
+        sessionmaker must not record its failure somewhere else.
+        """
         try:
+            from sqlalchemy.ext.asyncio import AsyncConnection  # noqa: PLC0415
+
             from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
             from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
             from app.platform.middleware.context import (  # noqa: PLC0415
@@ -128,7 +137,8 @@ class UnitOfWork:
                 current_request_id,
             )
 
-            engine = get_engine()
+            bind = session.bind
+            engine = bind.engine if isinstance(bind, AsyncConnection) else bind or get_engine()
             # str(URL) masks the password as "***"; the separate connection
             # needs the real one or it fails authentication (silently, below).
             engine_url = engine.url.render_as_string(hide_password=False)

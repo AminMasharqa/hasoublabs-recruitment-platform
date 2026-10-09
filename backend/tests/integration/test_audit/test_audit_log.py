@@ -17,12 +17,13 @@ Other properties covered:
 
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime
 from typing import Any
+import uuid
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.modules.audit.models import (
@@ -40,25 +41,14 @@ from app.modules.audit.repository import (
     verify_chain_window,
 )
 from app.modules.audit.service import (
-    AuditChainVerifier,
     ensure_current_partition,
 )
 from app.platform.db.unit_of_work import UnitOfWork
-
 
 pytestmark = pytest.mark.integration
 
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
-
-@pytest.fixture(scope="module", autouse=True)
-def _run_audit_migration(pg_engine: AsyncEngine) -> None:
-    """
-    The conftest already runs ``alembic upgrade head`` on the shared container,
-    so this is a no-op placeholder that documents the dependency.
-    The audit tables are created by migration 0002_audit_foundation.
-    """
-
 
 @pytest.fixture
 async def session(pg_sessionmaker: async_sessionmaker[AsyncSession]) -> AsyncSession:
@@ -287,47 +277,62 @@ class TestHashChainVerification:
         assert ok is True
         assert bad_id is None
 
+    async def test_append_only_rejects_update_and_delete(
+        self,
+        session: AsyncSession,
+        pg_sessionmaker: async_sessionmaker[AsyncSession],
+        system_actor: uuid.UUID,
+    ) -> None:
+        """Property 42: the trigger refuses any UPDATE or DELETE of a committed entry."""
+        await ensure_current_partition(session)
+        entry = await _append(session, actor_id=system_actor, entity_id="append-only")
+        await session.flush()
+        entry_id = entry.id
+        await session.commit()
+
+        for statement in (
+            "UPDATE audit_log SET entry_hash = :bad WHERE id = :id",
+            "DELETE FROM audit_log WHERE id = :id",
+        ):
+            async with pg_sessionmaker() as raw_session:
+                with pytest.raises(DBAPIError, match="audit_log is append-only"):
+                    await raw_session.execute(
+                        text(statement), {"bad": bytes(32), "id": entry_id}
+                    )
+                await raw_session.rollback()
+
     async def test_verifier_detects_tampered_entry_hash(
         self,
         session: AsyncSession,
         pg_sessionmaker: async_sessionmaker[AsyncSession],
         system_actor: uuid.UUID,
     ) -> None:
-        """Directly overriding entry_hash via raw SQL breaks chain verification."""
+        """Property 45: an entry rewritten past the trigger is named by the verifier.
+
+        The trigger stops the application, not a superuser: replica mode skips
+        ordinary triggers, which is the tamper the hash chain exists to detect.
+        """
         await ensure_current_partition(session)
         entries = []
         for i in range(5):
             e = await _append(session, actor_id=system_actor, entity_id=f"tamper-{i}")
             entries.append(e)
         await session.flush()
-        tamper_id = entries[2].id
+        first_id, tamper_id, last_id = entries[0].id, entries[2].id, entries[-1].id
         await session.commit()
 
-        # Tamper: write garbage directly into the stored entry_hash.
-        async with pg_sessionmaker() as raw_session:
+        async with pg_sessionmaker() as raw_session, raw_session.begin():
+            await raw_session.execute(text("SET LOCAL session_replication_role = replica"))
             await raw_session.execute(
-                text(
-                    "UPDATE audit_log SET entry_hash = :bad WHERE id = :id"
-                ),
-                {"bad": b"\xff" * 32, "id": tamper_id},
+                text("UPDATE audit_log SET entity_id = 'rewritten' WHERE id = :id"),
+                {"id": tamper_id},
             )
-            # Note: this will be rejected by the trigger — that's the point.
-            # If the trigger fires we catch the exception and the test still
-            # proves the trigger prevents tampering.
-            try:
-                await raw_session.commit()
-                # If somehow committed (no trigger yet), verify detects it.
-                async with pg_sessionmaker() as verify_session:
-                    max_id = await get_max_audit_id(verify_session)
-                    ok, bad_id = await verify_chain_window(
-                        verify_session,
-                        from_id=entries[0].id,
-                        to_id=max_id or entries[-1].id,  # type: ignore[arg-type]
-                    )
-                assert ok is False or bad_id is not None
-            except Exception:
-                # Trigger fired and rejected the UPDATE — exactly what we want.
-                await raw_session.rollback()
+
+        async with pg_sessionmaker() as verify_session:
+            ok, bad_id = await verify_chain_window(
+                verify_session, from_id=first_id, to_id=last_id
+            )
+        assert (ok, bad_id) == (False, tamper_id)
 
 
 # ── Property 44: Transaction atomicity with exactly one failure entry ─────────
@@ -375,6 +380,17 @@ class TestTransactionAtomicity:
                 ).all()
             )
         assert len(rows) == 0, "Rolled-back entry must not appear as a success entry"
+
+        # ...and the rollback itself is recorded by exactly one failure entry.
+        async with pg_sessionmaker() as s:
+            after_count = await s.scalar(text("SELECT COUNT(*) FROM audit_log"))
+            newest = (
+                await s.execute(
+                    text("SELECT outcome, error_type FROM audit_log ORDER BY id DESC LIMIT 1")
+                )
+            ).one()
+        assert after_count == before_count + 1
+        assert (newest.outcome, newest.error_type) == ("failure", "RuntimeError")
 
 
 # ── Property 43: State reconstruction (structural) ───────────────────────────
@@ -469,6 +485,7 @@ class TestAnonymisation:
             account_id=account_id,
             role="CANDIDATE",
             display_name="Test User",
+            email="test.user@example.com",
         )
         await session.flush()
         await anonymise_actor(session, account_id=account_id)
@@ -490,6 +507,7 @@ class TestAnonymisation:
             account_id=account_id,
             role="CANDIDATE",
             display_name="Test User",
+            email="test.user@example.com",
         )
         await session.flush()
 
@@ -500,6 +518,8 @@ class TestAnonymisation:
             action="Account.created",
             entity_type="Account",
             entity_id=entity_marker,
+            before=None,
+            after={"marker": entity_marker},
         )
         await session.flush()
 

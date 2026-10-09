@@ -10,7 +10,7 @@ code paths that reach them; all three are recorded below.
 
 Update 2026-10-06 (latest): **E2E is 79 passed / 0 failed.** The full gate is
 green except the known baseline: the 2 slow `JobNewScreen` vitest tests
-(1273/1275), and `tests/integration/test_audit` still excluded.
+(1273/1275). `tests/integration/test_audit` runs again (2026-10-09).
 
 - **MinIO:** compose now builds a pinned release from source
   (`backend/docker/minio/Dockerfile`). Images and binaries are no longer
@@ -27,6 +27,8 @@ green except the known baseline: the 2 slow `JobNewScreen` vitest tests
 Open follow-ups from this round:
 - **2026-10-09: Bug 24 fixed.** 27 of 38 error keys had no message in any
   catalog, so those errors reached users as raw keys. See its section.
+- **2026-10-09: `tests/integration/test_audit` runs again,** and running it found
+  **Bug 25** (fixed). Integration is now 47/47 with nothing excluded.
 - ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
   nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
   - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on
@@ -1617,6 +1619,55 @@ in every locale. The API log showed `Missing message key` on each one.
 - **Review:** the Arabic and Hebrew wording should get a native speaker's read.
 - **Not live-verified:** the compose stack was stopped. `translate()` returns
   the new messages in all three locales (and for `he-IL`), and unit is 365/365.
+
+---
+
+## Bug 25 — a UnitOfWork records its failure entry in the wrong database — **FIXED 2026-10-09**
+
+Found by re-enabling `tests/integration/test_audit`, which had never run.
+
+### Re-enabling the suite (test defects)
+
+- **The ScopeMismatch:** a module-scoped autouse fixture requested the
+  function-scoped `pg_engine` only to "document" that migrations run. Its
+  docstring called it a no-op placeholder. Removed.
+- **Two stale calls:** the anonymisation tests omitted `upsert_actor_identity`'s
+  `email` and `append_audit_entry`'s `before`/`after`, which are required now.
+- **The tamper test never tested detection.** It tried a plain `UPDATE`, which
+  the append-only trigger refuses at execute time, outside its `try`, so it
+  errored. Even when it caught the refusal it passed without checking
+  Property 45. It is now two tests:
+  - `test_append_only_rejects_update_and_delete` (Property 42; the module
+    docstring cited `test_append_only_*`, but none existed);
+  - `test_verifier_detects_tampered_entry_hash`: rewrites an entry with
+    `session_replication_role = replica` (the superuser path the trigger cannot
+    stop), and requires `verify_chain_window` to return `(False, <that id>)`.
+- **Property 44 was half-asserted.** `test_rollback_leaves_no_success_entries`
+  computed `before_count` and never used it: nothing checked that the rollback
+  writes exactly one failure entry. It now does, and that assertion found the
+  bug.
+
+### What was wrong
+
+`UnitOfWork._write_failure_entry` connected with `get_engine()`, the
+process-wide engine from `DATABASE_URL`, not the engine its own session is bound
+to. The sessionmaker is injectable precisely so a UoW can run against another
+database, and the failure path ignored that. In production there is one engine,
+so this did not show. But every integration-test rollback wrote its
+`operation.failed` entry into the **dev** database when that was running, and
+lost it silently when it was not. The test database never got one.
+
+### What was changed
+
+- `_write_failure_entry` uses `session.bind` (the connection's engine when bound
+  to a connection), falling back to `get_engine()` only when the session has no
+  bind.
+- **Guard:** the strengthened Property 44 test. It failed with no failure entry
+  (`NoResultFound`) and passes after.
+- **Suites:** unit 365/365, integration 47/47 (21 + the 26 audit tests), mypy
+  unchanged (74).
+- **Dev data:** `operation.failed` entries from past integration runs are in
+  the dev audit log. They are append-only and stay, like the Bug 5 history.
 
 ---
 
