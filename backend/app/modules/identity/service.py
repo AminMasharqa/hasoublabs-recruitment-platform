@@ -25,7 +25,7 @@ from app.platform.db.enums import (
     ResidencyProofType,
     Role,
 )
-from app.platform.db.unit_of_work import UnitOfWork
+from app.platform.db.unit_of_work import UnitOfWork, failure_entry_engine_url
 # Import security-layer equivalents used by SessionService / Principal.
 from app.platform.security.types import (
     AccountStatus as SecAccountStatus,
@@ -237,6 +237,34 @@ class RegistrationService:
         self._pepper = blind_index_pepper
         self._code_ttl_hours = verification_code_ttl_hours
 
+    async def _audit_residency_failure(self, proof_type: ResidencyProofType) -> None:
+        """Record a residency-validation failure at registration (R8 AC1).
+
+        It fails before any transaction opens, so no UnitOfWork rollback writes
+        the entry. It names only the proof type: the value and the validator's
+        reason text can carry parts of the proof (a mobile prefix, a city),
+        which is encrypted at rest and must not be copied into the append-only
+        log. A failure to record is logged and never masks the refusal.
+        """
+        from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
+        from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
+        from app.platform.middleware.context import current_request_id  # noqa: PLC0415
+
+        try:
+            async with self._uow_factory() as uow:
+                engine_url = failure_entry_engine_url(uow.session)
+            await append_failure_entry(
+                engine_url=engine_url,
+                actor_identity_id=audit_actor_id_var.get(),
+                action="registration.residency_failed",
+                entity_type="ResidencyProof",
+                entity_id=proof_type.value,
+                error_type="ResidencyValidationFailed",
+                request_id=current_request_id(),
+            )
+        except Exception:
+            logger.exception("registration: failed to audit a residency-validation failure")
+
     async def register(
         self,
         data: RegistrationRequest,
@@ -279,6 +307,7 @@ class RegistrationService:
             proof_type, data.residency_proof_value
         )
         if not validation_result.is_valid:
+            await self._audit_residency_failure(proof_type)
             raise ResidencyValidationFailed(
                 reason=validation_result.reason or "Residency proof validation failed"
             )

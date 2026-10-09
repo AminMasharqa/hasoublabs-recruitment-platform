@@ -1595,11 +1595,25 @@ one nothing set:
   - **Live:** after one E2E run, the admin journey's suspension reason and the
     approvals' reasons are on their audit entries. Unit 361/361, integration
     21/21, E2E 79/79.
-- **Residency failures at registration are not audited (R8 AC1).**
-  `RegistrationService` raises `ResidencyValidationFailed` before it opens a
-  transaction, so no UoW runs and no failure entry is written. R8 AC1 lists
-  these failures explicitly. A fix would write a failure entry on that path, as
-  the denial handler does.
+- ~~**Residency failures at registration are not audited (R8 AC1).**~~
+  **FIXED 2026-10-09.** `RegistrationService` raised `ResidencyValidationFailed`
+  before opening a transaction, so no UoW ran and nothing was recorded.
+  - **Fix:** `register` writes one failure entry first:
+    `registration.residency_failed`, entity `ResidencyProof` / the proof type,
+    `error_type` `ResidencyValidationFailed`, plus the request ID. It goes to the
+    database the service's UoW is bound to, through the new
+    `unit_of_work.failure_entry_engine_url`, which `UnitOfWork` now uses as well
+    (no repeat of Bug 25). A failure to record is logged and never masks the
+    refusal.
+  - **No reason text, by design.** The validator's reasons can carry parts of
+    the proof (a mobile prefix, a city name, the parser's message). The proof is
+    encrypted at rest, so none of it is copied into the append-only log.
+  - **Guard:** `tests/integration/test_residency_failure_audit.py` requires
+    exactly that one entry with nothing from the proof in it. It found no entry
+    before the fix.
+  - **"On later edits"** has no code path yet: registration is the only place a
+    residency proof is validated.
+  - **Suites:** unit 365/365, integration 48/48, Semgrep 0 findings, mypy 74.
 
 ## Bug 24 — 27 domain errors reach users as raw message keys — **FIXED 2026-10-09**
 

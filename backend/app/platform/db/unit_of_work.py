@@ -44,6 +44,20 @@ if TYPE_CHECKING:
 _LOG = logging.getLogger(__name__)
 
 
+def failure_entry_engine_url(session: AsyncSession) -> str:
+    """The URL a failure entry for ``session``'s work must be written to.
+
+    That is the database the session is bound to, which is not always the
+    process-wide engine (Bug 25), with the real password: ``str(URL)`` masks it
+    as "***" and the separate connection then fails to authenticate (Bug 6).
+    """
+    from sqlalchemy.ext.asyncio import AsyncConnection  # noqa: PLC0415
+
+    bind = session.bind
+    engine = bind.engine if isinstance(bind, AsyncConnection) else bind or get_engine()
+    return engine.url.render_as_string(hide_password=False)
+
+
 class UnitOfWork:
     """An async context manager wrapping a single database transaction.
 
@@ -128,8 +142,6 @@ class UnitOfWork:
         sessionmaker must not record its failure somewhere else.
         """
         try:
-            from sqlalchemy.ext.asyncio import AsyncConnection  # noqa: PLC0415
-
             from app.platform.audit.chain import append_failure_entry  # noqa: PLC0415
             from app.platform.audit.context import audit_actor_id_var  # noqa: PLC0415
             from app.platform.middleware.context import (  # noqa: PLC0415
@@ -137,14 +149,8 @@ class UnitOfWork:
                 current_request_id,
             )
 
-            bind = session.bind
-            engine = bind.engine if isinstance(bind, AsyncConnection) else bind or get_engine()
-            # str(URL) masks the password as "***"; the separate connection
-            # needs the real one or it fails authentication (silently, below).
-            engine_url = engine.url.render_as_string(hide_password=False)
-
             await append_failure_entry(
-                engine_url=engine_url,
+                engine_url=failure_entry_engine_url(session),
                 actor_identity_id=audit_actor_id_var.get(),
                 action="operation.failed",
                 entity_type="Transaction",
@@ -157,4 +163,4 @@ class UnitOfWork:
             _LOG.exception("UnitOfWork: failed to write failure audit entry")
 
 
-__all__ = ["UnitOfWork"]
+__all__ = ["UnitOfWork", "failure_entry_engine_url"]
