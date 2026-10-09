@@ -32,6 +32,16 @@ Open follow-ups from this round:
 - **2026-10-09: Bug 26 fixed.** Twelve bulk `UPDATE`/`DELETE` statements in the
   cvs, profiles and jobs repositories were never audited. A new Semgrep rule now
   rejects them.
+- **2026-10-09 re-run: E2E 79/79, a11y 40/40** on all of today's fixes, after
+  `./dev.sh --seed-admin`.
+  - **Test-setup defect found on the way:** the first run failed 37 tests.
+    Playwright starts its own Vite server, which took its API URL from whatever
+    `VITE_API_BASE_URL` the shell had. The old scratchpad `e2e.env.ps1` exported
+    it, but `.dev-secrets/admin.env.sh` does not. Without it the bundle used a
+    relative `/api/v1` with no proxy, and every request hit Vite's 404.
+  - **Fix:** `playwright.config.ts` now passes the server
+    `VITE_API_BASE_URL ?? E2E_API_BASE_URL ?? http://localhost:8000/api/v1`,
+    the same URL the journeys' API helpers use. The a11y mocks match any host.
 - ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
   nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
   - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on

@@ -5,6 +5,12 @@ import { defineConfig, devices } from '@playwright/test'
 const port = Number(process.env.E2E_PORT ?? 5173)
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`
 const isCI = Boolean(process.env.CI)
+// The Web_Client this config starts must call the same Backend_Api the journeys'
+// own API helpers do (e2e/support/backend.ts). There is no dev proxy, so without
+// this the bundle falls back to a relative /api/v1 and every request reaches Vite.
+// An explicit VITE_API_BASE_URL still wins. The a11y mocks match any host.
+const apiBaseUrl =
+  process.env.VITE_API_BASE_URL ?? process.env.E2E_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 
 export default defineConfig({
   testDir: './e2e',
@@ -27,5 +33,6 @@ export default defineConfig({
         url: baseURL,
         reuseExistingServer: !isCI,
         timeout: 120_000,
+        env: { VITE_API_BASE_URL: apiBaseUrl },
       },
 })
