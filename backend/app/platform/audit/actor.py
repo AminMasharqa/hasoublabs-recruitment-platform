@@ -12,6 +12,7 @@ actor, as they did before the request context was wired.
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import logging
 from typing import TYPE_CHECKING, Protocol
 
@@ -19,7 +20,10 @@ from app.platform.audit.context import audit_actor_id_var
 from app.platform.middleware.context import Actor, set_actor
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
     import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.platform.security.principal import Principal
 
@@ -30,6 +34,12 @@ class ActorIdentityResolver(Protocol):
     """Return the ``audit_actor_identities`` id for an account acting in a role."""
 
     async def resolve(self, account_id: uuid.UUID, role: str) -> uuid.UUID: ...
+
+    async def resolve_in_session(
+        self, session: AsyncSession, account_id: uuid.UUID, role: str, email: str
+    ) -> uuid.UUID:
+        """The same, inside ``session``'s transaction, for an account not yet committed."""
+        ...
 
 
 _resolver: ActorIdentityResolver | None = None
@@ -66,4 +76,40 @@ async def bind_principal_actor(principal: Principal) -> None:
     audit_actor_id_var.set(identity_id)
 
 
-__all__ = ["ActorIdentityResolver", "bind_principal_actor", "configure_actor_identity_resolver"]
+@asynccontextmanager
+async def acting_as_account(
+    session: AsyncSession, *, account_id: uuid.UUID, role: str, email: str
+) -> AsyncIterator[None]:
+    """Attribute what the block records to an account acting without a session (R8 AC2).
+
+    For public flows where the account is known to be the one acting: a
+    registrant once their account row exists, and a verification once the code
+    checks out. On a clean exit the block's changes are flushed while the
+    account is the actor; the previous actor is always restored before the
+    UnitOfWork commits or writes a failure entry, so a rolled-back identity is
+    never referenced. The identity row is written in ``session``'s transaction
+    (a registrant is not committed yet), in a savepoint, and a failure to write
+    it is logged and leaves the current actor.
+    """
+    token = None
+    if _resolver is not None:
+        try:
+            async with session.begin_nested():
+                identity_id = await _resolver.resolve_in_session(session, account_id, role, email)
+            token = audit_actor_id_var.set(identity_id)
+        except Exception:
+            _LOG.exception("audit: could not resolve the actor identity of %s", account_id)
+    try:
+        yield
+        await session.flush()
+    finally:
+        if token is not None:
+            audit_actor_id_var.reset(token)
+
+
+__all__ = [
+    "ActorIdentityResolver",
+    "acting_as_account",
+    "bind_principal_actor",
+    "configure_actor_identity_resolver",
+]

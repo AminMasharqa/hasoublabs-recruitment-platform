@@ -41,6 +41,7 @@ from app.platform.errors.base import (
 )
 from app.platform.mail.outbox import enqueue_email
 from app.platform.mail.templates import EmailTemplate
+from app.platform.audit.actor import acting_as_account
 from app.platform.middleware.context import use_reason
 from app.platform.notifications.models import NotificationType
 from app.platform.notifications.service import push, push_many
@@ -360,55 +361,59 @@ class RegistrationService:
                 password_hash=hashed_pw,
                 language_preference=data.language_preference,
             )
+            # From here on the registrant is the actor of what this transaction
+            # records (R8 AC2). Account.created is already flushed as `system`.
+            async with acting_as_account(
+                session, account_id=account.id, role=role.value, email=data.email
+            ):
+                # Create email verification.
+                await repo.create_email_verification(
+                    session,
+                    account_id=account.id,
+                    code_hash=code_hash,
+                    expires_at=expires_at,
+                )
 
-            # Create email verification.
-            await repo.create_email_verification(
-                session,
-                account_id=account.id,
-                code_hash=code_hash,
-                expires_at=expires_at,
-            )
+                # Create residency proof.
+                await repo.upsert_residency_proof(
+                    session,
+                    account_id=account.id,
+                    type=proof_type,
+                    value_enc=value_enc,
+                    value_wrapped_key=value_wrapped_key,
+                    value_digest=value_digest,
+                    validator_version=validation_result.validator_version,
+                )
 
-            # Create residency proof.
-            await repo.upsert_residency_proof(
-                session,
-                account_id=account.id,
-                type=proof_type,
-                value_enc=value_enc,
-                value_wrapped_key=value_wrapped_key,
-                value_digest=value_digest,
-                validator_version=validation_result.validator_version,
-            )
+                # Record initial status transition (None → PendingVerification).
+                await repo.record_status_transition(
+                    session,
+                    account_id=account.id,
+                    from_status=None,
+                    to_status=AccountStatus.PENDING_VERIFICATION,
+                    actor_account_id=None,
+                    reason="Registration",
+                )
 
-            # Record initial status transition (None → PendingVerification).
-            await repo.record_status_transition(
-                session,
-                account_id=account.id,
-                from_status=None,
-                to_status=AccountStatus.PENDING_VERIFICATION,
-                actor_account_id=None,
-                reason="Registration",
-            )
+                # Mark link as used.
+                await repo.increment_link_used_count(session, link)
 
-            # Mark link as used.
-            await repo.increment_link_used_count(session, link)
-
-            # Enqueue verification-code email inside the transaction.
-            # The code is stored as a short-lived secret reference so it is
-            # never persisted in the outbox payload.
-            await enqueue_email(
-                session,
-                template=EmailTemplate.VERIFICATION_CODE,
-                to_address=data.email,
-                locale=data.language_preference,
-                idempotency_key=f"verification_code:{account.id}:{now.isoformat()}",
-                payload={
-                    "full_name": data.full_name,
-                    "code": raw_code,  # ephemeral — OK to persist for delivery
-                    "expiry_hours": self._code_ttl_hours,
-                },
-                recipient_account_id=account.id,
-            )
+                # Enqueue verification-code email inside the transaction.
+                # The code is stored as a short-lived secret reference so it is
+                # never persisted in the outbox payload.
+                await enqueue_email(
+                    session,
+                    template=EmailTemplate.VERIFICATION_CODE,
+                    to_address=data.email,
+                    locale=data.language_preference,
+                    idempotency_key=f"verification_code:{account.id}:{now.isoformat()}",
+                    payload={
+                        "full_name": data.full_name,
+                        "code": raw_code,  # ephemeral — OK to persist for delivery
+                        "expiry_hours": self._code_ttl_hours,
+                    },
+                    recipient_account_id=account.id,
+                )
 
             dto = _make_account_dto(account)
 
@@ -507,48 +512,53 @@ class VerificationService:
         self, session: AsyncSession, account: Account, verification: EmailVerification
     ) -> AccountDTO:
         """Mark the code verified and move the account to PendingApproval."""
-        await repo.update_verification_state(
-            session, verification, EmailVerificationState.VERIFIED
-        )
-        old_status = account.status
-        await repo.update_account_status(session, account, AccountStatus.PENDING_APPROVAL)
-        await repo.record_status_transition(
-            session,
-            account_id=account.id,
-            from_status=old_status,
-            to_status=AccountStatus.PENDING_APPROVAL,
-            actor_account_id=None,
-            reason="Email verified",
-        )
-
-        # Push notification to the account.
-        push(
-            session,
-            recipient_account_id=account.id,
-            notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
-        )
-
-        # Notify all admins.
-        admin_accounts = await repo.get_all_admin_accounts(session)
-        if admin_accounts:
-            push_many(
+        # A correct code shows the account is the one acting (R8 AC2). A wrong
+        # code proves nothing, so the counted attempt above stays `system`.
+        async with acting_as_account(
+            session, account_id=account.id, role=account.roles[0].value, email=account.email
+        ):
+            await repo.update_verification_state(
+                session, verification, EmailVerificationState.VERIFIED
+            )
+            old_status = account.status
+            await repo.update_account_status(session, account, AccountStatus.PENDING_APPROVAL)
+            await repo.record_status_transition(
                 session,
-                recipient_account_ids=[a.id for a in admin_accounts],
-                notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
-                entity_type="Account",
-                entity_id=account.id,
+                account_id=account.id,
+                from_status=old_status,
+                to_status=AccountStatus.PENDING_APPROVAL,
+                actor_account_id=None,
+                reason="Email verified",
             )
 
-        # Enqueue awaiting-review email to the registrant.
-        await enqueue_email(
-            session,
-            template=EmailTemplate.REGISTRATION_AWAITING_REVIEW,
-            to_address=account.email,
-            locale=account.language_preference,
-            idempotency_key=f"awaiting_review:{account.id}",
-            payload={"full_name": account.email, "role": account.roles[0].value},
-            recipient_account_id=account.id,
-        )
+            # Push notification to the account.
+            push(
+                session,
+                recipient_account_id=account.id,
+                notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
+            )
+
+            # Notify all admins.
+            admin_accounts = await repo.get_all_admin_accounts(session)
+            if admin_accounts:
+                push_many(
+                    session,
+                    recipient_account_ids=[a.id for a in admin_accounts],
+                    notification_type=NotificationType.REGISTRATION_AWAITING_REVIEW,
+                    entity_type="Account",
+                    entity_id=account.id,
+                )
+
+            # Enqueue awaiting-review email to the registrant.
+            await enqueue_email(
+                session,
+                template=EmailTemplate.REGISTRATION_AWAITING_REVIEW,
+                to_address=account.email,
+                locale=account.language_preference,
+                idempotency_key=f"awaiting_review:{account.id}",
+                payload={"full_name": account.email, "role": account.roles[0].value},
+                recipient_account_id=account.id,
+            )
 
         return _make_account_dto(account)
 

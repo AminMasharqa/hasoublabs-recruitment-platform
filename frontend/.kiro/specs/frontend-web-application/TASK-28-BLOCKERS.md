@@ -1654,11 +1654,28 @@ one nothing set:
   - responses carry `X-Request-ID` and `Content-Language`.
 
 ### Still open
-- **Pre-authentication flows are attributed to `system`.** Registration, email
-  verification and residency proof run on public routes with no principal.
-  They now carry their request ID. Naming the registrant needs a decision: the
-  account is created in the same transaction as its first audited rows, so
-  resolving its identity row needs different handling.
+- ~~**Pre-authentication flows are attributed to `system`.**~~ **FIXED
+  2026-10-09** (decision: name the account where it is known to be acting):
+  - **Registration:** every entry after the account row exists names the
+    registrant. `Account.created` itself is flushed before there is an identity,
+    so it stays `system`.
+  - **Verification:** the entries from a correct code name the account. The
+    counted attempt (written before the code is checked), wrong codes and
+    resends stay `system`, because anyone can submit them for any account ID.
+  - **Mechanism:** `platform/audit/actor.py::acting_as_account(session, ...)`.
+    - It writes the identity row in the operation's own transaction (a
+      registrant isn't committed yet), in a savepoint, through a new
+      `resolve_in_session` on the registered resolver (`AuditActorResolver`).
+    - It flushes the block's changes while the account is the actor.
+    - It always restores the previous actor before the UnitOfWork commits or
+      writes a failure entry. `audit_log` has a foreign key to the identity
+      table, so a failure entry naming a rolled-back identity would be refused,
+      and the failure would go unrecorded (R8 AC5).
+  - **Guard:** `tests/integration/test_preauth_audit_actor.py`. It failed with
+    every entry `system` before the change.
+  - **Residency failures at registration** stay `system`: no account exists yet.
+  - **Suites:** unit 395/395, integration 59/59, E2E 79/79, Semgrep 0,
+    mypy 74.
 - ~~**No service sets a reason.**~~ **FIXED 2026-10-08.** R8 AC2 wants the
   reason on entries for actions that require one.
   - **Fix:** every UoW that records a status transition with a reason is

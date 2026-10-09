@@ -210,6 +210,21 @@ class AuditActorResolver:
         self._cache[key] = identity_id
         return identity_id
 
+    async def resolve_in_session(
+        self, session: AsyncSession, account_id: uuid.UUID, role: str, email: str
+    ) -> uuid.UUID:
+        """Return the identity id, written in ``session``'s own transaction.
+
+        Not cached: the transaction may still roll back, and the row with it.
+        """
+        return await upsert_actor_identity(
+            session,
+            account_id=account_id,
+            role=role,
+            display_name=f"{email} ({role.capitalize()})",
+            email=email,
+        )
+
 
 class AuditChainVerifier:
     """Windowed hash-chain verifier (R8 AC8).
