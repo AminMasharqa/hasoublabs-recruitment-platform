@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.jobs.models import JdExtractionDraft, JdRequiredSkill, JobDescription
@@ -22,6 +22,7 @@ from app.platform.db.enums import (
     WorkModel,
 )
 from app.platform.db.base import utc_now
+from app.platform.db.mutations import delete_each
 
 
 # ── JobDescription queries ─────────────────────────────────────────────────────
@@ -254,9 +255,7 @@ async def set_jd_required_skills(
 
     Deletes existing rows then inserts the new set within the same flush.
     """
-    await session.execute(
-        delete(JdRequiredSkill).where(JdRequiredSkill.jd_id == jd_id)
-    )
+    await delete_each(session, JdRequiredSkill, JdRequiredSkill.jd_id == jd_id)
     for skill_id in skill_ids:
         session.add(JdRequiredSkill(jd_id=jd_id, skill_id=skill_id))
     await session.flush()
@@ -341,12 +340,7 @@ async def delete_stale_drafts(
 
     Returns the count of deleted rows.
     """
-    result = await session.execute(
-        delete(JdExtractionDraft)
-        .where(JdExtractionDraft.expires_at < before)
-        .returning(JdExtractionDraft.id)
-    )
-    return len(result.fetchall())
+    return await delete_each(session, JdExtractionDraft, JdExtractionDraft.expires_at < before)
 
 
 __all__ = [

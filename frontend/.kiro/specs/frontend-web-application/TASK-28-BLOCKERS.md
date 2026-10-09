@@ -29,6 +29,9 @@ Open follow-ups from this round:
   catalog, so those errors reached users as raw keys. See its section.
 - **2026-10-09: `tests/integration/test_audit` runs again,** and running it found
   **Bug 25** (fixed). Integration is now 47/47 with nothing excluded.
+- **2026-10-09: Bug 26 fixed.** Twelve bulk `UPDATE`/`DELETE` statements in the
+  cvs, profiles and jobs repositories were never audited. A new Semgrep rule now
+  rejects them.
 - ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
   nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
   - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on
@@ -87,8 +90,9 @@ Open follow-ups from this round:
   - The move turned up **Bug 22** (fixed) and **Bug 23** (open), below.
 - **mypy's 74 errors are worth triaging.** One of them (`main.py:208`,
   `ArqRedis` passed as `TaskQueue`) was Bug 17.
-- `repo.promote_version` mutates with a bulk `UPDATE`, which the audit
-  `before_flush` hook does not see.
+- ~~`repo.promote_version` mutates with a bulk `UPDATE`, which the audit
+  `before_flush` hook does not see.~~ **FIXED 2026-10-09** as part of Bug 26:
+  twelve such statements, not one.
 - Versions dead-lettered while Bug 18 was live stay PendingScan in the dev
   database (test data only).
 
@@ -1682,6 +1686,45 @@ lost it silently when it was not. The test database never got one.
   unchanged (74).
 - **Dev data:** `operation.failed` entries from past integration runs are in
   the dev audit log. They are append-only and stay, like the Bug 5 history.
+
+---
+
+## Bug 26 — twelve repository writes never reach the audit trail: bulk DML — **FIXED 2026-10-09**
+
+The audit trail is a `before_flush` hook over the session's new, dirty and
+deleted objects. A bulk `update()`/`delete()` run through the session never
+enters those sets, and SQLAlchemy synchronizes in-session objects as already
+committed. So even the "keep the object consistent" assignments some functions
+made afterwards recorded nothing. Twelve statements did this:
+
+| Module | Function | What went unaudited |
+|---|---|---|
+| cvs | `set_primary_variant` (×2) | active-version designation (named in R8 AC1) |
+| cvs | `update_version_scan`, `promote_version`, `quarantine_version` | scan result, promotion, quarantine (named in R8 AC1) |
+| profiles | `replace_education`, `_work_experience`, `_skills`, `_languages`, `_senior_expertise_skills` | every removed row on each save |
+| jobs | `set_jd_required_skills`, `delete_stale_drafts` | removed JD skills, purged drafts |
+
+The profile and JD replacements audited the new rows but not the removed ones.
+Replaying an entity's diffs could therefore not rebuild it (R8 AC6).
+
+### What was changed
+
+- **`app/platform/db/mutations.py::delete_each`** loads the matching rows,
+  `session.delete()`s each, and flushes. The flush lets a replacement reuse a
+  unique key in the same transaction. The profile and jobs replacements use it.
+- **The CV functions assign ORM attributes and flush.** `set_primary_variant`
+  clears the old flag and flushes before setting the new one, because of the
+  one-primary-per-account partial unique index.
+- **Guard:** `tests/integration/test_bulk_dml_audited.py` covers CV
+  designation, scan, promotion and quarantine, candidate and senior skill
+  replacement, JD skill replacement and the draft purge. All 4 tests failed
+  for the missing entries before the fix.
+- **Regression guard:** `semgrep/audit-trail.yml` rejects
+  `sqlalchemy.update/delete` under `app/modules`. Run against the old
+  repositories it reports exactly these 12; against the new ones, 0.
+  `notifications` keeps its bulk updates: the hook excludes that table on
+  purpose, and it lives in `platform`.
+- **Suites:** unit 365/365, integration 52/52, Semgrep 0 findings, mypy 74.
 
 ---
 

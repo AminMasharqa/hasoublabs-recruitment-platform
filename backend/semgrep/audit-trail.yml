@@ -1,0 +1,24 @@
+rules:
+  # ─── No bulk UPDATE/DELETE in domain modules (R8 AC1, AC6) ─────────────────
+  # The audit trail is written by a before_flush hook that diffs the session's
+  # new, dirty and deleted objects. A bulk update()/delete() statement never
+  # enters those sets, so the change is silently unaudited (Bug 26: twelve such
+  # statements in cvs, profiles and jobs). Mutate ORM objects instead, or use
+  # app.platform.db.mutations.delete_each to delete matching rows.
+  - id: bulk-dml-bypasses-audit
+    pattern-either:
+      - pattern: sqlalchemy.update(...)
+      - pattern: sqlalchemy.delete(...)
+      - pattern: sqlalchemy.sql.expression.update(...)
+      - pattern: sqlalchemy.sql.expression.delete(...)
+      - pattern: sqlalchemy.dialects.postgresql.insert(...).on_conflict_do_update(...)
+    message: |
+      A bulk UPDATE/DELETE statement bypasses the audit hook, so this change
+      would not reach the Audit_Log (R8 AC1, AC6). Load the rows and change or
+      `session.delete()` the ORM objects, or use
+      `app.platform.db.mutations.delete_each(session, Model, *criteria)`.
+    languages: [python]
+    severity: ERROR
+    paths:
+      include:
+        - "app/modules/**"

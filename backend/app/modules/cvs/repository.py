@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 
 from app.platform.db.base import utc_now
 from app.platform.db.enums import CvVersionState
@@ -106,25 +106,29 @@ async def set_primary_variant(
 ) -> None:
     """Set exactly one variant as primary, clearing the flag on all others.
 
-    Uses two UPDATE statements inside the same transaction:
-    1. Clear is_primary on all active variants for the account.
-    2. Set is_primary=True on the target variant.
+    Both sides of the designation go through the ORM, so the audit hook
+    records them (R8 AC1 names active-version designation). The old flag is
+    flushed clear before the new one is set, because a partial unique index
+    allows one active primary per account.
     """
-    # Clear existing primary
-    await session.execute(
-        update(CvVariant)
-        .where(
+    now = utc_now()
+    current = await session.scalars(
+        select(CvVariant).where(
             CvVariant.account_id == account_id,
             CvVariant.is_archived.is_(False),
+            CvVariant.is_primary.is_(True),
+            CvVariant.id != variant_id,
         )
-        .values(is_primary=False, updated_at=utc_now())
     )
-    # Set new primary
-    await session.execute(
-        update(CvVariant)
-        .where(CvVariant.id == variant_id)
-        .values(is_primary=True, updated_at=utc_now())
-    )
+    for variant in current.all():
+        variant.is_primary = False
+        variant.updated_at = now
+    await session.flush()
+
+    target = await session.get(CvVariant, variant_id)
+    if target is not None and not target.is_primary:
+        target.is_primary = True
+        target.updated_at = now
     await session.flush()
 
 
@@ -308,19 +312,10 @@ async def promote_version(
     ``object_version_id`` is the version the available bucket assigned to the
     copy, so a download pins that exact snapshot.
     """
-    await session.execute(
-        update(CvVersion)
-        .where(CvVersion.id == version.id)
-        .values(
-            state=CvVersionState.AVAILABLE,
-            bucket=bucket,
-            object_key=object_key,
-            object_version_id=object_version_id,
-        )
-    )
-    # Keep in-memory object consistent
+    # Through the ORM, so the audit hook records the promotion (R8 AC1).
     version.state = CvVersionState.AVAILABLE
     version.bucket = bucket
+    version.object_key = object_key
     version.object_version_id = object_version_id
     # object_key is immutable after insert; the promotion key should be the same
     await session.flush()
@@ -333,14 +328,7 @@ async def quarantine_version(
     scan_result: str,
 ) -> None:
     """Mark a version as Quarantined and record the scan result."""
-    await session.execute(
-        update(CvVersion)
-        .where(CvVersion.id == version.id)
-        .values(
-            state=CvVersionState.QUARANTINED,
-            scan_result=scan_result,
-        )
-    )
+    # Through the ORM, so the audit hook records the quarantine (R8 AC1).
     version.state = CvVersionState.QUARANTINED
     version.scan_result = scan_result
     await session.flush()
@@ -355,15 +343,7 @@ async def update_version_scan(
     scanned_at: datetime,
 ) -> None:
     """Record the full scan result on a version row."""
-    await session.execute(
-        update(CvVersion)
-        .where(CvVersion.id == version.id)
-        .values(
-            state=state,
-            scan_result=scan_result,
-            scanned_at=scanned_at,
-        )
-    )
+    # Through the ORM, so the audit hook records the scan result (R8 AC1).
     version.state = state
     version.scan_result = scan_result
     version.scanned_at = scanned_at

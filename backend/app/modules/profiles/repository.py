@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import delete, exists, func, select, text
+from sqlalchemy import exists, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,6 +22,7 @@ from app.modules.profiles.models import (
     SeniorProfile,
 )
 from app.platform.db.base import utc_now
+from app.platform.db.mutations import delete_each
 
 __all__ = [
     "contactable_seniors_for_jd",
@@ -166,9 +167,7 @@ async def replace_education(
     Returns:
         The list of newly created ``CandidateEducation`` ORM objects.
     """
-    await session.execute(
-        delete(CandidateEducation).where(CandidateEducation.profile_id == profile_id)
-    )
+    await delete_each(session, CandidateEducation, CandidateEducation.profile_id == profile_id)
     rows = [
         CandidateEducation(profile_id=profile_id, account_id=account_id, **entry)
         for entry in entries
@@ -198,10 +197,8 @@ async def replace_work_experience(
     Returns:
         The list of newly created ``CandidateWorkExperience`` ORM objects.
     """
-    await session.execute(
-        delete(CandidateWorkExperience).where(
-            CandidateWorkExperience.profile_id == profile_id
-        )
+    await delete_each(
+        session, CandidateWorkExperience, CandidateWorkExperience.profile_id == profile_id
     )
     rows = [
         CandidateWorkExperience(profile_id=profile_id, account_id=account_id, **entry)
@@ -231,9 +228,7 @@ async def replace_skills(
     Returns:
         The list of newly created ``CandidateSkill`` ORM objects.
     """
-    await session.execute(
-        delete(CandidateSkill).where(CandidateSkill.profile_id == profile_id)
-    )
+    await delete_each(session, CandidateSkill, CandidateSkill.profile_id == profile_id)
     rows = [
         CandidateSkill(
             profile_id=profile_id,
@@ -268,9 +263,7 @@ async def replace_languages(
     Returns:
         The list of newly created ``CandidateLanguage`` ORM objects.
     """
-    await session.execute(
-        delete(CandidateLanguage).where(CandidateLanguage.profile_id == profile_id)
-    )
+    await delete_each(session, CandidateLanguage, CandidateLanguage.profile_id == profile_id)
     rows = [
         CandidateLanguage(profile_id=profile_id, account_id=account_id, **entry)
         for entry in entries
@@ -391,9 +384,7 @@ async def replace_senior_expertise_skills(
     Returns:
         The list of newly created ``SeniorExpertiseSkill`` ORM objects.
     """
-    await session.execute(
-        delete(SeniorExpertiseSkill).where(SeniorExpertiseSkill.account_id == account_id)
-    )
+    await delete_each(session, SeniorExpertiseSkill, SeniorExpertiseSkill.account_id == account_id)
     rows = [
         SeniorExpertiseSkill(account_id=account_id, skill_id=skill_id)
         for skill_id in skill_ids
