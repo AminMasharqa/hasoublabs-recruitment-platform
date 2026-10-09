@@ -63,8 +63,44 @@ def test_each_alias_is_normalized_and_targets_a_seeded_skill(alias: str, skill: 
     assert skill in {normalized for normalized, *_ in SEED.SEED_SKILLS}
 
 
-@pytest.mark.parametrize("ambiguous", ["C", "C++", "C#"])
-def test_ambiguous_c_family_is_not_seeded(ambiguous: str) -> None:
-    # All three normalize to "c"; seeding one would resolve the others to it.
-    assert normalize_skill_term(ambiguous) == "c"
-    assert "c" not in {normalized for normalized, *_ in SEED.SEED_SKILLS}
+# ── 0012: the C family, seeded once the normalizer could tell them apart ──────
+
+_SYMBOLS_MIGRATION = _MIGRATION.with_name("0012_skill_language_symbols.py")
+
+
+def _load_symbols_seed() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("skill_language_symbols", _SYMBOLS_MIGRATION)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+SYMBOLS = _load_symbols_seed()
+
+
+@pytest.mark.parametrize(("normalized", "en"), SYMBOLS.SEED_SKILLS)
+def test_each_c_family_skill_is_reachable_by_its_name(normalized: str, en: str) -> None:
+    assert normalize_skill_term(en) == normalized
+
+
+@pytest.mark.parametrize(("alias", "skill"), SYMBOLS.SEED_ALIASES)
+def test_each_c_family_alias_is_normalized_and_resolves_to_a_seeded_skill(
+    alias: str, skill: str
+) -> None:
+    assert normalize_skill_term(alias) == alias
+    assert skill in {normalized for normalized, _ in SYMBOLS.SEED_SKILLS}
+
+
+def test_the_c_family_does_not_collide_with_the_first_seed() -> None:
+    first = {normalized for normalized, *_ in SEED.SEED_SKILLS} | {a for a, _ in SEED.SEED_ALIASES}
+    second = {n for n, _ in SYMBOLS.SEED_SKILLS} | {a for a, _ in SYMBOLS.SEED_ALIASES}
+    assert not first & second
+
+
+@pytest.mark.parametrize(
+    "term", ["C", "C++", "c#", "F#", "C/C++", "React + Redux", "Node.js", "ج++", "a+b", "++"]
+)
+def test_the_migrations_copy_of_the_normalizer_matches_the_real_one(term: str) -> None:
+    assert SYMBOLS._skill_key(term) == normalize_skill_term(term)

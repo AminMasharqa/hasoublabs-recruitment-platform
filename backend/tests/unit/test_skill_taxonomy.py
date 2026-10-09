@@ -265,3 +265,39 @@ async def test_resolve_is_total_resolved_or_flagged() -> None:
             SkillResolutionOutcome.FLAGGED_LINKED,
             SkillResolutionOutcome.FLAGGED_UNLINKED,
         }
+
+
+# ── Language-name symbols: C, C++, C#, F# (R4 AC2, AC3) ──────────────────────
+# Stripping every symbol mapped "C", "C++" and "C#" to one key, so seeding any
+# of them would silently resolve the others to it. A "+" or "#" attached to the
+# end of a word is now part of the key; a free-standing one is still a separator.
+
+
+def test_c_family_names_normalize_apart() -> None:
+    keys = {normalize_skill_term(term) for term in ("C", "C++", "C#", "F#")}
+    assert keys == {"c", "c++", "c#", "f#"}
+
+
+def test_language_symbols_survive_casing_spacing_and_fullwidth_forms() -> None:
+    assert normalize_skill_term("  c++ ") == "c++"
+    assert normalize_skill_term("C＃") == "c#"  # full-width number sign
+    assert normalize_skill_term("C/C++") == "c c++"
+
+
+def test_a_free_standing_plus_or_hash_is_still_a_separator() -> None:
+    assert normalize_skill_term("React + Redux") == "react redux"
+    assert normalize_skill_term("# Python") == "python"
+    assert normalize_skill_term("+") == ""
+
+
+def test_language_symbols_keep_normalization_idempotent() -> None:
+    for term in ("C++", "c#", "F#", "C/C++", "React + Redux", "c ++", "++c", "a+b"):
+        once = normalize_skill_term(term)
+        assert normalize_skill_term(once) == once
+
+
+def test_locality_normalization_is_unchanged() -> None:
+    from app.platform.taxonomy.normalization import normalize_text  # noqa: PLC0415
+
+    # The shared core still strips every symbol; only skill keys keep them.
+    assert normalize_text("C++") == "c"

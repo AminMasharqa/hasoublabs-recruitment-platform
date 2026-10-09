@@ -1104,8 +1104,27 @@ exposed the next.
      (en/ar/he names) and 16 aliases, using `ON CONFLICT DO NOTHING`.
    - **Downgrade:** removes only seeded skills that nothing references.
    - **C, C++ and C# are deliberately not seeded.** `normalize_skill_term` strips
-     `+` and `#`, so all three normalise to `"c"` and would collide. That
-     normaliser defect is still open.
+     `+` and `#`, so all three normalise to `"c"` and would collide. ~~That
+     normaliser defect is still open.~~ **FIXED 2026-10-09** (decision: keep `+`
+     and `#`):
+     - **Normaliser:** `normalize_skill_term` keeps a `+`/`#` attached to the end
+       of a word, so C, C++, C# and F# get distinct keys. A free-standing one
+       ("React + Redux") is still a separator. `normalize_text`, which locality
+       lookup uses, is unchanged.
+     - **Migration `0012_skill_language_symbols`:** re-normalizes existing skills
+       and unmatched terms whose text carries the symbol (a skill whose new key
+       is taken keeps its old one, and the migration reports it). It then seeds
+       C, C++, C# and F# with aliases `cpp`, `c plus plus`, `csharp`, `c sharp`,
+       `fsharp` and `f sharp`. Downgrade removes only unreferenced seeded skills.
+     - **Guards:**
+       - `test_skill_taxonomy.py`: distinct keys, a free-standing symbol still
+         separates, idempotence, localities unchanged;
+       - `test_skill_taxonomy_seed.py`: seed literals, aliases, no clash with
+         `0011`, and the migration's copy of the normaliser matching the real one;
+       - `tests/integration/test_c_family_skills.py`: four canonical skills,
+         aliases resolve to them.
+     - **Dev database:** upgraded, downgraded and re-upgraded cleanly.
+     - **Suites:** unit 395/395, integration 53/53.
    - **Guard:** `tests/unit/test_skill_taxonomy_seed.py`.
    - **The journeys now enter seeded skills** (`SQL`, `QA Automation`), and the
      `profile` journey passes.

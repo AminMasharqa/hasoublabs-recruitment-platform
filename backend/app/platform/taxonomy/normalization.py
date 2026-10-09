@@ -106,12 +106,19 @@ def normalize_text(text: str) -> str:
     return " ".join(result.split())
 
 
+#: Symbols that end a programming-language name: "C++", "C#", "F#".
+_LANGUAGE_SUFFIXES: frozenset[str] = frozenset("+#")
+
+
 def normalize_skill_term(term: str) -> str:
     """Reduce a raw skill term to its canonical normalized key.
 
-    A thin, named alias over :func:`normalize_text` — skill lookup uses the
-    shared core transform. Kept as its own name so call sites and the taxonomy's
-    UNIQUE ``normalized_name`` semantics read in skill terms.
+    The shared core transform (:func:`normalize_text`) with one exception: a
+    ``+`` or ``#`` attached to the end of a word is kept, so "C", "C++", "C#"
+    and "F#" get distinct keys. Stripping every symbol mapped all three C
+    names to ``"c"``, so seeding any of them silently resolved the others to it.
+    A free-standing ``+`` or ``#`` ("React + Redux") is still a separator.
+    Locality lookup keeps using :func:`normalize_text` unchanged.
 
     Args:
         term: The raw term as entered by a Candidate, Senior, or extractor.
@@ -120,4 +127,14 @@ def normalize_skill_term(term: str) -> str:
         The normalized key. Idempotent; may be the empty string if the input
         contained no letters, digits, or marks (e.g. ``"!!!"``).
     """
-    return normalize_text(term)
+    folded = unicodedata.normalize("NFKC", term).casefold()
+    kept: list[str] = []
+    for ch in folded:
+        attached = bool(kept) and (kept[-1].isalnum() or kept[-1] in _LANGUAGE_SUFFIXES)
+        if ch in _LANGUAGE_SUFFIXES and attached:
+            kept.append(ch)
+        elif _is_stripped_punctuation(ch):
+            kept.append(" ")
+        else:
+            kept.append(ch)
+    return " ".join("".join(kept).split())
