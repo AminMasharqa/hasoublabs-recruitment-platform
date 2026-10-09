@@ -25,6 +25,8 @@ green except the known baseline: the 2 slow `JobNewScreen` vitest tests
 - **Bug 5** fixed (accept the break), and the `admin-accounts` walk (below).
 
 Open follow-ups from this round:
+- **2026-10-09: Bug 24 fixed.** 27 of 38 error keys had no message in any
+  catalog, so those errors reached users as raw keys. See its section.
 - ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
   nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
   - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on
@@ -1596,6 +1598,27 @@ one nothing set:
   transaction, so no UoW runs and no failure entry is written. R8 AC1 lists
   these failures explicitly. A fix would write a failure entry on that path, as
   the denial handler does.
+
+## Bug 24 — 27 domain errors reach users as raw message keys — **FIXED 2026-10-09**
+
+The envelope's `message` is `translate(error.message_key, locale)`, which falls
+back to English and then to the key itself. Only the 11 platform errors had
+catalog entries. Every domain error in the modules' `errors.py` (27 keys:
+`error.mfa_required`, `error.application_not_ready`, `error.duplicate_email`,
+...) was missing from all three catalogs, so the API answered with the raw key
+in every locale. The API log showed `Missing message key` on each one.
+
+- **Fix:** a "Domain errors" block in `en.po`, `ar.po` and `he.po` with one
+  message per key, worded from each class's docstring. None of them says more
+  than the error key already reveals.
+- **Guard:** `tests/unit/test_i18n_error_catalogs.py` discovers every
+  `PlatformError` subclass and fails if any locale lacks its key. It failed on
+  27 keys per locale before the fix.
+- **Review:** the Arabic and Hebrew wording should get a native speaker's read.
+- **Not live-verified:** the compose stack was stopped. `translate()` returns
+  the new messages in all three locales (and for `he-IL`), and unit is 365/365.
+
+---
 
 ## Failure attribution
 

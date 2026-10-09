@@ -63,6 +63,89 @@ msgstr "That content type is not supported."
 msgid "error.http_error"
 msgstr "The request could not be completed."
 
+# ── Domain errors (one per error class in the modules' errors.py) ─────────────
+
+msgid "error.application_not_ready"
+msgstr "Your profile is not ready for applications yet. Complete the missing items and try again."
+
+msgid "error.audit_write_failed"
+msgstr "The action could not be recorded, so it was not completed. Please try again."
+
+msgid "error.contact_preference_invalid"
+msgstr "The selected contact preferences do not fit together. Review them and try again."
+
+msgid "error.cv_integrity_error"
+msgstr "This CV file failed an integrity check and cannot be provided."
+
+msgid "error.cv_limit_exceeded"
+msgstr "You have reached the maximum number of active CV variants. Archive one before creating another."
+
+msgid "error.cv_upload_validation_failed"
+msgstr "This file cannot be uploaded. Choose a PDF or Word document within the size limit."
+
+msgid "error.duplicate_application"
+msgstr "You have already applied to this role."
+
+msgid "error.duplicate_email"
+msgstr "An account with this email address already exists for this account type."
+
+msgid "error.export_failed"
+msgstr "The export could not be generated. Please try again."
+
+msgid "error.export_not_ready"
+msgstr "The export is still being prepared. Please check again shortly."
+
+msgid "error.extraction_draft_expired"
+msgstr "This draft has expired. Start the job description extraction again."
+
+msgid "error.invalid_mfa_code"
+msgstr "The authentication code is incorrect. Please try again."
+
+msgid "error.invalid_registration_link"
+msgstr "This registration link is invalid or has expired. Ask for a new one."
+
+msgid "error.invalid_verification_code"
+msgstr "The verification code is incorrect."
+
+msgid "error.jd_already_closed"
+msgstr "This job description is already closed."
+
+msgid "error.jd_edit_forbidden_when_closed"
+msgstr "A closed job description cannot be edited."
+
+msgid "error.jd_not_open"
+msgstr "This role is not open for applications."
+
+msgid "error.jd_publish_precondition_failed"
+msgstr "This job description cannot be published yet. Complete the required details first."
+
+msgid "error.last_variant_error"
+msgstr "You cannot archive your only active CV variant."
+
+msgid "error.mfa_required"
+msgstr "Enter the code from your authenticator app to continue."
+
+msgid "error.profile_validation_failed"
+msgstr "Some profile fields are not valid. Correct them and try again."
+
+msgid "error.residency_validation_failed"
+msgstr "The residency proof could not be validated. Check the details and try again."
+
+msgid "error.review_correction_not_allowed"
+msgstr "You can only correct your own review of this candidate."
+
+msgid "error.skill_limit_exceeded"
+msgstr "A profile can list at most 20 skills."
+
+msgid "error.ssrf_guard_rejected"
+msgstr "This web address cannot be used. Enter the public address of a job posting."
+
+msgid "error.unsupported_entity_type"
+msgstr "This type of data cannot be exported."
+
+msgid "error.verification_code_expired"
+msgstr "This verification code has expired. Request a new code."
+
 # ── Field-level error codes ──────────────────────────────────────────────────
 
 msgid "error.field.invalid"

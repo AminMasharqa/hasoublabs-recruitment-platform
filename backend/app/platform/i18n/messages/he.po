@@ -61,6 +61,89 @@ msgstr "סוג התוכן הזה אינו נתמך."
 msgid "error.http_error"
 msgstr "לא ניתן היה להשלים את הבקשה."
 
+# ── Domain errors (one per error class in the modules' errors.py) ─────────────
+
+msgid "error.application_not_ready"
+msgstr "הפרופיל שלך עדיין לא מוכן להגשת מועמדות. השלם את הפריטים החסרים ונסה שוב."
+
+msgid "error.audit_write_failed"
+msgstr "לא ניתן היה לתעד את הפעולה, ולכן היא לא הושלמה. נסה שוב."
+
+msgid "error.contact_preference_invalid"
+msgstr "העדפות יצירת הקשר שנבחרו אינן מתאימות זו לזו. בדוק אותן ונסה שוב."
+
+msgid "error.cv_integrity_error"
+msgstr "קובץ קורות החיים הזה נכשל בבדיקת תקינות ולא ניתן לספק אותו."
+
+msgid "error.cv_limit_exceeded"
+msgstr "הגעת למספר המרבי של גרסאות קורות חיים פעילות. העבר אחת לארכיון לפני יצירת גרסה חדשה."
+
+msgid "error.cv_upload_validation_failed"
+msgstr "לא ניתן להעלות את הקובץ הזה. בחר מסמך PDF או Word בגודל המותר."
+
+msgid "error.duplicate_application"
+msgstr "כבר הגשת מועמדות לתפקיד הזה."
+
+msgid "error.duplicate_email"
+msgstr "כבר קיים חשבון עם כתובת הדוא״ל הזו עבור סוג החשבון הזה."
+
+msgid "error.export_failed"
+msgstr "לא ניתן היה ליצור את קובץ הייצוא. נסה שוב."
+
+msgid "error.export_not_ready"
+msgstr "קובץ הייצוא עדיין בהכנה. בדוק שוב בעוד רגע."
+
+msgid "error.extraction_draft_expired"
+msgstr "תוקף הטיוטה הזו פג. התחל מחדש את חילוץ תיאור המשרה."
+
+msgid "error.invalid_mfa_code"
+msgstr "קוד האימות הדו-שלבי שגוי. נסה שוב."
+
+msgid "error.invalid_registration_link"
+msgstr "קישור ההרשמה הזה אינו תקף או שפג תוקפו. בקש קישור חדש."
+
+msgid "error.invalid_verification_code"
+msgstr "קוד האימות שגוי."
+
+msgid "error.jd_already_closed"
+msgstr "תיאור המשרה הזה כבר סגור."
+
+msgid "error.jd_edit_forbidden_when_closed"
+msgstr "לא ניתן לערוך תיאור משרה סגור."
+
+msgid "error.jd_not_open"
+msgstr "המשרה הזו אינה פתוחה להגשת מועמדות."
+
+msgid "error.jd_publish_precondition_failed"
+msgstr "עדיין לא ניתן לפרסם את תיאור המשרה הזה. השלם קודם את הפרטים הנדרשים."
+
+msgid "error.last_variant_error"
+msgstr "לא ניתן להעביר לארכיון את גרסת קורות החיים הפעילה היחידה שלך."
+
+msgid "error.mfa_required"
+msgstr "הזן את הקוד מאפליקציית האימות כדי להמשיך."
+
+msgid "error.profile_validation_failed"
+msgstr "חלק משדות הפרופיל אינם תקינים. תקן אותם ונסה שוב."
+
+msgid "error.residency_validation_failed"
+msgstr "לא ניתן היה לאמת את הוכחת התושבות. בדוק את הפרטים ונסה שוב."
+
+msgid "error.review_correction_not_allowed"
+msgstr "ניתן לתקן רק את חוות הדעת שלך על המועמד הזה."
+
+msgid "error.skill_limit_exceeded"
+msgstr "פרופיל יכול לכלול עד 20 כישורים."
+
+msgid "error.ssrf_guard_rejected"
+msgstr "לא ניתן להשתמש בכתובת האינטרנט הזו. הזן את הכתובת הציבורית של מודעת הדרושים."
+
+msgid "error.unsupported_entity_type"
+msgstr "לא ניתן לייצא סוג נתונים זה."
+
+msgid "error.verification_code_expired"
+msgstr "תוקף קוד האימות הזה פג. בקש קוד חדש."
+
 # ── שגיאות ברמת השדה ─────────────────────────────────────────────────────────
 
 msgid "error.field.invalid"

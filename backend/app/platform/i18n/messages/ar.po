@@ -61,6 +61,89 @@ msgstr "نوع المحتوى هذا غير مدعوم."
 msgid "error.http_error"
 msgstr "لم يتم إكمال الطلب."
 
+# ── Domain errors (one per error class in the modules' errors.py) ─────────────
+
+msgid "error.application_not_ready"
+msgstr "ملفك الشخصي غير جاهز للتقديم بعد. أكمل العناصر الناقصة ثم حاول مرة أخرى."
+
+msgid "error.audit_write_failed"
+msgstr "تعذّر تسجيل الإجراء، لذلك لم يكتمل. يرجى المحاولة مرة أخرى."
+
+msgid "error.contact_preference_invalid"
+msgstr "تفضيلات التواصل المحددة غير متوافقة. راجعها ثم حاول مرة أخرى."
+
+msgid "error.cv_integrity_error"
+msgstr "فشل ملف السيرة الذاتية هذا في فحص السلامة ولا يمكن توفيره."
+
+msgid "error.cv_limit_exceeded"
+msgstr "لقد وصلت إلى الحد الأقصى لنسخ السيرة الذاتية النشطة. أرشف إحداها قبل إنشاء نسخة جديدة."
+
+msgid "error.cv_upload_validation_failed"
+msgstr "لا يمكن رفع هذا الملف. اختر مستند PDF أو Word ضمن الحد المسموح للحجم."
+
+msgid "error.duplicate_application"
+msgstr "لقد تقدّمت لهذه الوظيفة من قبل."
+
+msgid "error.duplicate_email"
+msgstr "يوجد بالفعل حساب بهذا البريد الإلكتروني لنوع الحساب هذا."
+
+msgid "error.export_failed"
+msgstr "تعذّر إنشاء ملف التصدير. يرجى المحاولة مرة أخرى."
+
+msgid "error.export_not_ready"
+msgstr "لا يزال ملف التصدير قيد التحضير. يرجى التحقق بعد قليل."
+
+msgid "error.extraction_draft_expired"
+msgstr "انتهت صلاحية هذه المسودة. ابدأ استخراج الوصف الوظيفي من جديد."
+
+msgid "error.invalid_mfa_code"
+msgstr "رمز المصادقة غير صحيح. يرجى المحاولة مرة أخرى."
+
+msgid "error.invalid_registration_link"
+msgstr "رابط التسجيل هذا غير صالح أو منتهي الصلاحية. اطلب رابطًا جديدًا."
+
+msgid "error.invalid_verification_code"
+msgstr "رمز التحقق غير صحيح."
+
+msgid "error.jd_already_closed"
+msgstr "هذا الوصف الوظيفي مغلق بالفعل."
+
+msgid "error.jd_edit_forbidden_when_closed"
+msgstr "لا يمكن تعديل وصف وظيفي مغلق."
+
+msgid "error.jd_not_open"
+msgstr "هذه الوظيفة غير مفتوحة للتقديم."
+
+msgid "error.jd_publish_precondition_failed"
+msgstr "لا يمكن نشر هذا الوصف الوظيفي بعد. أكمل التفاصيل المطلوبة أولًا."
+
+msgid "error.last_variant_error"
+msgstr "لا يمكنك أرشفة نسخة السيرة الذاتية النشطة الوحيدة لديك."
+
+msgid "error.mfa_required"
+msgstr "أدخل الرمز من تطبيق المصادقة للمتابعة."
+
+msgid "error.profile_validation_failed"
+msgstr "بعض حقول الملف الشخصي غير صالحة. صحّحها ثم حاول مرة أخرى."
+
+msgid "error.residency_validation_failed"
+msgstr "تعذّر التحقق من إثبات الإقامة. تحقّق من التفاصيل ثم حاول مرة أخرى."
+
+msgid "error.review_correction_not_allowed"
+msgstr "يمكنك تصحيح تقييمك أنت لهذا المرشّح فقط."
+
+msgid "error.skill_limit_exceeded"
+msgstr "يمكن أن يتضمن الملف الشخصي 20 مهارة كحد أقصى."
+
+msgid "error.ssrf_guard_rejected"
+msgstr "لا يمكن استخدام عنوان الويب هذا. أدخل الرابط العام لإعلان الوظيفة."
+
+msgid "error.unsupported_entity_type"
+msgstr "لا يمكن تصدير هذا النوع من البيانات."
+
+msgid "error.verification_code_expired"
+msgstr "انتهت صلاحية رمز التحقق هذا. اطلب رمزًا جديدًا."
+
 # ── أخطاء على مستوى الحقل ────────────────────────────────────────────────────
 
 msgid "error.field.invalid"
