@@ -90,7 +90,8 @@ class CompletenessEvaluator:
         # These rely on the relations being loaded; the service always passes a
         # fully hydrated profile.
         education_loaded = profile.education if profile.education is not None else []
-        skills_loaded = profile.skills if profile.skills is not None else []
+        # A skill pending Admin review (no skill_id) does not count (R4 AC3, AC6).
+        skills_loaded = [s for s in (profile.skills or []) if s.skill_id is not None]
 
         if not education_loaded:
             missing.append("education")
@@ -151,13 +152,14 @@ class CompletenessEvaluator:
 
 def _build_candidate_dto(
     profile: CandidateProfile,
-    skill_names: dict[UUID, str],
+    skill_labels: dict[UUID, str],
 ) -> CandidateProfileDTO:
     """Build a CandidateProfileDTO from a hydrated ORM object.
 
     Args:
         profile: Fully loaded profile (relations must be accessible).
-        skill_names: Mapping from skill_id → canonical skill name for display.
+        skill_labels: Display name per candidate-skill row id; see
+            :func:`_candidate_skill_labels`.
     """
     education_dtos = [
         EducationEntryDTO.model_validate(e) for e in (profile.education or [])
@@ -168,8 +170,9 @@ def _build_candidate_dto(
     skill_dtos = [
         SkillEntryDTO(
             skill_id=s.skill_id,
-            name=skill_names.get(s.skill_id, ""),
+            name=skill_labels.get(s.id, ""),
             years_experience=s.years_experience,
+            pending=s.skill_id is None,
         )
         for s in (profile.skills or [])
     ]
@@ -194,6 +197,39 @@ def _build_candidate_dto(
         created_at=profile.created_at,
         updated_at=profile.updated_at,
     )
+
+
+async def _candidate_skill_labels(
+    session: Any,  # noqa: ANN401 - AsyncSession, as in _load_skill_names
+    profile: CandidateProfile,
+) -> dict[UUID, str]:
+    """Display name per candidate-skill row: the skill, or the term as entered.
+
+    A pending row (R4 AC3) shows what the Candidate typed, from its unmatched term.
+    """
+    from sqlalchemy import select as sa_select  # noqa: PLC0415
+
+    from app.platform.taxonomy.models import UnmatchedSkillTerm  # noqa: PLC0415
+
+    rows = list(profile.skills or [])
+    names = await _load_skill_names(session, [r.skill_id for r in rows if r.skill_id is not None])
+    term_ids = [r.unmatched_term_id for r in rows if r.unmatched_term_id is not None]
+    terms: dict[UUID, str] = {}
+    if term_ids:
+        result = await session.execute(
+            sa_select(UnmatchedSkillTerm.id, UnmatchedSkillTerm.raw_term).where(
+                UnmatchedSkillTerm.id.in_(term_ids)
+            )
+        )
+        terms = {row.id: row.raw_term for row in result}
+
+    labels: dict[UUID, str] = {}
+    for r in rows:
+        if r.skill_id is not None:
+            labels[r.id] = names.get(r.skill_id, "")
+        elif r.unmatched_term_id is not None:
+            labels[r.id] = terms.get(r.unmatched_term_id, "")
+    return labels
 
 
 async def _load_skill_names(
@@ -330,9 +366,8 @@ class CandidateProfileService:
                     uow.session, account_id
                 )
             assert profile is not None  # always set by get_or_create path
-            skill_ids = [s.skill_id for s in (profile.skills or [])]
-            skill_names = await _load_skill_names(uow.session, skill_ids)
-        return _build_candidate_dto(profile, skill_names)
+            skill_labels = await _candidate_skill_labels(uow.session, profile)
+        return _build_candidate_dto(profile, skill_labels)
 
     async def update(
         self, account_id: UUID, data: CandidateProfileUpdateRequest
@@ -427,14 +462,21 @@ class CandidateProfileService:
             raise ProfileValidationFailed(fields=violations)
 
         # --- Resolve skills before touching the DB ---
-        resolved_skill_ids_years: list[tuple[UUID, int | None]] = []
+        # An exact taxonomy or alias hit is a confirmed skill. Anything else,
+        # including a fuzzy match, stays on the profile as a pending term for
+        # Admin review (R4 AC3) and does not count toward completeness (AC6).
+        skill_entries: list[tuple[UUID | None, UUID | None, int | None]] = []
         if data.skills is not None:
+            seen: set[UUID] = set()
             for entry in data.skills:
                 resolution = await self._skill_resolver.resolve(entry.term)
-                if resolution.skill_id is not None:
-                    resolved_skill_ids_years.append(
-                        (resolution.skill_id, entry.years_experience)
-                    )
+                confirmed = resolution.skill_id if resolution.is_resolved else None
+                pending = None if confirmed is not None else resolution.unmatched_term_id
+                key = confirmed or pending
+                if key is None or key in seen:
+                    continue
+                seen.add(key)
+                skill_entries.append((confirmed, pending, entry.years_experience))
 
         # --- Write (all-or-nothing inside the UoW) ---
         async with self._uow_factory() as uow:
@@ -493,7 +535,7 @@ class CandidateProfileService:
 
             if data.skills is not None:
                 await repo.replace_skills(
-                    uow.session, profile.id, account_id, resolved_skill_ids_years
+                    uow.session, profile.id, account_id, skill_entries
                 )
 
             if data.languages is not None:
@@ -522,10 +564,9 @@ class CandidateProfileService:
                     uow.session, profile, state=new_state
                 )
 
-            skill_ids = [s.skill_id for s in (profile.skills or [])]
-            skill_names = await _load_skill_names(uow.session, skill_ids)
+            skill_labels = await _candidate_skill_labels(uow.session, profile)
 
-        return _build_candidate_dto(profile, skill_names)
+        return _build_candidate_dto(profile, skill_labels)
 
     async def get_for_admin(self, account_id: UUID) -> CandidateProfileDTO:
         """Load any candidate's profile for Admin inspection.
@@ -544,9 +585,8 @@ class CandidateProfileService:
                 from app.platform.security.errors import AuthorizationDenied  # noqa: PLC0415
 
                 raise AuthorizationDenied()
-            skill_ids = [s.skill_id for s in (profile.skills or [])]
-            skill_names = await _load_skill_names(uow.session, skill_ids)
-        return _build_candidate_dto(profile, skill_names)
+            skill_labels = await _candidate_skill_labels(uow.session, profile)
+        return _build_candidate_dto(profile, skill_labels)
 
 
 # ── Senior Profile Service ────────────────────────────────────────────────────

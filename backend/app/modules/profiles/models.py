@@ -238,10 +238,19 @@ class CandidateSkill(Base, UuidPkMixin):
         index=True,
     )
 
-    # FK into the taxonomy skills table.
-    skill_id: Mapped[UUID] = mapped_column(
+    # FK into the taxonomy skills table: a confirmed skill. ``None`` while the
+    # entered term is pending Admin review (R4 AC3); see ``unmatched_term_id``.
+    skill_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("skills.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
+    )
+
+    # The entered term awaiting Admin taxonomy review, when it matched no skill.
+    # Exactly one of ``skill_id`` and this is set (the check constraint below).
+    unmatched_term_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("unmatched_skill_terms.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
 
     # 0-50 years, nullable (candidate may not know exact duration).
@@ -267,7 +276,16 @@ class CandidateSkill(Base, UuidPkMixin):
             "years_experience IS NULL OR (years_experience >= 0 AND years_experience <= 50)",
             name="ck_candidate_skills_years_experience_range",
         ),
+        CheckConstraint(
+            "num_nonnulls(skill_id, unmatched_term_id) = 1",
+            name="ck_candidate_skills_skill_or_pending_term",
+        ),
     )
+
+    @property
+    def is_pending(self) -> bool:
+        """Whether this entry is a term awaiting review, not a confirmed skill."""
+        return self.skill_id is None
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<CandidateSkill profile_id={self.profile_id} skill_id={self.skill_id}>"

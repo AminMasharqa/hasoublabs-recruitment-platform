@@ -90,7 +90,9 @@
     "education": "Education entry {{number}}",
     "work": "Work experience entry {{number}}",
     "skill": "Skill {{number}}",
-    "language": "Language {{number}}"
+    "language": "Language {{number}}",
+    "skillPending": "Pending review: this skill is not in the platform's skill list yet, so it does not count toward a complete profile.",
+    "skillPendingShort": "(pending review)"
   },
   "action": {
     "addEducation": "Add an education entry",

@@ -76,11 +76,17 @@ class SkillEntryRequest(BaseModel):
 
 
 class SkillEntryDTO(BaseModel):
-    """Response DTO for one resolved skill on a candidate profile."""
+    """Response DTO for one skill on a candidate profile.
 
-    skill_id: UUID
+    A ``pending`` entry is a term that matched no Skill_Taxonomy skill and awaits
+    Admin review (R4 AC3): it has no ``skill_id``, its ``name`` is the term as
+    entered, and it does not count toward completeness (AC6).
+    """
+
+    skill_id: UUID | None
     name: str
     years_experience: int | None
+    pending: bool = False
 
     model_config = {"from_attributes": True}
 

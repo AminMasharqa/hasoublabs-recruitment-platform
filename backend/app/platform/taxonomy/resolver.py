@@ -74,6 +74,9 @@ class SkillResolution:
             taxonomy skill); ``False`` when the term was stored for Admin review.
         confidence: The rapidfuzz score of the linked fuzzy candidate, when the
             outcome is ``FLAGGED_LINKED``; otherwise ``None``.
+        unmatched_term_id: The review-queue row the term was stored as, for a
+            flagged outcome (R4 AC3); ``None`` for an exact hit. A profile keeps
+            this as a pending skill.
     """
 
     outcome: SkillResolutionOutcome
@@ -81,6 +84,7 @@ class SkillResolution:
     skill_id: UUID | None
     is_resolved: bool
     confidence: float | None = None
+    unmatched_term_id: UUID | None = None
 
 
 class SkillResolver:
@@ -141,7 +145,7 @@ class SkillResolver:
         best_id, best_score = await self._best_fuzzy_candidate(normalized)
         linked = best_id is not None and best_score >= self._threshold
 
-        await self._repo.add_unmatched_term(
+        unmatched_term_id = await self._repo.record_unmatched_term(
             UnmatchedSkillTerm(
                 raw_term=term,
                 normalized_term=normalized,
@@ -157,12 +161,14 @@ class SkillResolver:
                 skill_id=best_id,
                 is_resolved=False,
                 confidence=best_score,
+                unmatched_term_id=unmatched_term_id,
             )
         return SkillResolution(
             outcome=SkillResolutionOutcome.FLAGGED_UNLINKED,
             normalized_term=normalized,
             skill_id=None,
             is_resolved=False,
+            unmatched_term_id=unmatched_term_id,
         )
 
     async def _best_fuzzy_candidate(self, normalized: str) -> tuple[UUID | None, float]:

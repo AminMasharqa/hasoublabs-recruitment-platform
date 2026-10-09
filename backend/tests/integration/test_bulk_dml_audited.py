@@ -138,16 +138,22 @@ async def test_cv_designation_scan_promotion_and_quarantine_are_audited(
 
     # Active-version designation moves the flag, and both sides of it are recorded.
     assert ("CvVariant.updated", {"is_primary": True}, {"is_primary": False}) in [
-        (a, {k: v for k, v in (b or {}).items() if k == "is_primary"},
-         {k: v for k, v in (af or {}).items() if k == "is_primary"})
+        (
+            a,
+            {k: v for k, v in (b or {}).items() if k == "is_primary"},
+            {k: v for k, v in (af or {}).items() if k == "is_primary"},
+        )
         for a, b, af in await _entries(pg_sessionmaker, first.id)
     ]
     assert any(
         action == "CvVariant.updated" and (after or {}).get("is_primary") is True
         for action, _, after in await _entries(pg_sessionmaker, second.id)
     )
-    clean_after = [after for action, _, after in await _entries(pg_sessionmaker, clean.id)
-                   if action == "CvVersion.updated"]
+    clean_after = [
+        after
+        for action, _, after in await _entries(pg_sessionmaker, clean.id)
+        if action == "CvVersion.updated"
+    ]
     merged = {k: v for after in clean_after for k, v in (after or {}).items()}
     assert merged.get("state") == "Available"
     assert merged.get("bucket") == "cvs"
@@ -172,12 +178,14 @@ async def test_replacing_a_profile_collection_audits_the_removed_rows(
         )
         await uow.session.flush()
         old_rows = await profile_repo.replace_skills(
-            uow.session, profile.id, account_id, [(first_skill, 2)]
+            uow.session, profile.id, account_id, [(first_skill, None, 2)]
         )
     old_id = old_rows[0].id
 
     async with UnitOfWork(pg_sessionmaker) as uow:
-        await profile_repo.replace_skills(uow.session, profile.id, account_id, [(second_skill, 3)])
+        await profile_repo.replace_skills(
+            uow.session, profile.id, account_id, [(second_skill, None, 3)]
+        )
 
     assert [action for action, _, _ in await _entries(pg_sessionmaker, old_id)] == [
         "CandidateSkill.created",

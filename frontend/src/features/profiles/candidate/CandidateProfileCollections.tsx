@@ -360,10 +360,15 @@ export function SkillRow({
         label={t('profiles:field.skillTerm')}
         messages={messages.messagesFor(path('term'))}
         value={entry.term}
-        onChange={(term) => onChange({ term })}
+        onChange={(term) => onChange({ term, pending: false })}
         maxLength={BOUNDS.skill.term.maxLength}
         required
       />
+      {entry.pending === true ? (
+        <Text size="sm" c="dimmed" data-testid={`skill-pending-${index}`}>
+          {t('profiles:entry.skillPending')}
+        </Text>
+      ) : null}
       <ProfileTextField
         path={path('years_experience')}
         label={t('profiles:field.yearsExperience')}

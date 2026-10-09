@@ -1128,8 +1128,40 @@ exposed the next.
    - **Guard:** `tests/unit/test_skill_taxonomy_seed.py`.
    - **The journeys now enter seeded skills** (`SQL`, `QA Automation`), and the
      `profile` journey passes.
-   - **Option (b) is still open** for a team decision: an unknown skill still
-     vanishes from the profile.
+   - ~~**Option (b) is still open** for a team decision: an unknown skill still
+     vanishes from the profile.~~ **DONE 2026-10-09** (decision: option b; a
+     pending skill does not count toward AC6 until an Admin maps it):
+     - **Schema (`0013_candidate_pending_skills`):** `candidate_skills.skill_id` is
+       nullable, plus a new `unmatched_term_id` FK and a check that exactly one of
+       the two is set. Downgrade deletes pending rows, whose terms stay in the
+       review queue.
+     - **Resolver:** `record_unmatched_term` (was `add_unmatched_term`) returns the
+       review-queue row and reuses a pending row with the same normalized term.
+       Every save used to add another copy of each unknown skill to the queue.
+     - **Service:** an exact or alias match is a confirmed skill. Anything else is
+       pending, **including a fuzzy match**: "kubernets" used to be saved as
+       Kubernetes without anyone deciding so. Completeness counts confirmed
+       skills only. The response's `SkillEntryDTO` has a nullable `skill_id` and
+       `pending`, and a pending entry's `name` is the term as entered.
+     - **Frontend:** the editor keeps the term and notes it is pending review
+       (cleared when the term is edited). The Admin view marks it.
+       `profiles:entry.skillPending` / `skillPendingShort` are added in
+       en/ar/he, and `schema.d.ts` is regenerated.
+     - **Guards:**
+       - `tests/integration/test_pending_skills.py`: kept beside a confirmed
+         skill, re-save does not duplicate the queue entry, pending only means
+         Draft, fuzzy means pending. It failed before the change.
+       - `CandidateProfileScreen.test.tsx`: the editor note, its clearing, and
+         the Admin mark.
+     - **Suites:** unit 395/395, integration 56/56, vitest 1275/1277 (the 2
+       known `JobNewScreen` timeouts), E2E 79/79, a11y 40/40, verify:api,
+       build, Semgrep and mypy (74) unchanged.
+     - **Still open:**
+       - There is no Admin action that maps a pending term to a skill. The review
+         view is read-only, so pending skills stay pending until one is added.
+       - Senior expertise and JD skills still drop unknown terms.
+       - Confirmed skills display their `normalized_name` (e.g. `postgresql`),
+         not the taxonomy's display name.
 
    The original analysis: The dev database's `skills` table is **empty**, and nothing in
    the repo seeds it. Every entered skill is therefore unmatched. `SkillResolver`

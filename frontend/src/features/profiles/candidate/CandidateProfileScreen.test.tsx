@@ -429,7 +429,7 @@ describe('the completeness surface (Req 9 AC9, AC10, AC13)', () => {
         ...stored,
         state: 'Complete',
         updated_at: '2025-02-01T00:00:00Z',
-        skills: [{ name: 'Kubernetes', skill_id: 'skill-1', years_experience: 4 }],
+        skills: [{ name: 'Kubernetes', skill_id: 'skill-1', years_experience: 4, pending: false }],
       }),
     )
     mount(api.api, <CandidateProfileScreen />)
@@ -524,7 +524,7 @@ describe('the Admin view of a Candidate profile (Req 9 AC14)', () => {
     const api = backend({
       stored: profile({
         education: [educationEntry()],
-        skills: [{ name: 'Kubernetes', skill_id: 'skill-1', years_experience: 4 }],
+        skills: [{ name: 'Kubernetes', skill_id: 'skill-1', years_experience: 4, pending: false }],
         languages: [
           {
             id: 'language-1',
@@ -551,5 +551,44 @@ describe('the Admin view of a Candidate profile (Req 9 AC14)', () => {
     // A read, not an editor: nothing here can attempt a write.
     expect(screen.queryByTestId('candidate-profile-form')).toBeNull()
     expect(screen.queryByTestId('profile-save')).toBeNull()
+  })
+})
+
+// ── A skill pending Admin review (Req 9 AC5; backend R4 AC3, AC6) ─────────────
+
+const PENDING_SKILL = {
+  name: 'Quantum Weaving',
+  skill_id: null,
+  years_experience: 2,
+  pending: true,
+} as const
+
+describe('a skill that is pending Admin review', () => {
+  it('keeps the term in the editor and says it does not count yet', async () => {
+    const user = userEvent.setup()
+    const api = backend({ stored: profile({ skills: [PENDING_SKILL] }) })
+    mount(api.api, <CandidateProfileScreen />)
+
+    const term = await screen.findByTestId('skill-term-skills.0.term')
+    expect(term).toHaveValue('Quantum Weaving')
+    expect(screen.getByTestId('skill-pending-0')).toHaveTextContent(/pending review/i)
+
+    // An edited term has not been checked yet, so the note no longer applies.
+    await user.type(term, ' Pro')
+    expect(screen.queryByTestId('skill-pending-0')).toBeNull()
+  })
+
+  it('marks the entry in the Admin view', async () => {
+    const api = backend({
+      stored: profile({
+        skills: [{ name: 'Kubernetes', skill_id: 'skill-1', years_experience: 4, pending: false }, PENDING_SKILL],
+      }),
+    })
+    mount(api.api, <AdminCandidateProfileScreen />, '/admin/candidates/account-1')
+
+    const list = await screen.findByTestId('admin-skill-list')
+    expect(list).toHaveTextContent('Quantum Weaving')
+    expect(screen.getByTestId('admin-skill-pending-1')).toHaveTextContent(/pending review/i)
+    expect(screen.queryByTestId('admin-skill-pending-0')).toBeNull()
   })
 })

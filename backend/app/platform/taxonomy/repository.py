@@ -71,9 +71,11 @@ class SkillRepositoryProtocol(Protocol):
         """Return canonical-skill candidates near ``normalized`` by trigram similarity."""
         ...
 
-    async def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
-        """Persist a new unmatched-term row.
+    async def record_unmatched_term(self, term: UnmatchedSkillTerm) -> UUID:
+        """Store ``term`` for Admin review, or reuse its pending row; return the row id.
 
+        A term already pending review under the same normalized form is not
+        stored again, so re-saving a profile does not grow the review queue.
         Committed independently of any caller transaction — see
         :class:`SkillRepository` for why.
         """
@@ -89,7 +91,7 @@ class SkillRepository:
     there is no caller-owned session for this repository to join. It therefore
     owns a sessionmaker, not a session, and opens (and commits/closes) one
     short-lived session per call — a lookup-scoped analogue of ``UnitOfWork``
-    for this narrow surface. This also means ``add_unmatched_term`` commits its
+    for this narrow surface. This also means ``record_unmatched_term`` commits its
     row independently: an unmatched term is not part of the atomicity guarantee
     of whatever profile/job write later uses the resolved skill ids, matching
     the resolver's own contract that a term is stored+flagged unconditionally,
@@ -140,7 +142,21 @@ class SkillRepository:
                 candidates.append(FuzzyCandidate(skill_id=row[0], normalized_value=row[1]))
         return candidates
 
-    async def add_unmatched_term(self, term: UnmatchedSkillTerm) -> None:
+    async def record_unmatched_term(self, term: UnmatchedSkillTerm) -> UUID:
         async with self._sessionmaker() as session:
+            pending = await session.scalar(
+                select(UnmatchedSkillTerm.id)
+                .where(
+                    UnmatchedSkillTerm.normalized_term == term.normalized_term,
+                    UnmatchedSkillTerm.pending_review.is_(True),
+                )
+                .order_by(UnmatchedSkillTerm.created_at)
+                .limit(1)
+            )
+            if pending is not None:
+                return pending
             session.add(term)
+            await session.flush()
+            term_id = term.id
             await session.commit()
+            return term_id

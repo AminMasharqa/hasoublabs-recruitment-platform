@@ -215,7 +215,7 @@ async def replace_skills(
     session: AsyncSession,
     profile_id: UUID,
     account_id: UUID,
-    skill_ids_years: list[tuple[UUID, int | None]],
+    entries: list[tuple[UUID | None, UUID | None, int | None]],
 ) -> list[CandidateSkill]:
     """Replace all skill entries atomically: delete then insert.
 
@@ -223,7 +223,9 @@ async def replace_skills(
         session: The active async session.
         profile_id: The owning profile UUID.
         account_id: Denormalized account UUID stored on each row.
-        skill_ids_years: List of ``(skill_id, years_experience)`` tuples.
+        entries: ``(skill_id, unmatched_term_id, years_experience)`` per entry.
+            Exactly one of the two ids is set: a confirmed skill, or a term
+            pending Admin review (R4 AC3).
 
     Returns:
         The list of newly created ``CandidateSkill`` ORM objects.
@@ -234,9 +236,10 @@ async def replace_skills(
             profile_id=profile_id,
             account_id=account_id,
             skill_id=skill_id,
+            unmatched_term_id=unmatched_term_id,
             years_experience=years,
         )
-        for skill_id, years in skill_ids_years
+        for skill_id, unmatched_term_id, years in entries
     ]
     session.add_all(rows)
     return rows

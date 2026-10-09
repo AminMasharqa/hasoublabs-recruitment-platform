@@ -77,6 +77,12 @@ export interface WorkFormEntry {
 export interface SkillFormEntry {
   readonly term: string
   readonly years_experience: string
+  /**
+   * The saved term matched no Skill_Taxonomy skill and awaits Admin review
+   * (backend R4 AC3), so it does not count toward completeness yet. Display
+   * only: it is never submitted, and editing the term clears it.
+   */
+  readonly pending?: boolean
 }
 
 /** One language row as the editor holds it (AC6). */
@@ -207,6 +213,7 @@ export function toFormValues(profile: CandidateProfile | null | undefined): Cand
     skills: profile.skills.map((entry) => ({
       term: text(entry.name),
       years_experience: numberText(entry.years_experience),
+      pending: entry.pending,
     })),
     languages: profile.languages.map((entry) => ({
       language_code: text(entry.language_code),

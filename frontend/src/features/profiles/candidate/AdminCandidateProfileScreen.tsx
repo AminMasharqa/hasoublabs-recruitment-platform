@@ -207,9 +207,15 @@ export function AdminCandidateProfileView({ profile }: AdminCandidateProfileView
         count={profile.skills.length}
       >
         <List data-testid="admin-skill-list">
-          {profile.skills.map((entry) => (
-            <List.Item key={entry.skill_id}>
+          {profile.skills.map((entry, index) => (
+            // A pending skill has no skill_id; this read-only list never reorders.
+            <List.Item key={index}>
               {entry.name}
+              {entry.pending ? (
+                <span data-testid={`admin-skill-pending-${index}`}>
+                  {` ${t('profiles:entry.skillPendingShort')}`}
+                </span>
+              ) : null}
               {entry.years_experience === null
                 ? null
                 : ` — ${t('profiles:readOnly.yearsExperience', {

@@ -90,7 +90,9 @@
     "education": "רשומת השכלה {{number}}",
     "work": "רשומת ניסיון תעסוקתי {{number}}",
     "skill": "כישור {{number}}",
-    "language": "שפה {{number}}"
+    "language": "שפה {{number}}",
+    "skillPending": "ממתין לבדיקה: הכישור הזה עדיין לא נמצא ברשימת הכישורים של הפלטפורמה, ולכן הוא לא נספר לצורך השלמת הפרופיל.",
+    "skillPendingShort": "(ממתין לבדיקה)"
   },
   "action": {
     "addEducation": "הוספת רשומת השכלה",

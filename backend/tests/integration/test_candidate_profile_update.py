@@ -39,6 +39,8 @@ pytestmark = pytest.mark.integration
 @dataclass(frozen=True)
 class _Resolution:
     skill_id: uuid.UUID
+    is_resolved: bool = True
+    unmatched_term_id: uuid.UUID | None = None
 
 
 class _StubResolver:

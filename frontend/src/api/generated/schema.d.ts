@@ -2409,16 +2409,22 @@ export interface components {
         };
         /**
          * SkillEntryDTO
-         * @description Response DTO for one resolved skill on a candidate profile.
+         * @description Response DTO for one skill on a candidate profile.
+         *
+         *     A ``pending`` entry is a term that matched no Skill_Taxonomy skill and awaits
+         *     Admin review (R4 AC3): it has no ``skill_id``, its ``name`` is the term as
+         *     entered, and it does not count toward completeness (AC6).
          */
         SkillEntryDTO: {
             /** Name */
             name: string;
             /**
-             * Skill Id
-             * Format: uuid
+             * Pending
+             * @default false
              */
-            skill_id: string;
+            pending: boolean;
+            /** Skill Id */
+            skill_id: string | null;
             /** Years Experience */
             years_experience: number | null;
         };
