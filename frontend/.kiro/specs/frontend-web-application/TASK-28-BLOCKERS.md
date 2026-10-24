@@ -1160,8 +1160,15 @@ exposed the next.
        - There is no Admin action that maps a pending term to a skill. The review
          view is read-only, so pending skills stay pending until one is added.
        - Senior expertise and JD skills still drop unknown terms.
-       - Confirmed skills display their `normalized_name` (e.g. `postgresql`),
-         not the taxonomy's display name.
+       - ~~Confirmed skills display their `normalized_name` (e.g. `postgresql`),
+         not the taxonomy's display name.~~ **FIXED 2026-10-24.**
+         `_load_skill_names` returns the taxonomy's English name (`PostgreSQL`),
+         but only when it normalizes back to the same key, so the name the editor
+         sends back on the next save still resolves. Candidate skills and senior
+         expertise both use it. Guard:
+         `test_pending_skills.py::test_a_confirmed_skill_shows_its_taxonomy_display_name`.
+         Arabic and Hebrew names are not shown: the resolver matches only the
+         English key and aliases, so a saved localized name would turn pending.
 
    The original analysis: The dev database's `skills` table is **empty**, and nothing in
    the repo seeds it. Every entered skill is therefore unmatched. `SkillResolver`

@@ -236,8 +236,11 @@ async def _load_skill_names(
     session: Any,  # AsyncSession
     skill_ids: list[UUID],
 ) -> dict[UUID, str]:
-    """Fetch canonical skill names for a list of skill UUIDs.
+    """Fetch display names for a list of skill UUIDs.
 
+    The name is the taxonomy's English one (``PostgreSQL``), not the lookup key
+    (``postgresql``). It is used only when it normalizes back to that key, so a
+    name the editor sends back on the next save still resolves to the same skill.
     Returns an empty dict when there are no skill_ids.
     """
     if not skill_ids:
@@ -245,11 +248,19 @@ async def _load_skill_names(
 
     from sqlalchemy import select as sa_select  # noqa: PLC0415
     from app.platform.taxonomy.models import Skill  # noqa: PLC0415
+    from app.platform.taxonomy.normalization import normalize_skill_term  # noqa: PLC0415
 
     result = await session.execute(
-        sa_select(Skill.id, Skill.normalized_name).where(Skill.id.in_(skill_ids))
+        sa_select(Skill.id, Skill.normalized_name, Skill.name).where(Skill.id.in_(skill_ids))
     )
-    return {row.id: row.normalized_name for row in result}
+    names: dict[UUID, str] = {}
+    for row in result:
+        en = (row.name or {}).get("en")
+        names[row.id] = (
+            en if isinstance(en, str) and normalize_skill_term(en) == row.normalized_name
+            else row.normalized_name
+        )
+    return names
 
 
 def _build_senior_dto(

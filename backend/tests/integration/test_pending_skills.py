@@ -111,6 +111,20 @@ async def test_an_unknown_skill_is_kept_as_pending_beside_a_confirmed_one(
     assert await _pending_rows(pg_sessionmaker, unknown.casefold()) == 1
 
 
+async def test_a_confirmed_skill_shows_its_taxonomy_display_name(
+    pg_sessionmaker: async_sessionmaker[AsyncSession], service: CandidateProfileService
+) -> None:
+    """Bug 10: the editor showed ``postgresql``, the lookup key, not ``PostgreSQL``."""
+    account_id, email = await _candidate(pg_sessionmaker)
+
+    saved = await service.update(account_id, _request(email, "postgresql"))
+    assert [entry.name for entry in saved.skills] == ["PostgreSQL"]
+
+    # The shown name resolves to the same skill when the Candidate saves it back.
+    again = await service.update(account_id, _request(email, saved.skills[0].name))
+    assert [(e.name, e.pending) for e in again.skills] == [("PostgreSQL", False)]
+
+
 async def test_only_pending_skills_leave_the_profile_draft(
     pg_sessionmaker: async_sessionmaker[AsyncSession], service: CandidateProfileService
 ) -> None:
