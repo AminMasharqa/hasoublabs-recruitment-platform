@@ -6,6 +6,9 @@
 #   ./dev.sh --no-frontend start the backend only
 #   ./dev.sh --seed-admin  also create/reset the local Admin and enrol its MFA
 #                          (backend/scripts/seed_admin.py; secrets go to .dev-secrets/)
+#   ./dev.sh --seed-demo   also seed demo accounts, jobs, applications and a review
+#                          (backend/scripts/seed_demo.py; needs the Admin from --seed-admin;
+#                          run backend/scripts/wipe_dev_db.sh --yes first for a clean database)
 #
 # Runs in Git Bash on Windows, and on macOS and Linux. Needs docker, uv and npm.
 # Docker containers keep running after Ctrl+C; stop them with
@@ -26,12 +29,14 @@ WEB_URL="http://localhost:5173"
 SKIP_DEPS=0
 WITH_FRONTEND=1
 SEED_ADMIN=0
+SEED_DEMO=0
 for arg in "$@"; do
   case "$arg" in
     --skip-deps) SKIP_DEPS=1 ;;
     --no-frontend) WITH_FRONTEND=0 ;;
     --seed-admin) SEED_ADMIN=1 ;;
-    -h | --help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --seed-demo) SEED_DEMO=1 ;;
+    -h | --help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $arg (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -173,6 +178,11 @@ echo "API is up"
 if [[ $SEED_ADMIN -eq 1 ]]; then
   step "Seeding the local Admin (backend/scripts/seed_admin.py)"
   (cd "$BACKEND" && uv run python scripts/seed_admin.py)
+fi
+
+if [[ $SEED_DEMO -eq 1 ]]; then
+  step "Seeding demo data (backend/scripts/seed_demo.py; waits for ClamAV to scan the CVs)"
+  (cd "$BACKEND" && uv run python scripts/seed_demo.py)
 fi
 
 # ── 4. Frontend ───────────────────────────────────────────────────────────────
