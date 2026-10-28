@@ -1,0 +1,1643 @@
+{
+  "pbtResults": {
+    "8.2 Property test — keyset cursor derivation": {
+      "status": "passed",
+      "lastRunTimestamp": 1789941143054
+    },
+    "6.3 Property test — direction resolution": {
+      "status": "passed",
+      "lastRunTimestamp": 1789941961778
+    },
+    "6.2 Property test — unauthenticated locale resolution": {
+      "status": "passed",
+      "lastRunTimestamp": 1789941974909
+    },
+    "3.4 Property test — validation details map to a complete Field_Violation list": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942038556
+    },
+    "3.2 Property test — error decoding always yields a well-formed envelope": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942152138
+    },
+    "7.6 Property test — date-range ordering with index reporting": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942408840
+    },
+    "7.7 Property test — fixed-format code and rating bounds": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942444357
+    },
+    "7.4 Property test — email addr-spec acceptance": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942487519
+    },
+    "7.5 Property test — LinkedIn URL validation": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942511255
+    },
+    "7.8 Property test — Field_Violation partition is total and placement-correct": {
+      "status": "passed",
+      "lastRunTimestamp": 1789942835482
+    },
+    "11.3 Property test — route admission equals role/context/status conjunction": {
+      "status": "passed",
+      "lastRunTimestamp": 1789943071167
+    },
+    "4.2 Property test — refresh scheduled at least 60 seconds before expiry": {
+      "status": "passed",
+      "lastRunTimestamp": 1789943092574
+    },
+    "11.4 Property test — Navigation_Menu is a subset of admitted destinations": {
+      "status": "passed",
+      "lastRunTimestamp": 1789943831381
+    },
+    "11.2 Property test — onboarding gating admits only Onboarding_Screens": {
+      "status": "passed",
+      "lastRunTimestamp": 1789943875636
+    },
+    "6.6 Property test — bidirectional text round-trips byte-identically": {
+      "status": "passed",
+      "lastRunTimestamp": 1789944691305
+    }
+  },
+  "executionHistory": {
+    "1.1 Install and pin dependencies and configure the toolchain": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937401919
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937419782
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937853961
+      }
+    ],
+    "1.2 Wire the npm script contracts": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402639
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937857261
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789938221373
+      }
+    ],
+    "1.3 Add build-pipeline smoke tests for exit-code contracts": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402712
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789938225075
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789938520161
+      }
+    ],
+    "2.1 Implement the Contract_Generator scripts": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402787
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789938530315
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939473905
+      }
+    ],
+    "2.2 Derive enum unions from generated declarations": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402861
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940304339
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940934650
+      }
+    ],
+    "2.3 Add verify:api smoke tests": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402904
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939481391
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939621387
+      }
+    ],
+    "3.1 Implement error decoding and Field_Violation mapping": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937402968
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939633927
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940274108
+      }
+    ],
+    "3.2 Property test — error decoding always yields a well-formed envelope": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403007
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941817681
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942173809
+      }
+    ],
+    "3.3 Property test — 401/403 refresh classification": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403048
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941818444
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942175289
+      }
+    ],
+    "3.4 Property test — validation details map to a complete Field_Violation list": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403088
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941819890
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942176355
+      }
+    ],
+    "4.1 Implement refresh-time computation and principal decoding (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403130
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940941856
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941803822
+      }
+    ],
+    "4.2 Property test — refresh scheduled at least 60 seconds before expiry": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403167
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942865047
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943610721
+      }
+    ],
+    "4.3 Implement the single-flight refresh primitive and SessionManager core": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403227
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942861252
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943612121
+      }
+    ],
+    "4.4 Provide the SessionContext": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403263
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943935401
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944950725
+      }
+    ],
+    "4.5 Property test — refresh is single-flight and replays once": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403305
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944963046
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945380339
+      }
+    ],
+    "4.6 Unit tests — refresh-4xx session-clear and logout-always-clears transitions": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403343
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944964445
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945379340
+      }
+    ],
+    "5.1 Implement the retry-decision predicate (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403380
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942862208
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943609351
+      }
+    ],
+    "5.2 Property test — retry policy applies only to idempotent reads": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403420
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943938822
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944951366
+      }
+    ],
+    "5.3 Implement the Api_Client over openapi-fetch": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403459
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943934430
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944952326
+      }
+    ],
+    "5.4 Unit tests — secret hygiene and timeout/retry behaviour": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403498
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945385473
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946430686
+      }
+    ],
+    "6.1 Implement locale and direction resolution helpers (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403536
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939634837
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940274271
+      }
+    ],
+    "6.2 Property test — unauthenticated locale resolution": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403586
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941821300
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942177610
+      }
+    ],
+    "6.3 Property test — direction resolution": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403639
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941821959
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942178350
+      }
+    ],
+    "6.4 Initialize i18next and author baseline catalogues": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403706
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940944776
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941807565
+      }
+    ],
+    "6.5 Implement Direction_Provider and bidi-safe text handling": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403741
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942863639
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943613222
+      }
+    ],
+    "6.6 Property test — bidirectional text round-trips byte-identically": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403782
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943937880
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944953706
+      }
+    ],
+    "7.1 Implement the validation schema layer mirroring Pydantic bounds": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403819
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939635781
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940275224
+      }
+    ],
+    "7.2 Implement the server violation → input placement mapper": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403859
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940942421
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941805222
+      }
+    ],
+    "7.3 Property test — password length counted in code points": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403895
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942183214
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942536719
+      }
+    ],
+    "7.4 Property test — email addr-spec acceptance": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403936
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942184507
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942536890
+      }
+    ],
+    "7.5 Property test — LinkedIn URL validation": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937403976
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942185409
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942536936
+      }
+    ],
+    "7.6 Property test — date-range ordering with index reporting": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404019
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942186866
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942537599
+      }
+    ],
+    "7.7 Property test — fixed-format code and rating bounds": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404059
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942187582
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942538759
+      }
+    ],
+    "7.8 Property test — Field_Violation partition is total and placement-correct": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404095
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942542814
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942855812
+      }
+    ],
+    "8.1 Implement the pagination cursor deriver": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404131
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789939636816
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940276407
+      }
+    ],
+    "8.2 Property test — keyset cursor derivation": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404171
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940945640
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941808497
+      }
+    ],
+    "9. Checkpoint - infrastructure complete": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404212
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789948615842
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949172963
+      }
+    ],
+    "10.1 Implement Error_Presenter and state primitives": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404258
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943936771
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944954789
+      }
+    ],
+    "10.2 Implement the recovery boundary": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404295
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944965158
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945377941
+      }
+    ],
+    "10.3 Component tests — uniform denial, empty/error states, live-region announcements": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404333
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945386410
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946431751
+      }
+    ],
+    "11.1 Implement the admission predicate and onboarding gate (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404371
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940943398
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941806174
+      }
+    ],
+    "11.2 Property test — onboarding gating admits only Onboarding_Screens": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404408
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943626049
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943928592
+      }
+    ],
+    "11.3 Property test — route admission equals role/context/status conjunction": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404448
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942865809
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943614383
+      }
+    ],
+    "11.4 Property test — Navigation_Menu is a subset of admitted destinations": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404485
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943626111
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789943929523
+      }
+    ],
+    "11.5 Implement RouteGuard, NavigationMenu and the declarative router": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404523
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945387633
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946429440
+      }
+    ],
+    "11.6 Component tests — guard redirects, denied screen, menu scoping, onboarding gate": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404600
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946438294
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789947601278
+      }
+    ],
+    "12.1 Implement the shell and providers": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404640
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946439406
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789947601987
+      }
+    ],
+    "12.2 Implement LocaleControl and ContextSwitch": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404677
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789947607317
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789948603480
+      }
+    ],
+    "12.3 Implement the diagnostics surface": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404714
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789947608152
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789948603783
+      }
+    ],
+    "13. Checkpoint - shell and navigation runnable": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404754
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789948616828
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949173837
+      }
+    ],
+    "14.1 Implement login and session wiring": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404791
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949187236
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982256543
+      }
+    ],
+    "14.2 Implement the MFA code step and Admin enrolment": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404830
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985308867
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988451171
+      }
+    ],
+    "14.3 Component tests — MFA code step and enrolment rendering": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404870
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990366522
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991647557
+      }
+    ],
+    "15.1 Implement registration link validation and the role-fixed form": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404923
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949187344
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982260719
+      }
+    ],
+    "15.2 Implement the verification-code screen": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937404977
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985317602
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988455550
+      }
+    ],
+    "15.3 Implement onboarding Status_Notice screen": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405018
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985324129
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988459844
+      }
+    ],
+    "15.4 Component tests — registration/verification flows including lock and resend": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405057
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990371204
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991652382
+      }
+    ],
+    "16.1 Implement Candidate profile management": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405095
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949187690
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982264623
+      }
+    ],
+    "16.2 Implement Senior profile and contact preferences": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405135
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982289776
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985286248
+      }
+    ],
+    "16.3 Component tests — completeness panel, violation mapping, contact-preference conditionals": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405171
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990376094
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991657103
+      }
+    ],
+    "17.1 Implement CV variant management": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405211
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949189148
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982268873
+      }
+    ],
+    "17.2 Implement version upload, scan polling and download": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405248
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985330212
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988464606
+      }
+    ],
+    "17.3 Component tests — upload progress, scan-state polling (fake timers), download gating": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405294
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990380680
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991661872
+      }
+    ],
+    "18.1 Implement job browse and detail": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405332
+      },
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789949189967
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982273255
+      }
+    ],
+    "19.1 Implement creation, extraction and lifecycle controls": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405371
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985334381
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988469204
+      }
+    ],
+    "19.2 Component tests — extraction confirmation gating and illegal_transition refresh": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405409
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990385135
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991666628
+      }
+    ],
+    "20.1 Implement apply flow and application tracking": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405447
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789988478210
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789990361266
+      }
+    ],
+    "20.2 Component tests — apply outcomes and applicant-card three-field constraint": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405484
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991673768
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992567775
+      }
+    ],
+    "21.1 Implement review form, correction and timelines": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405525
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982293785
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985290623
+      }
+    ],
+    "21.2 Component tests — append-only (no edit/delete) and correction pre-fill": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405605
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991678203
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992573692
+      }
+    ],
+    "22.1 Implement account listing, links and lifecycle controls": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405644
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982297870
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985294994
+      }
+    ],
+    "22.2 Component tests — lifecycle controls, confirmation dialogs, token-shown-once, admin-exclusivity block": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405684
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991683099
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992578554
+      }
+    ],
+    "23.1 Implement audit list, comparison and chain verify": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405724
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982301998
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985299584
+      }
+    ],
+    "24.1 Implement reports and export polling": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405764
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982306141
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985304032
+      }
+    ],
+    "24.2 Component tests — export polling with fake timers and terminal-state handling": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405803
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991687852
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992583291
+      }
+    ],
+    "25. Checkpoint - all feature slices complete": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405844
+      },
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992599676
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827353
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004842363
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790005061407
+      }
+    ],
+    "26.1 Implement cross-cutting accessibility behaviours": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405887
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827550
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790005065304
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790005443349
+      }
+    ],
+    "26.2 Component tests — focus trap/restore, focus indicators, label association, reduced motion": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405932
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827632
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790005450554
+      },
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020251126
+      }
+    ],
+    "26.3 Accessibility gate over every route": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937405974
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827699
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790005451244
+      },
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020251804
+      }
+    ],
+    "27.1 Playwright journeys including tri-locale coverage": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937406013
+      },
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827774
+      },
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790018620217
+      },
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020252677
+      }
+    ],
+    "28. Final checkpoint - full pipeline green": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789937406053
+      }
+    ],
+    "1. Establish the project baseline, tooling and build pipeline": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789938520213
+      }
+    ],
+    "2. Generate and verify the typed API contract": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789940934738
+      }
+    ],
+    "8. Build the keyset-cursor derivation helper (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789941808537
+      }
+    ],
+    "3. Build the Error_Envelope decoder (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942176403
+      }
+    ],
+    "7. Build the Form_Validator (pure logic)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789942855900
+      }
+    ],
+    "6. Build i18n, Direction_Provider and locale resolution (pure logic + provider)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789944953750
+      }
+    ],
+    "4. Build the Session_Manager (in-memory tokens, refresh, single-flight)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789945380376
+      }
+    ],
+    "5. Build the Api_Client (sole HTTP layer)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946430739
+      }
+    ],
+    "10. Build the Error_Presenter, recovery boundary and shared state primitives": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789946431799
+      }
+    ],
+    "11. Build routing, Route_Guard and Navigation_Menu (pure logic + components)": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789947601370
+      }
+    ],
+    "12. Build the application shell, TanStack Query provider, locale and context-switch controls": [
+      {
+        "executionId": "b74c3f97-d961-4788-b9d0-fbb72a1d88fc",
+        "chatSessionId": "sess_8378fd5a-0398-44bc-9b4e-ecf90d58a91d",
+        "timestamp": 1789948603833
+      }
+    ],
+    "18. Build the job browsing slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789982273324
+      }
+    ],
+    "23. Build the audit log browsing slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789985299626
+      }
+    ],
+    "14. Build the auth and MFA feature slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991647615
+      }
+    ],
+    "15. Build the registration and email-verification slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991652445
+      }
+    ],
+    "16. Build the Candidate and Senior profile slices": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991657202
+      }
+    ],
+    "17. Build the CV variant and version slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991661921
+      }
+    ],
+    "19. Build the job authoring slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789991666678
+      }
+    ],
+    "20. Build the application submission and tracking slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992567835
+      }
+    ],
+    "21. Build the review submission and timeline slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992573830
+      }
+    ],
+    "22. Build the admin account management slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992578633
+      }
+    ],
+    "24. Build the reports and Excel export slice": [
+      {
+        "executionId": "72f3c54d-8135-44ff-a2e2-200cf2b2c173",
+        "chatSessionId": "sess_f1078f41-cde4-4808-b69c-d6e1f8b4e3fc",
+        "timestamp": 1789992583359
+      }
+    ],
+    "28. Final checkpoint k,,,,,,,,,jk,,,,,,,,,,,,,,,,m- full pipeline green": [
+      {
+        "executionId": "1ccc4ffc-0231-4892-8599-2882dfb222c8",
+        "chatSessionId": "sess_9a714b97-8c73-4c73-953e-3625d066209a",
+        "timestamp": 1790004827947
+      },
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020257474
+      }
+    ],
+    "26. Apply accessibility conformance across the app": [
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020251870
+      }
+    ],
+    "27. Wire end-to-end journeys against a running Backend_Api": [
+      {
+        "executionId": "e46286d4-6439-4f56-ab12-3d8a8467de37",
+        "chatSessionId": "sess_ed81641b-f3cb-47f9-89b6-ddba0a22aa97",
+        "timestamp": 1790020252755
+      }
+    ]
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "title": "Audit log",
+  "description": "Every recorded action on the platform, newest first.",
+  "readOnly": "The audit log is a read-only record. Entries cannot be changed or removed.",
+  "loading": "Loading audit log entries…",
+  "table": {
+    "label": "Audit log entries",
+    "caption": "Recorded actions, with the entity each one touched and its outcome."
+  },
+  "column": {
+    "occurredAt": "Occurred at",
+    "action": "Action",
+    "entityType": "Entity type",
+    "entityId": "Entity identifier",
+    "outcome": "Outcome",
+    "reason": "Reason",
+    "comparison": "Field comparison"
+  },
+  "entry": {
+    "noReason": "No reason recorded",
+    "noTimestamp": "No timestamp recorded",
+    "compare": "Compare",
+    "compareFor": "Compare the recorded fields of entry {{id}}",
+    "hideComparison": "Hide comparison"
+  },
+  "timestamp": {
+    "utc": "{{value}} UTC",
+    "local": "{{value}} local time ({{zone}})"
+  },
+  "filters": {
+    "legend": "Search the audit log",
+    "actorAccountId": "Actor account",
+    "actorAccountIdPlaceholder": "Account identifier of the actor",
+    "action": "Action",
+    "actionPlaceholder": "Recorded action name",
+    "entityType": "Entity type",
+    "entityTypePlaceholder": "Kind of entity the action touched",
+    "entityId": "Entity identifier",
+    "entityIdPlaceholder": "Identifier of the affected entity",
+    "from": "From (UTC)",
+    "to": "To (UTC)",
+    "boundHint": "Read as Coordinated Universal Time, the time zone the log is recorded in.",
+    "apply": "Search",
+    "clear": "Clear filters"
+  },
+  "pagination": {
+    "next": "Next page",
+    "first": "Back to the first page",
+    "pageSize": "Up to {{size}} audit log entries per page."
+  },
+  "comparison": {
+    "title": "Recorded field values",
+    "caption": "The value of each field before and after the recorded action.",
+    "field": "Field",
+    "before": "Before",
+    "after": "After",
+    "change": "Change",
+    "absent": "Not present",
+    "noSnapshots": "This entry recorded no field values.",
+    "noChanges": "No field value changed in this entry.",
+    "kind": {
+      "added": "Added",
+      "removed": "Removed",
+      "changed": "Changed",
+      "unchanged": "Unchanged"
+    }
+  },
+  "verify": {
+    "title": "Chain integrity",
+    "description": "Check that no recorded entry has been altered since it was written.",
+    "action": "Verify the chain",
+    "running": "Verifying the audit chain…",
+    "ok": "Reported ok",
+    "firstBadId": "First failing entry",
+    "checkedFromId": "Checked from entry",
+    "maxId": "Highest entry checked",
+    "none": "None reported",
+    "intactTitle": "The chain is intact",
+    "intact": "Every checked entry matches the record written before it.",
+    "tamperedTitle": "Possible tampering detected",
+    "tampered": "Verification failed at audit log entry {{id}}. Treat every entry from that point on as unverified and escalate this immediately.",
+    "tamperedUnknown": "Verification failed, but the service reported no failing entry identifier. Escalate this immediately."
+  },
+  "announce": {
+    "loaded": "The audit log entries have been loaded.",
+    "empty": "No audit log entries match the current filters.",
+    "failed": "The audit log entries could not be loaded.",
+    "verifyIntact": "The audit chain verified as intact.",
+    "verifyTampered": "The audit chain failed verification.",
+    "verifyFailed": "The audit chain could not be verified."
+  }
+}

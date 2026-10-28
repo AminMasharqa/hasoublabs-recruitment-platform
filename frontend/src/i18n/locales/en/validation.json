@@ -1,0 +1,20 @@
+{
+  "required": "This field is required.",
+  "tooShort": "Enter at least {{minLength}} characters (currently {{actual}}).",
+  "tooLong": "Enter at most {{maxLength}} characters (currently {{actual}}).",
+  "passwordTooShort": "The password must be at least {{minLength}} characters long (currently {{actual}}).",
+  "passwordTooLong": "The password must be at most {{maxLength}} characters long (currently {{actual}}).",
+  "emailMalformed": "Enter a valid email address, for example name@example.com.",
+  "linkedinUrlInvalid": "Enter a LinkedIn address that starts with https:// and is at most {{maxLength}} characters long.",
+  "httpsUrlInvalid": "Enter an address that starts with https:// and is at most {{maxLength}} characters long.",
+  "codeSixDigits": "Enter the {{length}}-digit code, digits only.",
+  "ratingRange": "Choose a whole number from {{min}} to {{max}}.",
+  "dateRangeOrder": "In entry {{entryNumber}}, the end cannot come before the start.",
+  "numberRange": "This value is outside the allowed range ({{min}}–{{max}}).",
+  "notInteger": "Enter a whole number.",
+  "invalidType": "This value has the wrong type.",
+  "enumInvalid": "Choose one of: {{allowed}}.",
+  "tooFewItems": "Add at least {{minItems}} entries (currently {{actual}}).",
+  "tooManyItems": "Add at most {{maxItems}} entries (currently {{actual}}).",
+  "fileTooLarge": "Choose a file of at most {{maxBytes}} bytes (this one is {{actual}} bytes)."
+}

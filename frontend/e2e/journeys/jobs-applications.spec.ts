@@ -1,0 +1,164 @@
+/**
+ * Journey: job browse → apply → track, against a running Backend_Api
+ * (task 27.1; Requirement 1 AC12).
+ *
+ * Requirement 12 (browse and detail), Requirement 14 (apply and track): a
+ * Senior publishes a Job_Description, a Candidate — with a Complete profile and
+ * a CV_Variant, both seeded directly since Requirement 9/11 are their own
+ * journeys — finds it in the browse list, opens the detail view, applies with a
+ * CV_Variant selection, and sees the resulting Application in their own list.
+ */
+
+import { expect, test } from '@playwright/test'
+
+import { loginAsAdminThroughUi } from '../support/adminLogin'
+import {
+  createOpenJob,
+  establishAdminSession,
+  login,
+  registerVerifiedApprovedAccount,
+} from '../support/backend'
+import { createVariantWithAvailableCv, CV_SCAN_TIMEOUT_MS } from '../support/cvs'
+import { navigateInApp } from '../support/navigation'
+
+/**
+ * Fills every field the Backend_Api's Complete rule (R4 AC6) requires: name,
+ * email, E.164 phone, city, one education entry and one skill. The skill must be
+ * in the Skill_Taxonomy (`0011_seed_skill_taxonomy`); an unmatched term is
+ * flagged for review and does not count toward completeness.
+ */
+async function completeMinimalProfile(
+  page: import('@playwright/test').Page,
+  email: string,
+): Promise<void> {
+  await navigateInApp(page, '/candidate/profile')
+  await page.locator('#full_name').fill('E2E Apply Candidate')
+  await page.locator('#email').fill(email)
+  await page.locator('#phone').fill('+972502345671')
+  await page.locator('#city').fill('Haifa')
+  await page.getByTestId('profile-add-education').click()
+  await page.locator('#education-0-institution').fill('Haifa University')
+  await page.locator('#education-0-degree').fill('B.A.')
+  await page.locator('#education-0-enrolment_status').click()
+  await page.getByRole('listbox').getByRole('option').first().click()
+  await page.locator('#education-0-start_year').fill('2019')
+  await page.getByTestId('profile-add-skills').click()
+  await page.getByTestId('skill-term-skills.0.term').fill('SQL')
+  await page.getByTestId('profile-save').click()
+  await expect(page.getByTestId('profile-state')).toHaveAttribute('data-profile-state', 'Complete')
+}
+
+test.describe('job browse -> apply -> track', () => {
+  test('a Candidate finds a published role, applies, and sees it in their own list', async ({
+    page,
+  }) => {
+    test.setTimeout(CV_SCAN_TIMEOUT_MS + 60_000)
+    const admin = await establishAdminSession()
+    const senior = await registerVerifiedApprovedAccount(admin.access_token, 'SENIOR', 'jobs-senior')
+    const seniorTokens = await login(senior.email, senior.password, 'SENIOR')
+    const job = await createOpenJob(seniorTokens.access_token, { title: `E2E Apply Role ${Date.now()}` })
+
+    const candidate = await registerVerifiedApprovedAccount(admin.access_token, 'CANDIDATE', 'jobs-candidate')
+
+    await page.goto('/login')
+    await page.locator('#login-email').fill(candidate.email)
+    await page.locator('#login-password').fill(candidate.password)
+    await page.locator('#login-role').selectOption('CANDIDATE')
+    await page.getByTestId('login-submit').click()
+
+    // Req 9 AC13 / Req 12 AC7: apply is gated on a Complete profile plus an
+    // Available CV version, which waits on the worker's scan — both seeded here so this journey's own assertions are about
+    // browsing and applying, not about profile/CV completion (see
+    // `journeys/profile.spec.ts` and `journeys/cv.spec.ts` for those).
+    await completeMinimalProfile(page, candidate.email)
+    await createVariantWithAvailableCv(page, 'E2E Apply CV')
+
+    // Req 12 AC1-AC2: the published role is findable through the browse filters —
+    // the free-text search narrows the list to the one role this test created.
+    await navigateInApp(page, '/jobs')
+    await expect(page.getByTestId('jobs-browse-screen')).toBeVisible()
+    await page.getByTestId('job-filter-search').fill(job.title)
+    await page.getByTestId('job-filters-apply').click()
+
+    const card = page.locator('[data-testid^="job-card-"]', { hasText: job.title })
+    await expect(card).toBeVisible({ timeout: 15_000 })
+    await card.getByRole('link').first().click()
+
+    // Req 12 AC6: the detail view renders the role.
+    await expect(page.getByTestId('job-detail-screen')).toBeVisible()
+    await expect(page.getByTestId('job-detail-title')).toContainText(job.title)
+
+    // Req 14 AC1-AC3: the apply control opens the dialog, a CV_Variant is
+    // selected (defaulting to the only one), and submitting records the
+    // Application.
+    await page.getByTestId('job-apply').click()
+    await expect(page.getByTestId('apply-dialog')).toBeVisible()
+    await page.getByTestId('apply-submit').click()
+    await expect(page.getByTestId('apply-recorded')).toBeVisible()
+    await expect(page.getByTestId('apply-recorded-status')).toBeVisible()
+
+    await page.getByTestId('apply-recorded-link').click()
+
+    // Req 14 AC9: the Candidate's own Application list carries the submission.
+    await expect(page.getByTestId('my-applications-screen')).toBeVisible()
+    await expect(page.getByTestId('applications-list')).toContainText(job.title)
+  })
+
+  test('a Closed role carries its closed indicator in the list and the detail, with apply disabled', async ({
+    page,
+  }) => {
+    const admin = await establishAdminSession()
+    const secret = process.env.E2E_ADMIN_TOTP_SECRET
+    test.skip(secret === undefined, 'E2E_ADMIN_TOTP_SECRET is required to sign in as the seeded Admin through the UI')
+    if (secret === undefined) {
+      return
+    }
+
+    const senior = await registerVerifiedApprovedAccount(admin.access_token, 'SENIOR', 'jobs-closed-senior')
+    const seniorTokens = await login(senior.email, senior.password, 'SENIOR')
+    const job = await createOpenJob(seniorTokens.access_token, {
+      title: `E2E Closed Role ${Date.now()}`,
+    })
+
+    // Closes it directly against the Backend_Api — this journey's subject is the
+    // rendering of a Closed role, not the Senior-side lifecycle control itself
+    // (see the design's Requirement 13 coverage for that).
+    const closed = await fetch(
+      `${process.env.E2E_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/jobs/${job.id}:close`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${seniorTokens.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      },
+    )
+    expect(closed.ok).toBe(true)
+
+    // Who can load a Closed role at all: never a Candidate — browsing lists only
+    // `Open` postings (backend R6 AC9) and the detail read refuses a Closed role to
+    // a Candidate — but its creating Senior (the detail) and an Admin (the
+    // all-status list of Req 13 AC17). Req 12 AC7 is asserted on those surfaces.
+
+    // Req 12 AC7, the list entry: the Admin listing, filtered to Closed, newest first.
+    await loginAsAdminThroughUi(page, secret)
+    await navigateInApp(page, '/admin/jobs?status=Closed')
+    const entry = page.getByTestId(`admin-job-${job.id}`)
+    await expect(entry).toBeVisible({ timeout: 15_000 })
+    await expect(entry.getByTestId('job-status-closed')).toBeVisible()
+
+    // Req 12 AC7, the detail view: the closed notice and a disabled apply control.
+    // A fresh /login load drops the in-memory Admin session.
+    await page.goto('/login')
+    await page.locator('#login-email').fill(senior.email)
+    await page.locator('#login-password').fill(senior.password)
+    await page.locator('#login-role').selectOption('SENIOR')
+    await page.getByTestId('login-submit').click()
+
+    await navigateInApp(page, `/jobs/${job.id}`)
+    await expect(page.getByTestId('job-detail-closed-notice')).toBeVisible()
+    await expect(page.getByTestId('job-status-closed')).toBeVisible()
+    await expect(page.getByTestId('job-apply')).toBeDisabled()
+  })
+})

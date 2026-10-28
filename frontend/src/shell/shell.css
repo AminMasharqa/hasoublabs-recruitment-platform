@@ -1,0 +1,67 @@
+/*
+ * Chrome styles for the application shell.
+ *
+ * Only what the shell's own structure needs; every interface primitive inside it
+ * is Mantine. Directional values use logical properties so the chrome mirrors
+ * with the Direction_Provider (Requirement 19 AC8, AC9) — see
+ * `src/i18n/direction.css` for the convention.
+ */
+
+/*
+ * The skip-to-content link (Requirement 20 AC1, AC4).
+ *
+ * First focusable element in the document, so a keyboard or screen-reader user
+ * reaches the routed content without traversing the header and the
+ * Navigation_Menu. Off-screen until focused rather than `display: none`, because a
+ * hidden element is not focusable and the link would not exist for the very users
+ * it serves.
+ *
+ * `inset-inline-start` rather than `left`: under `dir="rtl"` the link appears at
+ * the start of the reading order, which is the right-hand side.
+ */
+.shell-skip-link {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 1000;
+  padding: 0.5rem 0.75rem;
+  border-end-end-radius: 0.25rem;
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  font: inherit;
+  text-decoration: underline;
+  /* Off-screen along the block axis, which mirrors safely in both directions. */
+  transform: translateY(-200%);
+}
+
+.shell-skip-link:focus,
+.shell-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--mantine-color-anchor);
+  outline-offset: 2px;
+}
+
+/* Requirement 20 AC12: no transition to suppress, but be explicit about it. */
+@media (prefers-reduced-motion: reduce) {
+  .shell-skip-link {
+    transition: none;
+  }
+}
+
+/*
+ * The routed region focus target.
+ *
+ * `tabIndex={-1}` makes the `main` landmark a valid skip-link destination; the
+ * outline is suppressed because focus lands there programmatically and the
+ * heading of the routed screen is what the user is looking for.
+ */
+.shell-main:focus {
+  outline: none;
+}
+
+/* The application name in the header must not wrap the header out of shape. */
+.shell-brand {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

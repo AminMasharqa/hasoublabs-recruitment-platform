@@ -1,0 +1,107 @@
+{
+  "title": "التقارير",
+  "description": "نشاط المسار وتقدّم المرشحين، مع إمكانية تصدير أيٍّ منهما إلى Excel.",
+  "filters": {
+    "legend": "تصفية التقرير",
+    "dateFrom": "من تاريخ",
+    "dateTo": "إلى تاريخ",
+    "dateHint": "أيام كاملة محسوبة بالتوقيت العالمي المنسّق.",
+    "jdId": "معرّف الوصف الوظيفي",
+    "jdIdPlaceholder": "معرّف وصف وظيفي واحد",
+    "reversedRange": "تاريخ البداية بعد تاريخ النهاية، لذا لا يغطّي النطاق أي فترة.",
+    "apply": "تطبيق"
+  },
+  "activity": {
+    "title": "النشاط",
+    "loading": "جارٍ تحميل تقرير النشاط…",
+    "period": "الفترة المشمولة",
+    "periodRange": "من {{from}} إلى {{to}}",
+    "unbounded": "بلا حدّ"
+  },
+  "metric": {
+    "candidates_registered": "المرشحون المسجَّلون",
+    "candidates_approved": "المرشحون المقبولون",
+    "candidates_rejected": "المرشحون المرفوضون",
+    "cv_versions_uploaded": "نسخ السيرة الذاتية المرفوعة",
+    "applications_submitted": "الطلبات المقدَّمة",
+    "applications_under_review": "الطلبات قيد المراجعة",
+    "applications_forwarded": "الطلبات المحوَّلة",
+    "applications_closed": "الطلبات المغلقة"
+  },
+  "progress": {
+    "title": "تقدّم المرشحين",
+    "caption": "كل حساب مرشح مع حالته وطلباته.",
+    "loading": "جارٍ تحميل تقدّم المرشحين…",
+    "pageSize": "حتى {{size}} مرشحًا في كل صفحة.",
+    "email": "البريد الإلكتروني",
+    "accountStatus": "حالة الحساب",
+    "createdAt": "تاريخ الإنشاء",
+    "applications": "الطلبات",
+    "drillDown": "فتح",
+    "noApplications": "لا توجد طلبات بعد.",
+    "openAccount": "فتح الحساب",
+    "openAccountFor": "فتح حساب {{email}}",
+    "openApplication": "فتح الطلب",
+    "openApplicationFor": "فتح الطلب الخاص بـ {{title}}",
+    "firstPage": "العودة إلى الصفحة الأولى"
+  },
+  "export": {
+    "legend": "تصدير إلى Excel",
+    "description": "يغطّي التصدير عوامل التصفية المطبَّقة أعلاه ويُنتَج في الخلفية.",
+    "entityType": "ما الذي تريد تصديره",
+    "request": "تصدير إلى Excel",
+    "dismiss": "إيقاف متابعة هذا التصدير",
+    "polling": "جارٍ إنتاج الملف…",
+    "statusLine": "الحالة الحالية: {{status}}",
+    "requestFailedTitle": "لم يتمكّن النظام من بدء التصدير",
+    "pollFailedTitle": "لم يتمكّن النظام من قراءة حالة التصدير",
+    "failedTitle": "فشل التصدير",
+    "failedWithoutMessage": "فشل التصدير دون ذكر سبب.",
+    "noJobId": "تم قبول التصدير لكنه لم يذكر مهمة يمكن متابعتها، لذا لا يمكن قراءة حالته.",
+    "expiresAt": "تنتهي صلاحية رابط التنزيل في {{value}}.",
+    "noExpiry": "لا يذكر رابط التنزيل تاريخ انتهاء.",
+    "readyWithoutUrl": "التصدير جاهز لكنه لا يذكر رابط تنزيل بعد.",
+    "downloadFor": "تنزيل تصدير {{entity}}"
+  },
+  "exports": {
+    "title": "التصديرات",
+    "description": "أنشئ ملف Excel للمرشحين أو الأوصاف الوظيفية أو الطلبات."
+  },
+  "entityType": {
+    "candidates": "المرشحون",
+    "job_descriptions": "الأوصاف الوظيفية",
+    "applications": "الطلبات"
+  },
+  "status": {
+    "pending": "في الانتظار",
+    "running": "قيد الإنتاج",
+    "ready": "جاهز",
+    "failed": "فاشل"
+  },
+  "accountStatus": {
+    "PendingVerification": "في انتظار تأكيد البريد الإلكتروني",
+    "PendingApproval": "في انتظار الموافقة",
+    "ApprovedPendingMeeting": "مقبول، في انتظار الاجتماع",
+    "Approved": "مقبول",
+    "Rejected": "مرفوض",
+    "Suspended": "موقوف",
+    "Deactivated": "معطَّل"
+  },
+  "applicationStatus": {
+    "Submitted": "مقدَّم",
+    "Under Review": "قيد المراجعة",
+    "Forwarded to Recruiter": "محوَّل إلى مسؤول التوظيف",
+    "Closed": "مغلق"
+  },
+  "announce": {
+    "activityLoaded": "تم تحميل تقرير النشاط.",
+    "activityFailed": "لم يتم تحميل تقرير النشاط.",
+    "progressLoaded": "تم تحميل تقرير تقدّم المرشحين.",
+    "progressEmpty": "لا يوجد مرشحون مطابقون لعوامل التصفية الحالية.",
+    "progressFailed": "لم يتم تحميل تقرير تقدّم المرشحين.",
+    "exportPolling": "جارٍ إنتاج التصدير.",
+    "exportReady": "التصدير جاهز للتنزيل.",
+    "exportFailed": "فشل التصدير.",
+    "exportRequestFailed": "لم يتمكّن النظام من بدء التصدير."
+  }
+}

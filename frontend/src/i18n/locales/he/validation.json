@@ -1,0 +1,20 @@
+{
+  "required": "זהו שדה חובה.",
+  "tooShort": "יש להזין {{minLength}} תווים לפחות (כרגע {{actual}}).",
+  "tooLong": "יש להזין עד {{maxLength}} תווים (כרגע {{actual}}).",
+  "passwordTooShort": "הסיסמה חייבת להיות באורך {{minLength}} תווים לפחות (כרגע {{actual}}).",
+  "passwordTooLong": "הסיסמה יכולה להיות באורך של עד {{maxLength}} תווים (כרגע {{actual}}).",
+  "emailMalformed": "יש להזין כתובת אימייל תקינה, למשל name@example.com.",
+  "linkedinUrlInvalid": "יש להזין כתובת LinkedIn שמתחילה ב-https:// ובאורך של עד {{maxLength}} תווים.",
+  "httpsUrlInvalid": "יש להזין כתובת שמתחילה ב-https:// ובאורך של עד {{maxLength}} תווים.",
+  "codeSixDigits": "יש להזין את הקוד בן {{length}} הספרות, ספרות בלבד.",
+  "ratingRange": "יש לבחור מספר שלם בין {{min}} ל-{{max}}.",
+  "dateRangeOrder": "ברשומה {{entryNumber}}, תאריך הסיום אינו יכול להיות לפני תאריך ההתחלה.",
+  "numberRange": "הערך מחוץ לטווח המותר ({{min}}–{{max}}).",
+  "notInteger": "יש להזין מספר שלם.",
+  "invalidType": "סוג הערך שגוי.",
+  "enumInvalid": "יש לבחור אחת מהאפשרויות: {{allowed}}.",
+  "tooFewItems": "יש להוסיף {{minItems}} רשומות לפחות (כרגע {{actual}}).",
+  "tooManyItems": "יש להוסיף עד {{maxItems}} רשומות (כרגע {{actual}}).",
+  "fileTooLarge": "יש לבחור קובץ בגודל של עד {{maxBytes}} בייטים (גודל הקובץ הזה {{actual}} בייטים)."
+}

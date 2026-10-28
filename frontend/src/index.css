@@ -1,0 +1,51 @@
+/*
+ * The application's baseline stylesheet, loaded after Mantine's own.
+ *
+ * Intentionally minimal. Mantine owns typography, colour, spacing and every
+ * component style through the shared theme (`src/shell/theme.ts`), so this file
+ * carries only what no component can express: the document- and root-level box
+ * model the shell fills.
+ *
+ * Directional values use logical properties (`src/i18n/direction.css` documents the
+ * convention) so the layout mirrors when the Direction_Provider switches the
+ * document to `rtl` (Requirement 19 AC8, AC9).
+ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  block-size: 100%;
+}
+
+/*
+ * The shell is a fixed-header/navbar layout that sizes itself from the viewport, so
+ * the mount point must not constrain it.
+ */
+#root {
+  min-block-size: 100svh;
+}
+
+/*
+ * Requirement 20 AC10: the interface stays usable at a 320px viewport width and at
+ * 200% text size, which requires text to reflow rather than scroll horizontally.
+ */
+body {
+  overflow-x: hidden;
+}
+
+/*
+ * Requirement 20 AC12: suppress non-essential motion when the operating system asks
+ * for it. Mantine's own transitions are handled by `respectReducedMotion` in the
+ * shared theme; this covers anything outside Mantine.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

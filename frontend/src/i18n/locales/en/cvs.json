@@ -1,0 +1,96 @@
+{
+  "title": "My CVs",
+  "intro": "Keep up to {{max}} CV variants, and mark the one you apply with by default as primary.",
+  "activeCount": "{{value}} of {{max}} active variants in use.",
+  "created": "Created {{value}}",
+  "field": {
+    "name": "Name",
+    "nameHint": "Between {{min}} and {{max}} characters.",
+    "description": "Description",
+    "descriptionHint": "Optional, at most {{max}} characters."
+  },
+  "create": {
+    "open": "Create a variant",
+    "submit": "Create variant",
+    "disabledReason": "You already have {{max}} active variants, the maximum. Archive one before creating another."
+  },
+  "edit": {
+    "open": "Edit",
+    "title": "Edit this CV variant",
+    "submit": "Save changes"
+  },
+  "primary": {
+    "badge": "Primary",
+    "set": "Make primary"
+  },
+  "archived": {
+    "badge": "Archived"
+  },
+  "archive": {
+    "open": "Archive",
+    "title": "Archive this CV variant?",
+    "body": "The variant stops being available for applications. Every version you uploaded to it is kept, and you can create another variant as long as you have fewer than {{max}} active ones.",
+    "confirm": "Archive variant",
+    "lastActiveReason": "This is your only active variant, so it cannot be archived."
+  },
+  "versions": {
+    "count": "Versions: {{value}}",
+    "manage": "Open this variant",
+    "title": "Uploaded versions",
+    "number": "Version {{value}}",
+    "sizeBytes": "{{value}} bytes",
+    "quarantined": "Quarantined",
+    "scanPending": "This version is being scanned. It becomes downloadable once the scan clears it.",
+    "scanPolling": "Checking the scan result…",
+    "scanPollingHint": "This list refreshes on its own while a scan is running.",
+    "emptyHint": "Upload a PDF or Word document to add the first version."
+  },
+  "versionState": {
+    "PendingScan": "Scan pending",
+    "Available": "Available",
+    "Quarantined": "Quarantined"
+  },
+  "upload": {
+    "field": "CV file",
+    "hint": "PDF or Word document, up to {{max}} bytes.",
+    "placeholder": "Choose a file",
+    "submit": "Upload version",
+    "progressLabel": "Upload progress",
+    "progress": "{{percentage}} transferred ({{transferred}} of {{total}} bytes).",
+    "acceptedTitle": "Upload accepted",
+    "scanPending": "The file was accepted and is being scanned for malware. It becomes downloadable once the scan clears it.",
+    "failedTitle": "This file could not be uploaded",
+    "selectionRequired": "Choose a file to upload.",
+    "unsupportedMediaType": "Choose a PDF or a Word (.docx) document."
+  },
+  "download": {
+    "controlLabel": "Download version {{value}}",
+    "failedTitle": "This version could not be downloaded",
+    "incompleteTitle": "The download did not finish",
+    "incomplete": "The transfer stopped before the whole file arrived, so the partial file was discarded. Try the download again.",
+    "blocked": {
+      "pending_scan": "The scan has not finished yet, so this version cannot be downloaded.",
+      "quarantined": "The scan quarantined this version, so it cannot be downloaded.",
+      "unknown_state": "This version is not available for download."
+    }
+  },
+  "admin": {
+    "title": "CV variants and versions",
+    "noVersions": "No versions have been uploaded to this variant."
+  },
+  "detail": {
+    "back": "Back to my CVs",
+    "notFoundTitle": "This CV variant was not found",
+    "notFound": "It may have been removed, or the address may be wrong. Go back to your CVs and choose one from the list."
+  },
+  "announce": {
+    "created": "The CV variant was created.",
+    "updated": "The changes to the CV variant were saved.",
+    "archived": "The CV variant was archived.",
+    "primary": "This CV variant is now your primary one.",
+    "uploadAccepted": "The file was accepted and is being scanned.",
+    "uploadFailed": "The file could not be uploaded.",
+    "downloaded": "The download started.",
+    "downloadFailed": "The download failed."
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "browse": {
+    "title": "Jobs",
+    "description": "Open roles across the platform.",
+    "resultsLabel": "Job descriptions",
+    "loading": "Loading job descriptions…"
+  },
+  "filters": {
+    "legend": "Filter jobs",
+    "search": "Search term",
+    "searchPlaceholder": "Role, company or keyword",
+    "location": "Location",
+    "locationPlaceholder": "City or region",
+    "workModel": "Work model",
+    "employmentType": "Employment type",
+    "experienceLevel": "Experience level",
+    "any": "Any",
+    "skills": "Skills",
+    "skillSearch": "Find a skill",
+    "skillSearchPlaceholder": "Part of a skill name",
+    "skillsEmpty": "No skills match that term.",
+    "skillsLoading": "Searching the skill taxonomy…",
+    "apply": "Apply filters",
+    "clear": "Clear filters"
+  },
+  "pagination": {
+    "next": "Next page",
+    "first": "Back to the first page",
+    "pageSize": "Up to {{size}} job descriptions per page."
+  },
+  "card": {
+    "company": "Company",
+    "location": "Location",
+    "workModel": "Work model",
+    "employmentType": "Employment type",
+    "experienceLevel": "Experience level",
+    "publishedAt": "Published",
+    "notStated": "Not stated",
+    "notPublished": "Not published",
+    "view": "View details",
+    "viewFor": "View details of {{title}}"
+  },
+  "status": {
+    "label": "Status",
+    "Draft": "Draft",
+    "Open": "Open",
+    "Closed": "Closed",
+    "closedNotice": "This role is closed and no longer accepts applications."
+  },
+  "apply": {
+    "action": "Apply",
+    "actionFor": "Apply to {{title}}",
+    "closed": "Applications are closed for this role.",
+    "draft": "This role is not published yet.",
+    "unavailable": "Submitting an application is not available in this build yet."
+  },
+  "detail": {
+    "loading": "Loading the job description…",
+    "description": "Description",
+    "descriptionMissing": "This role carries no description text.",
+    "requiredSkills": "Required skills",
+    "requiredSkillsMissing": "This role lists no required skills.",
+    "unresolvedSkill": "Skill {{id}}",
+    "unresolvedSkillsNote": "Some skills are shown as identifiers because the taxonomy search returned no name for them.",
+    "applicationChannel": "How to apply",
+    "externalUrl": "External application page",
+    "creator": "Posted by account",
+    "createdAt": "Created",
+    "updatedAt": "Last updated",
+    "closedAt": "Closed at",
+    "timestamps": "Dates",
+    "back": "Back to jobs",
+    "missingId": "This address carries no job description identifier."
+  },
+  "channel": {
+    "Senior_Dashboard": "Through this platform, to the posting senior",
+    "Admin_Dashboard": "Through this platform, to an administrator",
+    "External_Careers_URL": "On the employer's own careers page"
+  },
+  "contacts": {
+    "title": "Seniors you can contact",
+    "loading": "Loading contactable seniors…",
+    "empty": "No seniors are currently available to contact for this role.",
+    "channels": "Contact channels",
+    "channelChat": "In-platform chat",
+    "channelEmail": "Email",
+    "chatUnavailable": "In-platform chat is not available yet.",
+    "mail": "Send an email",
+    "mailTo": "Send an email to {{name}}",
+    "mailUnavailable": "This senior accepts email, but the platform does not report an address yet."
+  },
+  "workModel": {
+    "Onsite": "On site",
+    "Hybrid": "Hybrid",
+    "Remote": "Remote"
+  },
+  "employmentType": {
+    "Full-time": "Full time",
+    "Part-time": "Part time",
+    "Contract": "Contract",
+    "Freelance": "Freelance",
+    "Internship": "Internship"
+  },
+  "experienceLevel": {
+    "Junior-level": "Junior",
+    "Mid-level": "Mid level",
+    "Senior-level": "Senior",
+    "Lead": "Lead"
+  },
+  "announce": {
+    "loaded": "The job descriptions have been loaded.",
+    "empty": "No job descriptions match the current filters.",
+    "failed": "The job descriptions could not be loaded.",
+    "detailLoaded": "The job description has been loaded.",
+    "created": "The job description has been created as a draft.",
+    "saved": "The changes have been saved.",
+    "published": "The job description is now open.",
+    "closed": "The job description is now closed.",
+    "channelChanged": "The application channel has been updated.",
+    "extractionReady": "The extracted values are ready for review.",
+    "extractionFailed": "Nothing could be extracted from the source."
+  },
+  "authoring": {
+    "newTitle": "New job description",
+    "newDescription": "Fill the form in, or extract the values from a posting first.",
+    "editTitle": "Edit this job description",
+    "create": "Create a job description",
+    "confirmAndCreate": "Confirm and create",
+    "confirmationRequired": "Confirm or replace every suggested skill before creating this job description.",
+    "save": "Save changes",
+    "nothingChanged": "Nothing was changed, so there was nothing to save.",
+    "notEditable": "A closed job description can no longer be edited.",
+    "backToList": "Back to job descriptions",
+    "manage": "Manage this job description",
+    "manageFor": "Manage {{title}}"
+  },
+  "form": {
+    "title": "Role title",
+    "company": "Company",
+    "location": "Location",
+    "unselected": "Not stated",
+    "externalUrl": "External application URL",
+    "externalUrlHint": "An HTTPS address of at most {{max}} characters.",
+    "externalUrlRequired": "Required to publish with this channel: an HTTPS address of at most {{max}} characters.",
+    "missingExtracted": "The extraction found no value for this field. Please enter it.",
+    "skillsSection": "Required skills",
+    "skillsHint": "Up to {{max}} skill terms. Suggestions come from the skill taxonomy, and any term is accepted.",
+    "skillsEmpty": "No required skills have been added yet.",
+    "skillsLimit": "The maximum of {{max}} skills has been reached.",
+    "skillsLocked": "These skills cannot be edited because the taxonomy returned no name for: {{ids}}.",
+    "skillTerm": "Skill {{number}}",
+    "removeSkill": "Remove {{entry}}",
+    "addSkillLabel": "Add a skill",
+    "addSkillPlaceholder": "Part of a skill name",
+    "addSkill": "Add"
+  },
+  "extract": {
+    "legend": "Extract from an existing posting",
+    "description": "Give a public posting address or paste its text, and the values are extracted for your review.",
+    "urlLabel": "Posting address",
+    "urlHint": "An HTTPS address of at most {{max}} characters.",
+    "fromUrl": "Extract from the address",
+    "or": "or",
+    "textLabel": "Posting text",
+    "textHint": "Between {{min}} and {{max}} characters.",
+    "fromText": "Extract from the text",
+    "pending": "Extracting the values…",
+    "ready": "The values have been extracted. Review and edit them below.",
+    "failed": "Nothing could be extracted from that source. Fill the form in yourself.",
+    "unknownStatus": "The extraction reported an unexpected state: {{status}}.",
+    "missingCount": "{{count}} field(s) were left empty and need to be entered.",
+    "discard": "Discard the extraction"
+  },
+  "candidates": {
+    "legend": "Suggested skills",
+    "description": "Each suggested skill has to be confirmed, replaced or dropped before the job description can be created.",
+    "allDecided": "Every suggested skill has been dealt with.",
+    "undecided": "{{count}} suggested skill(s) still need a decision.",
+    "decisionLabel": "What should happen with this skill?",
+    "decision": {
+      "confirmed": "Keep it",
+      "replaced": "Replace it",
+      "discarded": "Drop it"
+    },
+    "state": {
+      "pending": "Undecided",
+      "confirmed": "Kept",
+      "replaced": "Replaced",
+      "discarded": "Dropped"
+    },
+    "replacementLabel": "Replacement skill",
+    "replacementHint": "The term submitted instead of the suggestion."
+  },
+  "lifecycle": {
+    "publish": "Publish",
+    "close": "Close",
+    "noneAvailable": "This job description admits no further changes.",
+    "publishNeedsUrl": "Publishing with an external careers page needs a valid address.",
+    "confirmCloseTitle": "Close this job description?",
+    "confirmCloseBody": "Closing stops new applications and removes the role from the open listings.",
+    "confirmCloseIrreversible": "Closing cannot be undone: a closed job description can never be reopened or edited.",
+    "confirmCloseAction": "Close it",
+    "channelLabel": "Application channel",
+    "channelHint": "Where an applicant is sent when they apply.",
+    "channelSave": "Save the channel",
+    "illegalTransition": "That change is not allowed: the job description is {{from}} and cannot become {{to}}.",
+    "unknownState": "an unreported state"
+  },
+  "admin": {
+    "title": "All job descriptions",
+    "description": "Every job description on the platform, whatever its status.",
+    "resultsLabel": "All job descriptions",
+    "anyStatus": "Any status"
+  },
+  "senior": {
+    "title": "My job descriptions",
+    "description": "Create a job description and manage its lifecycle.",
+    "browseOpen": "Browse the open roles",
+    "noListing": "A newly created job description opens on its own management page; an existing one is reached from its own address."
+  }
+}

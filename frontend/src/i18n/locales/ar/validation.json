@@ -1,0 +1,20 @@
+{
+  "required": "هذا الحقل مطلوب.",
+  "tooShort": "أدخل {{minLength}} حرفًا على الأقل (العدد الحالي {{actual}}).",
+  "tooLong": "أدخل {{maxLength}} حرفًا على الأكثر (العدد الحالي {{actual}}).",
+  "passwordTooShort": "يجب أن تتكون كلمة المرور من {{minLength}} حرفًا على الأقل (العدد الحالي {{actual}}).",
+  "passwordTooLong": "يجب ألا تزيد كلمة المرور عن {{maxLength}} حرفًا (العدد الحالي {{actual}}).",
+  "emailMalformed": "أدخل عنوان بريد إلكتروني صالحًا، مثل name@example.com.",
+  "linkedinUrlInvalid": "أدخل عنوان LinkedIn يبدأ بـ https:// ولا يزيد عن {{maxLength}} حرفًا.",
+  "httpsUrlInvalid": "أدخل عنوانًا يبدأ بـ https:// ولا يزيد عن {{maxLength}} حرفًا.",
+  "codeSixDigits": "أدخل الرمز المكوّن من {{length}} أرقام، أرقامًا فقط.",
+  "ratingRange": "اختر عددًا صحيحًا من {{min}} إلى {{max}}.",
+  "dateRangeOrder": "في المُدخل {{entryNumber}}، لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.",
+  "numberRange": "هذه القيمة خارج النطاق المسموح ({{min}}–{{max}}).",
+  "notInteger": "أدخل عددًا صحيحًا.",
+  "invalidType": "نوع هذه القيمة غير صحيح.",
+  "enumInvalid": "اختر إحدى القيم التالية: {{allowed}}.",
+  "tooFewItems": "أضف {{minItems}} مُدخلات على الأقل (العدد الحالي {{actual}}).",
+  "tooManyItems": "أضف {{maxItems}} مُدخلات على الأكثر (العدد الحالي {{actual}}).",
+  "fileTooLarge": "اختر ملفًا لا يزيد حجمه عن {{maxBytes}} بايت (حجم هذا الملف {{actual}} بايت)."
+}

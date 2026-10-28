@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    /*
+     * `vite/client` is needed alongside `node` because the a11y route catalogue
+     * pulls `src/routing/routes.tsx` into this project's type-checking, and that
+     * module's own dependency graph reaches `src/lib/env.ts` (`import.meta.env`)
+     * and CSS side-effect imports, both of which need Vite's ambient types.
+     */
+    "types": ["node", "vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    /*
+     * The a11y suite imports route-catalogue data out of `src/routing/routes.tsx`
+     * (Requirement 20 AC13) rather than re-declaring it, and that module also
+     * exports JSX-typed elements. This project never renders any of it, but `tsc`
+     * still needs a `jsx` mode to type-check the file it is imported from.
+     */
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["playwright.config.ts", "e2e"]
+}

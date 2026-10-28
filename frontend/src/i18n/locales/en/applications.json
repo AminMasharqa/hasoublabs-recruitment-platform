@@ -1,0 +1,129 @@
+{
+  "apply": {
+    "title": "Apply: {{title}}",
+    "description": "Choose the CV variant to attach to this application.",
+    "variantLabel": "CV variant",
+    "variantHint": "Your primary variant is selected by default.",
+    "primaryOption": "{{name}} (primary)",
+    "variantsLoading": "Loading your CV variants…",
+    "noVariants": "You have no active CV variant to apply with.",
+    "cvsLink": "Go to my CVs",
+    "submit": "Submit application",
+    "unreadable": "The server accepted the submission but answered in a form this application could not read. Check your applications before submitting again.",
+    "conflict": "You have already submitted an application for this job description.",
+    "rateLimited": "Too many attempts. Try again in {{seconds}} seconds.",
+    "rateLimitedUnknown": "Too many attempts. Try again shortly.",
+    "recorded": {
+      "title": "Application submitted",
+      "status": "Status",
+      "submittedAt": "Submitted",
+      "link": "See my applications"
+    },
+    "external": {
+      "title": "This job is handled outside the platform",
+      "notRecorded": "No application was recorded on the platform. Open the employer's page to apply there.",
+      "open": "Open the employer's application page",
+      "opensInNewTab": "Opens in a new browser tab."
+    },
+    "unmet": {
+      "title": "These requirements are not met yet",
+      "none": "The server reported unmet requirements without naming them.",
+      "fallback": "Unmet requirement: {{value}}",
+      "profile_incomplete": "Your candidate profile is still a draft.",
+      "profile_not_complete": "Your candidate profile is still a draft.",
+      "no_cv_variant": "You have no active CV variant.",
+      "no_cv_version": "The selected CV variant has no uploaded version.",
+      "cv_not_available": "The selected CV version is not available yet.",
+      "jd_not_open": "This job description is not open for applications.",
+      "account_not_approved": "Your account is not approved yet."
+    }
+  },
+  "mine": {
+    "title": "My applications",
+    "description": "Every application you submitted, newest first.",
+    "listLabel": "My applications",
+    "loading": "Loading your applications…",
+    "pageSize": "Up to {{size}} applications per page.",
+    "emptyPage": "This page is empty. Go back to the first page.",
+    "first": "Back to the first page"
+  },
+  "card": {
+    "company": "Company",
+    "status": "Status",
+    "submittedAt": "Submitted",
+    "notStated": "Not stated",
+    "view": "View application",
+    "viewFor": "View the application for {{title}}"
+  },
+  "detail": {
+    "back": "Back to my applications",
+    "loading": "Loading the application…",
+    "missingId": "This address carries no application identifier.",
+    "routedChannel": "Routed through",
+    "createdAt": "Created",
+    "updatedAt": "Last updated",
+    "id": "Application identifier",
+    "jdId": "Job description identifier",
+    "candidateId": "Candidate identifier",
+    "cvVersionId": "CV version identifier",
+    "jobLink": "Open the job description"
+  },
+  "applicants": {
+    "title": "Applicants",
+    "description": "The applicants of one job description.",
+    "listLabel": "Applicants",
+    "loading": "Loading the applicants…",
+    "pageSize": "Up to {{size}} applicants per page.",
+    "statusFilter": "Application status",
+    "statusAny": "Any status",
+    "noJob": "Name a job description to see its applicants.",
+    "jdLabel": "Job description",
+    "jdHint": "The job description identifier.",
+    "jdSubmit": "Show applicants"
+  },
+  "applicant": {
+    "full_name": "Full name",
+    "applied_role_title": "Applied role",
+    "application_status": "Application status"
+  },
+  "admin": {
+    "title": "Applications",
+    "description": "Change the status of an application, and read the applicants of a job description.",
+    "statusSection": "Application status",
+    "applicantsSection": "Applicants of a job description",
+    "applicationLabel": "Application",
+    "applicationHint": "The application identifier.",
+    "applicationSubmit": "Select application",
+    "noApplication": "Name an application to change its status.",
+    "statusLabel": "New status",
+    "statusHint": "The status this application moves to.",
+    "reasonLabel": "Reason",
+    "reasonHint": "Optional, up to {{max}} characters.",
+    "submit": "Change status",
+    "changed": "The application is now {{status}}."
+  },
+  "status": {
+    "Submitted": "Submitted",
+    "Under Review": "Under review",
+    "Forwarded to Recruiter": "Forwarded to recruiter",
+    "Closed": "Closed"
+  },
+  "channel": {
+    "Senior_Dashboard": "Senior dashboard",
+    "Admin_Dashboard": "Admin dashboard",
+    "External_Careers_URL": "External careers page"
+  },
+  "announce": {
+    "applied": "The application has been submitted.",
+    "external": "This job is handled outside the platform; no application was recorded.",
+    "unreadable": "The submission response could not be read.",
+    "listLoaded": "Your applications have been loaded.",
+    "listEmpty": "You have no applications yet.",
+    "listFailed": "Your applications could not be loaded.",
+    "detailLoaded": "The application has been loaded.",
+    "applicantsLoaded": "The applicants have been loaded.",
+    "applicantsEmpty": "No applicants match the current filter.",
+    "applicantsFailed": "The applicants could not be loaded.",
+    "statusChanged": "The application status is now {{status}}."
+  }
+}

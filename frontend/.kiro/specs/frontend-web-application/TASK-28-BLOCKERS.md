@@ -1,0 +1,2035 @@
+# Task 28 (final checkpoint — full pipeline green): run results and blockers
+
+Run date: 2026-09-22. Machine: Windows / PowerShell. All commands from `frontend/`
+unless stated otherwise.
+
+Last updated: 2026-09-22, after **Bugs 1 and 2 were fixed** (see those sections)
+and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
+defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
+code paths that reach them; all three are recorded below.
+
+Update 2026-10-06 (latest): **E2E is 79 passed / 0 failed.** The full gate is
+green except the known baseline: the 2 slow `JobNewScreen` vitest tests
+(1273/1275). `tests/integration/test_audit` runs again (2026-10-09).
+
+- **MinIO:** compose now builds a pinned release from source
+  (`backend/docker/minio/Dockerfile`). Images and binaries are no longer
+  published. See "Environment left behind".
+- **Unblocking the CV path exposed seven defects in a row.** They are Bugs 14–20.
+  Nothing on that path had ever run end to end: buckets never created, uploads
+  never sent, the API frozen, the scan never queued, the worker crashing, ClamAV
+  never called, and downloads never served.
+- **Test defects fixed:** the CV file-input locator, PDF fixtures pikepdf
+  rejects, apply journeys without an Available CV, and a wait on English-only
+  text. Shared helpers are in `e2e/support/cvs.ts`.
+- **Bug 5** fixed (accept the break), and the `admin-accounts` walk (below).
+
+Open follow-ups from this round:
+- **2026-10-09: Bug 24 fixed.** 27 of 38 error keys had no message in any
+  catalog, so those errors reached users as raw keys. See its section.
+- **2026-10-09: `tests/integration/test_audit` runs again,** and running it found
+  **Bug 25** (fixed). Integration is now 47/47 with nothing excluded.
+- **2026-10-09: Bug 26 fixed.** Twelve bulk `UPDATE`/`DELETE` statements in the
+  cvs, profiles and jobs repositories were never audited. A new Semgrep rule now
+  rejects them.
+- **2026-10-09 re-run: E2E 79/79, a11y 40/40** on all of today's fixes, after
+  `./dev.sh --seed-admin`.
+  - **Test-setup defect found on the way:** the first run failed 37 tests.
+    Playwright starts its own Vite server, which took its API URL from whatever
+    `VITE_API_BASE_URL` the shell had. The old scratchpad `e2e.env.ps1` exported
+    it, but `.dev-secrets/admin.env.sh` does not. Without it the bundle used a
+    relative `/api/v1` with no proxy, and every request hit Vite's 404.
+  - **Fix:** `playwright.config.ts` now passes the server
+    `VITE_API_BASE_URL ?? E2E_API_BASE_URL ?? http://localhost:8000/api/v1`,
+    the same URL the journeys' API helpers use. The a11y mocks match any host.
+- ~~**R5 AC16 SSE-KMS is not wired.**~~ **FIXED 2026-10-08.** Neither the upload
+  nor the promotion passed an `SseSpec`, so CVs were stored unencrypted at rest.
+  - **Fix:** `CvUploadService` takes a required `sse` argument and passes it on
+    both writes. `app/main.py` and `cvs/tasks.py::scan_cv` build it with
+    `cv_sse_spec_from_config` (key `OPENBAO_TRANSIT_KEY`, which matches compose's
+    static dev KMS key).
+  - **No TLS needed:** minio-py 7.2 and the MinIO server both accept SSE-KMS over
+    plain HTTP. The adapter docstring that said otherwise is corrected.
+  - **Guard:** `tests/unit/test_cv_sse_wiring.py`, which fails before the fix.
+  - **Live:** the `cv` and `jobs-applications` journeys pass. Every object they
+    wrote (3 in `cvs-quarantine`, 3 in `cvs`) stats as `aws:kms` under
+    `hasoub-data-key`.
+  - **Older objects stay plaintext.** The buckets are object-locked in
+    COMPLIANCE mode, so the 45 dev-test objects written before the fix can't be
+    rewritten. This is test data only.
+- ~~**`semgrep/module-boundaries.yml` is invalid**~~ **FIXED 2026-10-08: the rules
+  run.** Three defects:
+  - A duplicate `paths:` key.
+  - An `exclude` glob using `$OTHER_MODULE`. Paths can't use metavariables.
+  - Comments used as `pattern-inside`.
+
+  Changes:
+  - **Rule 2 is now one rule per module.** Each matches the whole dotted path
+    with a regex, because `from app.modules.$OTHER import ...` binds `$OTHER`
+    to `cvs.errors`.
+  - **More import forms covered** (`import app.modules.x.y`,
+    `from app.modules.x import service`, `from fastapi.responses import ...`).
+  - **`platform/db/metadata.py` is excluded.** It is Alembic's model registry.
+
+  The first run found **Bug 21** (below), now fixed.
+  - **The 7 `platform-imports-domain` findings are FIXED 2026-10-08.**
+    `platform/audit/hook.py`, `platform/db/unit_of_work.py` and
+    `platform/security/guards.py` imported `app.modules.audit`. The audit
+    write side now lives in `platform/audit`:
+    - `models.py`: `audit_log` and `audit_actor_identities`, moved with
+      `git mv`;
+    - `context.py`: the actor, reason and request-ID context variables;
+    - `chain.py`: lock key, redaction map, hashing and the separate-connection
+      failure entry.
+  - **`modules/audit` keeps search, verification and anonymisation.**
+    `modules/audit/models.py` and `repository.py` re-export the moved names, so
+    callers are unchanged.
+  - **The unused `record_denial_async` is removed.**
+  - **`uvx semgrep --config semgrep/ app/` now reports 0 findings.**
+  - **Verification:**
+    - unit 361/361;
+    - integration 18/18;
+    - E2E 79/79;
+    - mypy unchanged (74);
+    - `alembic check` drift identical before and after the move;
+    - every module imports cleanly from a cold start.
+  - **Import cycle fixed along the way.** It predated the move:
+    `platform.audit.hook` → `platform.db` (`__init__`) → `unit_of_work` → the
+    hook, so importing the hook first failed. `UnitOfWork` now imports the hook
+    lazily.
+  - The move turned up **Bug 22** (fixed) and **Bug 23** (open), below.
+- **mypy's 74 errors are worth triaging.** One of them (`main.py:208`,
+  `ArqRedis` passed as `TaskQueue`) was Bug 17.
+- ~~`repo.promote_version` mutates with a bulk `UPDATE`, which the audit
+  `before_flush` hook does not see.~~ **FIXED 2026-10-09** as part of Bug 26:
+  twelve such statements, not one.
+- Versions dead-lettered while Bug 18 was live stay PendingScan in the dev
+  database (test data only).
+
+Update 2026-10-05: E2E is **73 passed / 6 failed**, and all 6 remaining failures
+are blocked only by MinIO being unavailable.
+
+Since the previous update:
+- **Fixed:** Bug 6 (failure audit entries), Bug 11 (review journey races),
+  Bug 12 (`*.created` audit entries had no entity id) and Bug 13
+  (not-yet-approved sign-in never reached the Status_Notice).
+- **Test defects fixed:** three journey defects (`audit`, `admin-accounts`
+  suspend, the closed role). The closed role was also a conflict between the
+  specs.
+- **`verify:api`:** fixed for CRLF checkouts.
+- **2026-10-06, `admin-accounts` suspend (test defect, regressed):** the walk to
+  the seeded account went through the UI one 20-row page at a time. The list is
+  oldest first and every run adds Approved Candidates (260 by now), so the walk
+  outgrew the 30 s test timeout. Now `e2e/support/backend.ts::accountListCursorBefore`
+  reads the same keyset order from the API, 100 rows a request, and the test
+  opens the list with `after_id` in the address bar (AC3). The seeded account is
+  then the first row. It passes again.
+
+Still open:
+- ~~**Need decisions:** Bug 5, and pre-fix history for Bugs 5 and 12.~~ Bug 5 is
+  fixed (2026-10-06). The decision was to accept the break: pre-fix rows stay
+  as written.
+- ~~**Environment:** a MinIO replacement.~~ Built from source (2026-10-06).
+- **Spec owners:** the Req 4 AC12 / Req 7 AC6 note in Bug 13's section.
+
+Update 2026-10-05 (earlier): **Bugs 3, 4 and most of Bug 10 fixed**, plus the
+error-envelope wiring (field-level 422s now reach the client). A starter
+Skill_Taxonomy is seeded (migration `0011`), and the apply endpoint no longer
+500s. E2E is now **64 passed / 15 failed**. The remaining apply journeys are blocked
+only by MinIO being unavailable (an apply needs a CV). See "Re-run after the
+envelope fix" for the current attribution.
+
+Update 2026-10-05 (earlier): **Bug 7 fixed and verified end to end.** The e2e run
+also exposed two defects that were hiding behind "Bug 4": **Bug 8**, where the
+journeys reload the page after signing in, and **Bug 9**, where the Route_Guard
+hangs on its status read under StrictMode. Both are fixed. E2E went from 48
+passed / 31 failed to **61 passed / 18 failed**; see the re-measured attribution.
+Open: Bugs 3, 4 (narrowed to the admin MFA step), 5 and 6, plus the new
+unattributed groups in that table.
+
+## Summary
+
+Seven of the eight pipeline gates are green. The one that is not — `test:e2e`, the
+journey suite from task 27 — failed on **three backend defects** (Bugs 1–3) and
+**one frontend/e2e defect** (Bug 4). Bugs 1 and 2 are now fixed; Bugs 3 and 4 are
+open. None of the failures are in the unit, component, property, accessibility,
+typecheck, lint, build or contract-verification gates.
+
+| Gate | Command | Result |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | pass (exit 0) |
+| Lint | `npm run lint` | pass (exit 0, 3 pre-existing `only-export-components` warnings in `src/routing/routes.tsx`) |
+| Unit / component / property | `npm run test` | **pass — 112 files, 1259 tests** |
+| Build | `npm run build` | pass (`dist/` emitted; chunk-size warning only) |
+| Contract drift | `npm run verify:api` | pass — committed `schema.d.ts` matches the live OpenAPI document |
+| Accessibility gate | `npm run test:a11y` | **pass — 40/40 routes, no WCAG 2.1 AA violations** |
+| E2E journeys | `npm run test:e2e` | **fail — 5 passed, 34 failed** (original run) → **48 passed, 31 failed** after the Bug 1 + Bug 2 fixes |
+
+Task 28 is therefore left **not complete** in `tasks.md`.
+
+Note on the two E2E numbers: `test:e2e` is a bare `playwright test`, so it runs
+everything under `e2e/` — the 39 journey/locale tests *and* the 40 accessibility
+tests. The re-run's 79 total is the honest count; the original run's 39 evidently
+excluded the accessibility specs. Compared on journeys alone the movement is
+**5 → 8 passed**, and much more of the change is in *why* the rest fail: the
+`POST /verify/code` 500 that accounted for 31 of the 34 original failures appears
+in none of them now. See the re-measured attribution table below.
+
+## How the environment was brought up
+
+Docker services were already running and healthy (`postgres`, `valkey`, `minio`,
+`mailpit`, `clamav`, `openbao`). Two processes had to be started by hand:
+
+```powershell
+# backend/
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m arq app.worker.WorkerSettings   # failed at the time
+                                                              # of the run; fixed,
+                                                              # see Bug 1
+```
+
+E2E environment used:
+
+```powershell
+$env:E2E_API_BASE_URL   = 'http://127.0.0.1:8000/api/v1'
+$env:VITE_API_BASE_URL  = 'http://127.0.0.1:8000/api/v1'   # no dev-server proxy exists
+$env:E2E_MAILPIT_BASE_URL = 'http://localhost:8025'
+$env:E2E_ADMIN_TOTP_SECRET = '<your enrolled base32 secret>'
+```
+
+### Seeded Admin (the precondition `e2e/README.md` describes)
+
+`e2e-admin@example.com` already existed in the dev database, Approved, role
+`ADMIN`, password `correct-horse-battery-staple` (the `SEED_ADMIN` default). Its
+TOTP secret was unrecoverable (envelope-encrypted via OpenBao), so it was
+re-enrolled: the account's `mfa_secret_enc` / `mfa_wrapped_key` /
+`mfa_enrolled_at` columns were set to `NULL`, `POST /auth/mfa/enroll` was called
+on the resulting un-enrolled session, and the secret was read out of the returned
+`provisioning_uri`. TOTP secrets are not committed: each developer re-enrols the
+account this way and keeps the secret in their own environment.
+
+Account id: `b9ab10fc-e5e0-4610-9b61-49bb471ac952`.
+
+A `mfa_uri.txt` at the repo root once held a provisioning URI; it has been
+removed and is now git-ignored. Only one secret is stored per account, so
+re-enrolling invalidates any previously issued secret.
+
+Note `POST /auth/mfa/verify` requires `account_id` in the body in addition to
+`code` (not obvious from the enrolment response).
+
+---
+
+## Bug 1 — the ARQ worker cannot start: `app.modules.audit.tasks` does not exist — **FIXED 2026-09-22**
+
+**Severity: blocked all asynchronous backend behaviour.** This is the upstream
+cause of the first full-suite run (34 failures, every one of them
+`No Verification_Code found ... Is Mailpit reachable?`).
+
+### What was wrong
+
+`backend/app/worker.py::_register_tasks` imported the module unconditionally:
+
+```python
+# backend/app/worker.py, line 47 (before the fix)
+import app.modules.audit.tasks  # noqa: F401, PLC0415 - verify_audit_chain, create_audit_partition
+```
+
+`ModuleNotFoundError: No module named 'app.modules.audit.tasks'`. The only
+`tasks.py` modules in the tree were:
+
+```
+app/modules/cvs/tasks.py
+app/modules/identity/tasks.py
+app/modules/jobs/tasks.py
+app/modules/reporting/tasks.py
+app/platform/mail/tasks.py
+```
+
+Because `WorkerSettings = build_settings()` runs at import time, the failure killed
+the whole worker rather than degrading one task family. Consequences:
+
+- `drain_email_outbox` never runs → no Verification_Code email is ever delivered.
+  The dev database had **32 `outbox_emails` rows stuck in `Pending`** and Mailpit
+  had received **0 messages** before this was worked around.
+- `scan_cv` never runs → every `CvVersion` stays `PendingScan` forever.
+- `generate_export` never runs → no Excel export ever reaches a terminal state.
+
+**Confirmed, not inferred.** A throwaway entrypoint identical to
+`build_settings()` minus that one import started cleanly, registered 7 functions,
+and drained all 32 pending emails to `Sent` within ~20 seconds. That temporary
+file has been deleted.
+
+Related gaps found while doing that: `app/platform/jobs/catalog.py::SCHEDULES`
+also schedules `verify_audit_chain`, `apply_retention_policy` and
+`refresh_report_rollups`, and **none of those three had a registered handler**
+either. Only `drain_email_outbox`, `expire_verification_codes`, `scan_cv`,
+`verify_cv_checksums`, `extract_jd_from_url`, `extract_jd_from_text` and
+`generate_export` existed.
+
+### What was changed
+
+**`backend/app/modules/audit/tasks.py` (new).** The module `worker.py` was
+importing and that had never existed. It registers the two handlers the import
+comment promised:
+
+- `verify_audit_chain` — walks the chain through the existing
+  `AuditChainVerifier`, resuming from a cursor in Valkey
+  (`hasoub:audit:chain_verify_cursor`) so the table is not re-walked from
+  genesis every hour. Losing the cursor costs a full re-walk, never a wrong
+  answer. On mismatch the cursor is not advanced and nothing is repaired — a
+  chain that can be repaired is not evidence of anything.
+- `create_audit_partition` — `ensure_current_partition` +
+  `ensure_next_partition`. This one mattered more than it looked: `audit_log` has
+  no DEFAULT partition and `0002_audit_foundation` only pre-creates the current
+  and next month, so **every audited write would have started failing in
+  November 2026**. Scheduled daily rather than monthly, because the DDL is
+  `CREATE TABLE IF NOT EXISTS` and a daily tick self-heals a missed run.
+
+`JobName.CREATE_AUDIT_PARTITION` and its `Schedule` are new in
+`app/platform/jobs/catalog.py`; the job was referenced by the `worker.py` comment
+and by two docstrings but was in neither the enum nor the catalog.
+
+**`backend/app/worker.py`.** `_register_tasks` now walks a `_TASK_MODULES` tuple,
+imports each module independently, and returns the names that failed instead of
+raising. That is the blast-radius half of the bug: one missing module took
+`drain_email_outbox` down with it, which is the only reason 34 e2e tests failed
+on a missing email. A new `_report_job_coverage` then checks that every
+`Schedule` has a registered handler and reports any module that did not import —
+warning in development, `RuntimeError` in production, the same shape as
+`assert_all_routes_have_auth`.
+
+**`backend/app/platform/jobs/scheduler.py`.** `_fire` skips a schedule whose job
+has no registered handler, so an unhandled schedule no longer enqueues a job that
+fails on every tick and buries real errors.
+
+**`refresh_report_rollups`** now has a real handler in
+`app/modules/reporting/tasks.py`: it refreshes every materialized view in the
+application schema, discovered from `pg_matviews` rather than hard-coded, so it
+reports zero today and needs no change when a rollup view is added.
+
+**`apply_retention_policy` is deliberately still unregistered**, declared in a new
+`UNIMPLEMENTED_JOBS` frozenset in `catalog.py` — the same idiom as
+`PUBLIC_ROUTE_PATHS`, so the boot check can tell a known gap from a wiring
+mistake. It needs the declarative
+`(entity, retention_basis, minimum_period, action)` table from the design's Data
+Retention Model, which no migration creates, and its actions anonymise candidate
+data. That is a feature with a migration, not a wiring gap, and a handler that
+silently did nothing would have been worse than an honest absence.
+
+### Verification
+
+Cold boot from committed code:
+
+```
+INFO:app.worker:Scheduled jobs with no handler yet (declared in UNIMPLEMENTED_JOBS,
+not enqueued): apply_retention_policy
+Starting worker for 10 functions: drain_email_outbox, verify_audit_chain,
+create_audit_partition, expire_verification_codes, scan_cv, verify_cv_checksums,
+extract_jd_from_url, extract_jd_from_text, generate_export, refresh_report_rollups
+INFO:app.platform.jobs.scheduler:Scheduler started with 7 schedules (leader=True)
+```
+
+Ten functions, up from the seven the throwaway entrypoint managed. The three new
+jobs were enqueued by hand rather than waiting for their cron windows:
+
+```
+create_audit_partition ● {'status': 'ensured'}
+  audit: ensured partition audit_log_2026_09 [2026-09-01, 2026-10-01)
+  audit: ensured partition audit_log_2026_10 [2026-10-01, 2026-11-01)
+refresh_report_rollups ● {'status': 'ok', 'refreshed': [], 'skipped': []}
+verify_audit_chain     ● walked ids 1–625  (see Bug 5 for what it found)
+```
+
+`drain_email_outbox` ticks every 10 s and returns
+`{'claimed': 0, 'sent': 0, ...}` — the 32 stuck rows had already been drained by
+the earlier workaround, so there is nothing left to send.
+
+`ruff` (0.8.4, repo config) is clean on every file touched.
+`app/modules/reporting/tasks.py` still reports its 5 pre-existing findings —
+confirmed byte-identical at `HEAD`, so none are new. `pytest tests/unit` →
+**259 passed**. `tests/integration/test_audit` errors at setup on a pre-existing
+`ScopeMismatch` (the module-scoped `_run_audit_migration` fixture requests the
+function-scoped `pg_engine`); it is test-side and unrelated. mypy is not
+installed in `.venv`, so the strict typecheck was not run.
+
+### Still open in this area
+
+Secondary observation, same file family — `app/main.py` logs a boot-time
+authorization assertion failure at every startup but continues anyway:
+
+```
+Boot-time authorization assertion FAILED.
+The following routes lack an authorization dependency:
+  - /api/openapi.json ['GET', 'HEAD']
+  - /api/docs ['GET', 'HEAD']
+  - /docs/oauth2-redirect ['GET', 'HEAD']
+  - /api/redoc ['GET', 'HEAD']
+```
+
+The docs routes are presumably meant to be in `PUBLIC_ROUTE_PATHS`. Harmless in
+development, but an assertion that "fails" and then proceeds is worth deciding
+about.
+
+**FIXED 2026-10-09.** Two changes in `assert_all_routes_have_auth`:
+- **Docs routes:** the app's own documentation URLs (`docs_url`, `redoc_url`,
+  `openapi_url`, `swagger_ui_oauth2_redirect_url`) are exempt where the app
+  enables them. Production disables them. Dev boot now reports nothing, so the
+  log line means something again.
+- **Segment matching:** `PUBLIC_ROUTE_PATHS` was matched by raw string prefix,
+  so a new `/api/v1/registrations/...` or `/healthz` route would have skipped the
+  check. `is_public_path` now matches by path segment (the entry itself, or
+  `entry/...`). All 5 current sub-routes (`/register/candidate`,
+  `/verify/code`, ...) still qualify.
+- **Guard:** `tests/unit/test_security/test_boot_route_assertion.py`. Before the
+  fix, the docs routes tripped production mode and `/api/v1/verify-admin` and
+  `/healthz` passed as public. The assertion had no tests at all.
+
+---
+
+## Bug 2 — schema/ORM enum mismatch: `POST /verify/code` returns 500 — **FIXED 2026-09-22**
+
+**Severity: blocked 31 of the 34 e2e failures.** After Bug 1 was worked around and
+mail started flowing, the suite's next wall was:
+
+```
+POST /verify/code -> 500 internal_server_error
+```
+
+### What was wrong
+
+Backend traceback:
+
+```
+sqlalchemy.exc.ProgrammingError: <asyncpg.exceptions.UndefinedFunctionError>:
+operator does not exist: character varying = account_status
+HINT: No operator matches the given name and argument types.
+
+[SQL: SELECT ... FROM accounts
+      WHERE accounts.email_released IS false
+        AND accounts.status = $1::account_status
+        AND accounts.roles @> CAST($2::VARCHAR[] AS VARCHAR[])
+      ORDER BY accounts.created_at]
+[parameters: ('Approved', ['ADMIN'])]
+```
+
+Worth noting in hindsight: that SQL carries **two** type faults, not one. The
+reported error is the `status` comparison, but `accounts.roles @> CAST($2::VARCHAR[]
+AS VARCHAR[])` on the next line is the second — `accounts.roles` was correctly
+typed `role[]` all along, and the operand is cast to `varchar[]`. PostgreSQL only
+ever reports the first, so fixing the schema alone just moved the 500 one predicate
+to the right. Both halves are covered under *What was changed*.
+
+The ORM maps the column to the native PostgreSQL enum:
+
+```python
+# backend/app/modules/identity/models.py, line 73
+status: Mapped[AccountStatus] = mapped_column(account_status_type, nullable=False)
+```
+
+…but migration `0003_identity.py` creates it as a plain string:
+
+```python
+# backend/alembic/versions/0003_identity.py, line 134
+sa.Column("status", sa.String(50), nullable=False, server_default="PendingVerification"),
+```
+
+**This is systemic, not one column.** The migrations *do* create every enum type
+(`account_status`, `role`, `jd_status`, …) and `accounts.roles` correctly uses
+`_role`, but almost every other enum-valued column landed as `varchar`.
+
+The authoritative list is **19 columns**, derived by walking `Base.metadata` for
+every column whose ORM type is a named `sa.Enum` and comparing each against
+`information_schema.columns`, rather than by reading the migrations:
+
+```
+accounts.status                        -> varchar   (should be account_status)
+account_status_transitions.from_status -> varchar
+account_status_transitions.to_status   -> varchar
+email_verifications.state              -> varchar
+residency_proofs.type                  -> varchar
+registration_links.role                -> varchar
+candidate_profiles.state               -> varchar
+candidate_education.enrolment_status   -> varchar
+senior_profiles.contact_channel_pref   -> varchar
+senior_profiles.contact_scope_pref     -> varchar
+cv_versions.state                      -> varchar
+job_descriptions.work_model            -> varchar
+job_descriptions.employment_type       -> varchar
+job_descriptions.experience_level      -> varchar
+job_descriptions.status                -> varchar
+job_descriptions.application_channel   -> varchar
+applications.status                    -> varchar
+applications.routed_channel            -> varchar
+report_exports.status                  -> varchar
+```
+
+Two corrections to the list as first recorded here: `registration_links.role` and
+`residency_proofs.type` are affected and were missing, while
+`application_status_transitions.from_status` / `to_status` are **not** — the ORM
+maps those two as `String(50)`, so model and schema already agreed.
+
+Only `accounts.roles` (`_role`), `outbox_emails.state` (`outbox_email_state`) and
+`notifications.type` (`notification_type`) were correctly typed.
+
+Any query that *compares* one of these columns to a bound enum parameter 500s.
+Queries that only *select* the column are fine, which is why
+`GET /me/status`, `GET /admin/accounts`, `GET /admin/audit` and
+`GET /admin/skills/pending` all return 200 while `POST /verify/code` does not.
+
+Why the backend's own test suite did not catch this — **checked, and it is not the
+`create_all` explanation originally guessed here.**
+`backend/tests/integration/conftest.py` does run `alembic upgrade head` against a
+Postgres testcontainer, so the integration schema is the real migrated one. Three
+things combined instead:
+
+* No integration test ever *compares* an enum-valued column to a bound enum
+  parameter — the only shape that fails.
+* `Base.metadata` was incomplete (the taxonomy and reference models were never
+  registered), so `compare_metadata` and `alembic revision --autogenerate` both
+  raised `NoReferencedTableError` before emitting a single diff line. The drift was
+  not merely unasserted, it was unobservable by the tool designed to find it.
+* The whole `tests/integration/test_audit` module errors at setup on a fixture
+  `ScopeMismatch` (see Bug 1's verification notes), so the one integration module
+  that does exercise real schema behaviour never ran.
+
+### What was changed
+
+The `ALTER ... USING` direction was taken rather than retyping the models to
+`sa.String`: it preserves the design's intent, and the enum types already exist.
+
+**`backend/alembic/versions/0010_enum_column_alignment.py` (new).** Retypes all 19
+columns, carrying each column's server default across with an enum cast
+(`SET DEFAULT 'PendingVerification'::account_status`). The cast needed no data
+audit beyond a check that every stored value was already a valid label of its
+target enum — `USING col::enum` fails loudly on anything else rather than
+coercing it.
+
+One dependent object had to be rebuilt by hand:
+`uq_applications_candidate_jd_non_terminal`, the R7 AC7 partial unique index.
+PostgreSQL refuses to rebuild its varchar-era predicate over the new type —
+
+```
+InvalidObjectDefinitionError: functions in index predicate must be marked IMMUTABLE
+```
+
+— because the enum→text cast the old predicate carries is only STABLE. The
+migration drops it, retypes the column, and recreates it with an enum predicate
+(`WHERE status IN ('Submitted', 'Under Review')`), which is what the model
+declares anyway. The `senior_profiles` scope CHECK constraint *does* survive the
+rewrite, keeping its `(contact_channel_pref)::text = 'None'::text` form, which
+stays correct against the enum; it is left alone rather than reproducing the
+naming convention's truncated-and-hashed constraint name by hand.
+
+**`backend/app/modules/identity/repository.py`.** The migration alone did not fix
+the endpoint. It moved the 500 one predicate to the right, inside the very same
+query:
+
+```
+asyncpg.exceptions.UndefinedFunctionError: operator does not exist:
+role[] @> character varying[]
+```
+
+Two functions cast the operand of a `role[]` containment check to `varchar[]`:
+
+```python
+Account.roles.contains(cast([Role.ADMIN.value], PG_ARRAY(String)))
+```
+
+`get_all_admin_accounts` (the notification-target lookup `POST /verify/code`
+performs) and `list_accounts`'s `?role=` filter. Same defect class as the schema
+half — an enum compared against a varchar — but in application code.
+`get_account_by_email` already had it right with `PG_ARRAY(role_type)`; the other
+two now match it.
+
+**`backend/app/platform/db/metadata.py`.** Registers
+`app.platform.taxonomy.models` and `app.platform.reference.models`. This is a
+prerequisite, not tidying: without `skills`, the `candidate_skills.skill_id`
+foreign key cannot resolve, `Base.metadata.sorted_tables` raises
+`NoReferencedTableError`, and **every** `compare_metadata`/autogenerate call dies
+before producing a diff. That is a large part of the answer to why this drift went
+unnoticed for seven migrations — nobody could run autogenerate against this
+metadata at all.
+
+**`backend/tests/integration/test_schema_enum_alignment.py` (new)** — the guard,
+described under its own heading below.
+
+### The guard
+
+Three assertions, running against a database built by `alembic upgrade head` via
+the existing `pg_engine` fixture:
+
+1. the ORM actually declares enum columns at all (so a missing model registration
+   in `metadata.py` fails loudly instead of making the next two vacuous);
+2. every column the ORM maps to a named enum has that enum type in the schema;
+3. every such type carries exactly the ORM's labels, in the same order —
+   PostgreSQL orders by `enumsortorder`, and comparisons and `ORDER BY` on the
+   column use that order, not the Python declaration order.
+
+Deliberately narrow rather than a blanket `compare_metadata` diff. That full diff
+returns dozens of benign entries on this schema — audit-log child partitions,
+server defaults the models do not declare, column comments, expression indexes
+Alembic cannot compare — so a total-drift assertion would be noise rather than a
+signal, and would fail for reasons unrelated to the defect it is guarding.
+
+### Verification
+
+Negative control first, on a throwaway database: the guard reports **19
+mismatches** at `0009b_mfa_wrapped_key` and **0** at head. `upgrade head` →
+`downgrade -1` → `upgrade head` all succeed, and the index definition returns to
+its exact original varchar form on the way down.
+
+Then against the dev database, after applying the migration and restarting both
+uvicorn and the ARQ worker (asyncpg caches type information per connection, so
+pooled connections opened before the `ALTER` must be recycled): the full
+`registerVerifiedApprovedAccount` sequence from `e2e/support/backend.ts`,
+replicated over plain HTTP —
+
+```
+POST /admin/registration-links            -> 201
+POST /register/candidate                  -> 201
+(Verification_Code read from Mailpit)
+POST /verify/code                         -> 200   status: PendingApproval
+POST /admin/accounts/{id}:approve         -> 200   status: Approved
+GET  /admin/accounts?role=CANDIDATE       -> 200   (the role[] cast fix)
+GET  /admin/accounts?status=Approved      -> 200   (enum column filter)
+```
+
+The worker's `expire_verification_codes` now returns `{'expired': 0}` instead of
+dead-lettering on `character varying = email_verification_state`.
+
+`ruff` clean on both new files; `repository.py` is down to 3 findings, all in the
+untouched top-of-file import block. `pytest tests/unit` → **259 passed**. The new
+integration file → **3 passed**.
+
+No regression from the type change in raw SQL: queries that compare these columns
+to a plain string parameter (`WHERE to_status = :status`, `GROUP BY status`,
+`'CANDIDATE' = ANY(roles)`) all still work — asyncpg types the parameter from the
+column. The reporting failures in that area are Bug 3's untyped *date*
+parameters, unchanged.
+
+---
+
+## Bug 3 — `GET /admin/reports/activity` returns 500 (untyped NULL parameters) — **FIXED 2026-10-05**
+
+Independent of Bugs 1 and 2. Reproduced directly with an Admin bearer token.
+
+```
+sqlalchemy.exc.ProgrammingError: <asyncpg.exceptions.AmbiguousParameterError>:
+could not determine data type of parameter $1
+
+[SQL:
+        SELECT count(*) FROM accounts
+        WHERE 'CANDIDATE' = ANY(roles)
+          AND ($1 IS NULL OR created_at >= $1)
+          AND ($2   IS NULL OR created_at <= $2)
+        ]
+[parameters: (None, None)]
+```
+
+Raw SQL with an unfiltered date range gives asyncpg two bare `NULL`s it cannot
+type. asyncpg has no implicit-cast fallback the way psycopg does. Fix is an
+explicit cast (`$1::timestamptz`) or building the predicate conditionally instead
+of the `($1 IS NULL OR …)` idiom.
+
+**Correction to the first diagnosis here: this is not limited to the unfiltered
+default view.** Calling the repository functions directly with real
+`date_from`/`date_to` values fails identically — `AmbiguousParameterError` is
+about the *statement shape* (`$1 IS NULL`), which asyncpg must type at Prepare
+time before any value is bound. No input makes the activity report work. Every
+one of `count_candidates_registered`, `count_candidates_by_status` and
+`count_cv_versions_uploaded` fails this way.
+
+`count_applications_by_status` additionally carries a plain syntax error —
+`(:jd_id IS NULL OR jd_id = :jd_id::uuid)` yields
+`PostgresSyntaxError: syntax error at or near ":"`.
+
+This is what fails `e2e/journeys/reports.spec.ts` once the login blocker below is
+cleared.
+
+### What was changed
+
+The defect was wider than the three functions named above, and it covered both
+report endpoints. All of the raw SQL is in
+`backend/app/modules/reporting/repository.py`:
+
+- **Untyped NULL parameters**, in 7 predicates (activity counts, application
+  counts and the applications export). They are now
+  `CAST(:p AS timestamptz) IS NULL OR col >= CAST(:p AS timestamptz)`, so asyncpg
+  can type the parameter at Prepare time.
+- **`:name::type` inside `text()`**, at 5 sites. SQLAlchemy does not treat `:name`
+  as a bind when `::` follows it, so the literal reached PostgreSQL. These are now
+  `CAST(:name AS uuid)` / `CAST(:account_ids AS uuid[])`. One of them was in the
+  candidate-progress **page query** itself, so `/admin/reports/candidate-progress`
+  also returned 500 on every call, first page included.
+- **The paging bug behind it.** `list_candidate_progress` fetched `limit + 1`
+  rows to detect a next page, then returned only `limit` of them. The service's
+  `len(rows) > limit` check could therefore never be true: `has_next` was always
+  false, and nothing past the first page was reachable. Bug 3's 500s had hidden
+  this. The repository now returns the extra row and the service trims it, which
+  is the same contract as `jobs/repository.py::list_open_jds`.
+
+No other module has either SQL pattern (checked across `backend/app`).
+
+### Verification
+
+- **`tests/integration/test_reporting_queries.py` (new)** runs every activity query
+  and the applications export against `alembic upgrade head`, unfiltered and with
+  a date window, for any JD and for one JD. It also pages candidate progress
+  exactly the way `ReportService` does, using the extra row as the only
+  `has_next` signal.
+  - Before the fix: 4 × `AmbiguousParameterError` and 1 × the `:` syntax error.
+  - With the over-fetch trimmed again, the paging test fails.
+  - With the fix: 5 passed.
+- **Live API:** `/admin/reports/activity` returns 200 unfiltered, with a date window
+  and with a JD filter. `/candidate-progress` walks 6 pages (all 200) and reaches
+  all 128 candidates in the dev database, with no duplicates.
+  `candidates_registered` is 128, which agrees.
+- **`e2e/journeys/reports.spec.ts`:** 2 passed.
+- **Backend unit suite:** 263 passed.
+
+---
+
+## Bug 4 — MFA code step issues no second `/auth/login` request (frontend or journey helper) — **FIXED 2026-10-05: the journey helper**
+
+**The one failure that is not clearly backend-side.**
+
+**Revised blast radius (2026-09-22 re-run): far larger than the 3 journeys
+recorded below.** With Bug 2 fixed, roughly 20 of the 31 remaining failures are
+now UI-login failures — tests that time out waiting for an element on an
+authenticated screen, or assert a destination and get `/login`. They span
+`profile.spec.ts`, `cv.spec.ts`, `reviews.spec.ts`,
+`jobs-applications.spec.ts`, `registration.spec.ts` (the gating test),
+`auth-session.spec.ts` and most `tri-locale.spec.ts` variants, as well as the
+three originally attributed here. They were previously failing earlier, at
+`POST /verify/code`, which hid the fact that they never got past login either.
+Whatever the root cause turns out to be, fixing it is now worth far more than the
+2 failures the original attribution credited it with.
+
+Originally observed on the 3 journeys that sign in as the Admin through the real
+UI: `admin-accounts.spec.ts` (first test), `audit.spec.ts` (chain-verify test),
+`reports.spec.ts`.
+
+Symptom: after a correct credential submission the MFA step appears, the journey
+helper fills `mfa-code-input` with a fresh TOTP code and clicks
+`mfa-code-submit`, and the page stays on `/login`.
+
+Uvicorn access log for the browser's whole login attempt — note there is **no
+second POST**:
+
+```
+OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+POST    /api/v1/auth/login HTTP/1.1" 401 Unauthorized     <- mfa_required, correct
+(nothing further)
+```
+
+Playwright page snapshot at failure time:
+
+```
+- heading "Two-step verification" [level=2]
+- textbox "Authenticator code"          <- empty
+- button "Verify and sign in" [disabled]
+- alert: Enter your authenticator code to continue.
+```
+
+Reading that against `src/features/mfa/MfaCodeStep.tsx`: the alert text is
+`auth:mfa.codeIncomplete`, which is only announced when
+`validateMfaCodeValues(values)` returned violations — the early-return branch of
+`submit()` that fires **before** `api.request` is called. So `submit()` did run,
+and it saw `values.mfa_code` as empty or short.
+
+That contradicts the click having been possible at all: the button's
+`disabled={!isSubmittableMfaCode(values.mfa_code)}` reads the same state, and
+Playwright waits for enabled before clicking. So state held a valid 6-digit code
+at click time and an invalid one inside the handler. Something is resetting
+`values` between the click and the handler — a remount of `MfaCodeStep`, or the
+`autoFocus` / `useViolationFocus` interaction, are the obvious suspects.
+
+Two things to rule out, in this order:
+
+1. **The journey helper's race.** `loginAsAdminThroughUi` in
+   `e2e/journeys/admin-accounts.spec.ts` gates on
+   `await mfaStep.isVisible().catch(() => false)` immediately after clicking
+   submit, with no wait. That is the standard Playwright anti-pattern and it may
+   be interacting with the step mid-mount. Replacing it with
+   `await expect(mfaStep).toBeVisible()` is the cheap first experiment.
+2. **A genuine `MfaCodeStep` state reset.** If (1) does not fix it, the component
+   is losing the controlled value across the submit. Note the component tests in
+   `MfaCodeStep.test.tsx` drive the input with `userEvent.type` (per-character
+   events) while Playwright's `fill` sets the value in one shot — a component that
+   only tracks per-keystroke state would pass the former and fail the latter.
+
+Ruled out already: TOTP correctness and code reuse. The same
+`currentTotpCode(secret)` helper authenticates fine over plain `fetch`, and the
+backend accepts the **same** code twice inside one 30-second window (verified:
+two sequential `POST /auth/login` calls with an identical `mfa_code` both
+returned 200), so nothing about single-use replay protection is involved.
+
+### Resolution (2026-10-05): hypothesis 1, the helper's race
+
+Note first that most of the ~20 failures once credited here were Bugs 8 and 9.
+Candidate and senior sign-in has no MFA step at all. What was left was the
+admin-only MFA step, and a Playwright trace of `admin-accounts.spec.ts` settles it:
+
+```
+ 8049 ms  click   login-submit
+ 8171 ms  isVisible mfa-code-step  → false   (11 ms after the call)
+          POST /auth/login → 401 mfa_required   (arrives after the check)
+ 8201 ms  expect toHaveURL /admin/accounts      (no code typed, no second POST)
+```
+
+`isVisible()` does not wait. It ran before the `mfa_required` response had
+rendered the step, so the helper skipped the MFA branch entirely. `MfaCodeStep`
+never lost state; hypothesis 2 was not needed.
+
+**Fix.** The four sign-in sites now `await expect(mfaStep).toBeVisible()` and then
+enter the code unconditionally:
+- `admin-accounts.spec.ts` (`loginAsAdminThroughUi`)
+- `audit.spec.ts` ×2
+- `reports.spec.ts`
+
+The seeded Admin is MFA-enrolled by precondition, so the step always follows the
+credentials. The two other `isVisible().catch` uses, a pagination loop and an
+export-ready check, run against already-rendered content and are unchanged.
+
+**Verified.** Run alone, all five admin journeys now pass MFA and reach their
+screens. Three of them then fail further on, for reasons that are not Bug 4:
+- `reports`: Bug 3, with the exact signatures (`AmbiguousParameterError` on `$1`,
+  and the `:jd_id::uuid` syntax error) on `/admin/reports/activity` and
+  `/candidate-progress`.
+- `audit`: the entry's action is `Account.updated`, but the test expects
+  `/approve/i`.
+- `admin-accounts` suspend: the account's card is not in the filtered list.
+
+---
+
+## Bug 5 — the audit hash chain fails verification on every entry (µs hashed, ms stored) — **FIXED 2026-10-06**
+
+**Found by fixing Bug 1: the first real run of `verify_audit_chain` reported a
+tamper.** It is not a tamper. It does mean R8 AC8's tamper detection is currently
+useless, and that the scheduled job logs `CRITICAL` hourly (cron `minute: 5`).
+
+It should not fail `audit.spec.ts` — that test asserts the chain-verify control
+reports all four members "on every answer — intact or tampered", so a `false`
+verdict still satisfies it. But `GET /admin/audit/chain/verify` runs the same
+verifier, so the Admin UI will show the chain as broken once Bug 4 lets anyone
+log in and look.
+
+```
+CRITICAL:app.modules.audit.service:AUDIT CHAIN TAMPER DETECTED: first bad entry id=1
+verify_audit_chain ● {'status': 'tampered', 'first_bad_id': 1, 'from_id': 1,
+                      'through_id': 625}
+```
+
+`append_audit_entry` hashes `ts = datetime.now(UTC)` at **microsecond** precision,
+but `occurred_at` is `UtcTimestampMs` = `timestamptz(3)`, so Postgres stores
+**milliseconds**. `verify_chain_window` then re-hashes the truncated value it reads
+back, and gets a different digest. 999 of every 1000 entries will false-positive.
+
+**Proven, not inferred, and read-only.** Brute-forcing the 1000 microsecond
+offsets inside entry 1's stored millisecond reproduces the stored `entry_hash`
+exactly at offset `073`:
+
+```
+id 1  occurred_at 2026-09-21T21:07:04.097000+00:00   prev_hash None
+stored    c2ac60955e9e276a02af49fdcac527bdf3d3e75a7d7e2208dba4487c6c26b640
+as-stored 8110c84f3549dcb74df3a0854b53ead877d0f04f43155533b6c47cdfaabdb727
+microsecond offset reproducing the stored hash: 73
+```
+
+Nothing else about the row differs, so the truncation is the whole explanation.
+
+Fix direction: round `ts` to milliseconds in `append_audit_entry` before it is
+both hashed and inserted, so writer and verifier canonicalise the same value. The
+open decision is history: rows written before the fix stay unverifiable whatever
+happens, so someone has to choose between seeding
+`hasoub:audit:chain_verify_cursor` past them and accepting a permanent reported
+break at id 1. That is a tamper-evidence call, which is why the fix was not made
+as a side effect of Bug 1.
+
+### What was changed — **FIXED 2026-10-06**
+
+- **History decision (Karim, 2026-10-06): accept the break.** Rows written
+  before the fix stay byte-identical. Nothing re-hashes them, and the verify
+  cursor is not seeded past them. The verifier and the Admin UI will keep
+  reporting the chain as broken at id 1 on the dev database, and the hourly job
+  keeps logging it. An environment whose log starts after this fix verifies
+  clean.
+- **Fix:** all three writers now truncate the timestamp to milliseconds before it
+  is both hashed and inserted, so the writer hashes exactly what PostgreSQL
+  stores. The writers are the `before_flush` hook (`platform/audit/hook.py`),
+  `append_audit_entry` and `append_failure_entry` (`modules/audit/repository.py`).
+  A caller-supplied `occurred_at` is truncated too. The helper is
+  `truncate_to_ms` in `platform/db/base.py`, and `utc_now` now uses it.
+  Truncating, rather than letting PostgreSQL convert, matters because PostgreSQL
+  *rounds* sub-millisecond input.
+- **Guard:** `tests/integration/test_audit_chain_ms_precision.py` writes through
+  each of the three paths on a real database, then runs `verify_chain_window`
+  over what they wrote. It **failed before the fix** (`(False, 1)`) and passes
+  after.
+- **Live on the dev database:** the audit tail was id 5103 when the fix went in.
+  After a full e2e run, ids 5104–5718 (615 entries) verify `(True, None)`. A
+  window of pre-fix rows (5000–5103) still fails at its first row, as decided.
+- **Bug 12's pre-fix rows** need nothing more. They hashed `'unknown'` exactly as
+  they stored it, so the timestamp was the only thing breaking verification.
+- **Suites:** backend unit 346 passed, integration 17 passed (`test_audit` still
+  excluded).
+
+---
+
+## Bug 6 — failure audit entries are never written: the rollback path passes a masked password — **FIXED 2026-10-05**
+
+**Also surfaced by the worker running.** R8 AC5 requires exactly one failure entry
+per failed operation; none are being recorded.
+
+```
+ERROR:app.modules.audit.repository:audit: failed to write failure entry for
+action='operation.failed' entity=Transaction/unknown
+asyncpg.exceptions.InvalidPasswordError: password authentication failed for user "hasoub"
+```
+
+`UnitOfWork.__aexit__` builds the connection string for the separate-connection
+write with `engine_url = str(engine.url)` (`app/platform/db/unit_of_work.py`,
+~line 128). SQLAlchemy's `URL.__str__` renders the password as `***`, so
+`append_failure_entry` opens an engine with a literal `***` password and cannot
+connect. Its `except` swallows the failure by design — "losing a failure entry is
+better than masking the original error" — which is why this has been silent.
+
+Fix is one line: `engine.url.render_as_string(hide_password=False)`.
+
+Note the entry this was trying to write was itself a consequence of Bug 2, so the
+two appeared together in the worker log. With Bug 2 fixed nothing is failing, so
+this is currently silent again rather than resolved.
+
+### What was changed — **FIXED 2026-10-05**
+
+- **Fix:** `UnitOfWork._write_failure_entry` now passes
+  `engine.url.render_as_string(hide_password=False)`.
+- **Guard:** `tests/unit/test_uow_failure_entry_url.py` rolls back a real
+  `UnitOfWork` and captures the failure-entry write. It asserts exactly one entry,
+  with the unmasked password. It **fails before the fix** (`'***'` in the URL)
+  and passes after.
+- **Live on the dev database:** rolling back a `UnitOfWork` took the
+  `operation.failed` count from 0 to 1. That probe entry stays in the
+  append-only log.
+- **Suites:** backend unit and integration pass. The API and worker were
+  restarted on the fix.
+- **Not covered:** `tests/integration/test_audit` is still excluded because of
+  its fixture ScopeMismatch, so the failure entry's chain linkage is not exercised
+  there yet.
+
+---
+
+## Bug 7 — `POST /jobs` returns 500: the ORM writes a trigger-owned `tsvector` column as varchar — **FIXED 2026-10-05**
+
+**Found by fixing Bug 2, and now the top blocker for 9 e2e tests.** Pre-existing,
+not a regression — it was simply unreachable while `registerVerifiedApprovedAccount`
+failed first.
+
+```
+asyncpg.exceptions.DatatypeMismatchError: column "search_tsv" is of type tsvector
+but expression is of type character varying
+HINT: You will need to rewrite or cast the expression.
+
+[SQL: INSERT INTO job_descriptions (..., search_tsv, ...)
+      VALUES (..., $15::VARCHAR, ...)]
+```
+
+Migration `0006_jobs.py` creates the column as `postgresql.TSVECTOR` and populates
+it from a `BEFORE INSERT OR UPDATE` trigger (`trg_jd_search_tsv`). The model
+declares it as `sa.Text` under a comment asserting the opposite of what SQLAlchemy
+does:
+
+```python
+# backend/app/modules/jobs/models.py, line 83
+# Not mapped with Mapped[] so SQLAlchemy never tries to write it directly.
+search_tsv = sa.Column("search_tsv", sa.Text, nullable=True, comment=...)
+```
+
+A plain `sa.Column` on a declarative class is still a mapped, persisted column.
+SQLAlchemy includes it in the INSERT with a NULL varchar, and PostgreSQL rejects
+the statement. The column needs to be excluded from ORM persistence (and typed
+`TSVECTOR` to match), not just commented as off-limits.
+
+This is the same model-vs-migration family as Bug 2 with a different type, so it
+is also the reason `job_descriptions.search_tsv` shows up as
+`modify_type TSVECTOR -> Text` in a `compare_metadata` diff.
+
+Related, same column: `backend/app/modules/jobs/repository.py` (~line 73) filters
+with `func.to_tsvector("simple", JobDescription.search_tsv)` — calling
+`to_tsvector` on a value that is *already* a `tsvector`. No such function
+signature exists, so JD text search will fail the same way once it is reached. The
+predicate should be `search_tsv @@ plainto_tsquery('simple', :search)`.
+
+Blocks `createOpenJob` in `e2e/support/backend.ts`, hence all of
+`jobs-applications.spec.ts` and the job-browsing, application-submission and
+review variants of `tri-locale.spec.ts`.
+
+### What was changed — **FIXED 2026-10-05**
+
+The root cause is narrower than "a plain `sa.Column` is persisted". The ORM sends
+an explicit `NULL` on INSERT for **every** nullable column that has no default
+and was never set, whatever way it was declared. So the fix has to tell the
+mapper the value is generated by the database, not just leave the column unset.
+
+**`backend/app/modules/jobs/models.py`.** `search_tsv` is now
+`mapped_column(TSVECTOR, server_default=FetchedValue(), server_onupdate=FetchedValue(), deferred=True)`.
+- `FetchedValue` keeps the column out of the INSERT and lets the trigger fill it.
+- An UPDATE only writes changed attributes, so the trigger owns it there too.
+- `deferred` keeps the vector out of every `SELECT job_descriptions.*`, since only
+  the search predicate reads it.
+- The type now matches the migration, which also removes the
+  `modify_type TSVECTOR -> Text` autogenerate diff.
+
+**`backend/app/modules/jobs/repository.py`.** `list_open_jds` now matches the
+column directly: `search_tsv @@ plainto_tsquery('simple', :search)`. That is the
+same `simple` config the trigger builds the vector with.
+
+### Verification
+
+- **Unit tests,** `tests/unit/test_jobs_search_tsv.py` (new, 4 tests, no I/O). They
+  check the column contract (TSVECTOR, `FetchedValue`, deferred), and that the
+  compiled browse SQL uses `search_tsv @@ plainto_tsquery(`, has no `to_tsvector`,
+  and doesn't select the vector. **All 4 fail against the pre-fix code and pass
+  after it.**
+- **Full backend unit suite:** 262 passed, 1 failed. The failure is the
+  pre-existing `test_password.py::test_fresh_hash_never_needs_rehash`, flaky on
+  slower machines because argon2 hashing exceeds Hypothesis's 200 ms deadline.
+  It is unrelated to this change.
+- **Integration test,** `tests/integration/test_jobs_search_tsv.py` (new). It runs
+  against `alembic upgrade head`: an ORM INSERT, a check that the trigger
+  populated the vector, then a search hit and a miss, and an UPDATE that
+  re-triggers the vector. **Not yet run:** the machine used had no Docker, so it
+  was skipped. Run it with `uv run pytest tests/integration/test_jobs_search_tsv.py`
+  where Docker is available.
+- **E2E: not re-run**, for the same reason. The 9 failures attributed to this bug
+  in the table below are expected to clear. Confirm with `npm run test:e2e`
+  against a live backend.
+- **Later the same day, with Docker:**
+  - The integration test passes. Against the pre-fix code it fails with exactly
+    the `search_tsv` `DatatypeMismatchError` above.
+  - On the live stack, `POST /api/v1/jobs` returned 201 on every call, with no 5xx
+    anywhere in the run.
+  - The 9 job tests then failed at a later step, which was Bugs 8 and 9.
+
+---
+
+## Bug 8 — the journeys reload the page after signing in, which signs them out — **FIXED 2026-10-05**
+
+**The largest part of what was attributed to Bug 4.** The candidate and senior
+journeys have no MFA step, yet they all ended on `/login`.
+
+The Session_Manager keeps the session in memory only. `SessionManager.ts` says a
+page reload "starts with no session", by design (Requirement 4 AC3, AC11). The
+journeys signed in through the UI correctly; the `/jobs` URL assertion passed. They
+then moved to the next screen with `page.goto('/candidate/profile')`, which is a
+full page load. That discarded the session, and the Route_Guard sent the browser
+back to `/login`. This is a test-suite defect, not an application one.
+
+**Fix.**
+- **New helper, `e2e/support/navigation.ts::navigateInApp`.** It pushes the target
+  onto the history and fires `popstate`, which `createBrowserRouter` handles as a
+  client-side navigation through the same guard. It first waits for a UI sign-in
+  to leave `/login`.
+- **27 post-sign-in `page.goto` calls** across 10 specs now use the helper.
+- **Left as page loads on purpose:** `page.goto` stays for `/login`, for
+  Registration_Links, and for the two assertions that a reload or a signed-out
+  visit lands on `/login` (`auth-session.spec.ts`, `reports.spec.ts`).
+
+## Bug 9 — the Route_Guard hangs on "Loading…" when its status read races an effect cleanup — **FIXED 2026-10-05**
+
+**An application bug, exposed once Bug 8 was fixed.** Signed in and navigating
+in-app, the guarded screens rendered "Loading…" forever. `GET /me/status` returned
+200, and nothing after it was ever requested.
+
+`useAccountStatusSync` (`src/routing/accountStatus.ts`) latched the in-flight read
+in a ref and skipped any effect run whose key was already latched. React
+StrictMode, which `main.tsx` uses, runs each effect, cleans it up, and runs it
+again:
+1. The first run issued the read and set the latch.
+2. Its cleanup marked that run cancelled.
+3. The second run saw the latch and returned without subscribing.
+4. When the read resolved, its only subscriber was the cancelled run, so the result
+   was discarded. Nothing ever re-ran the effect, so the guard waited forever.
+
+The same deadlock happens in production whenever the effect's dependencies change
+while the read is outstanding.
+
+**Fix.**
+- **Every effect run subscribes to the read.** `requestAccountStatus` already
+  shares one in-flight read per account, so this never issues a second request.
+- **The ref now records only a key whose read *failed*.** That keeps the
+  "no automatic re-request after a failure" behaviour, and retry stays explicit.
+
+**Guard.** A new `RouteGuard.test.tsx` case renders the guard under `<StrictMode>`.
+It **fails before the fix and passes after**, and asserts that the read is still
+issued exactly once. The full frontend unit suite has 1258 passing; the 2 failures
+are the pre-existing `JobNewScreen.test.tsx` timeouts on slow machines.
+
+## Bug 10 — candidate profile save: never `Complete`, in four layers — **partly fixed 2026-10-05**
+
+Behind the 5 "candidate profile save" e2e failures (`profile`,
+`jobs-applications` apply, `tri-locale` application ×3). Each layer, once fixed,
+exposed the next.
+
+1. **Fixed (test): the enrolment-status option locator hit the header.**
+   `page.getByRole('option').first()` was meant to pick the first option of the
+   Mantine `Select`. But the header's language picker is a native `<select>`, and
+   its hidden `<option>`s matched first, so the click waited forever. The locator
+   is now scoped to `getByRole('listbox')`, in 3 specs.
+2. **Fixed (test): the profile phone was not E.164.** The journeys entered
+   `0501234570`; R4 AC6 and AC11 require E.164, so the backend was right to reject
+   it. The plausible-looking `+972501234570` is also invalid to `phonenumbers`,
+   because the range is unallocated. The specs now use allocated numbers
+   (`+97250234567x`). Residency-proof phones stay local-format, as R2 AC2
+   specifies.
+3. **Fixed (backend): the save evaluated and persisted completeness on stale
+   data.** `CandidateProfileService.update` replaces the child collections, then
+   re-reads the profile in the same session to evaluate AC6. Two things made that
+   re-read stale:
+   - The session has `autoflush=False`, so the newly added child rows were not
+     yet written.
+   - The identity map returned the already-loaded, pre-save collections.
+
+   As a result the save returned `education: []` and **wrote `state = Draft` to
+   the database** even for a profile meeting every AC6 condition. The fix is a
+   flush before the re-read plus `populate_existing` on the relations fetch; both
+   are needed (verified by removing each). The same pattern in the senior-profile
+   update is fixed the same way.
+   - Guard: `tests/integration/test_candidate_profile_update.py`, which **fails
+     before the fix and passes after**.
+   - Live: the save response now carries the saved education.
+4. **Mitigated with option (a), 2026-10-05: skills not in the Skill_Taxonomy are dropped from
+   the profile.**
+   - **Done:** `alembic/versions/0011_seed_skill_taxonomy.py` seeds 55 common skills
+     (en/ar/he names) and 16 aliases, using `ON CONFLICT DO NOTHING`.
+   - **Downgrade:** removes only seeded skills that nothing references.
+   - **C, C++ and C# are deliberately not seeded.** `normalize_skill_term` strips
+     `+` and `#`, so all three normalise to `"c"` and would collide. ~~That
+     normaliser defect is still open.~~ **FIXED 2026-10-09** (decision: keep `+`
+     and `#`):
+     - **Normaliser:** `normalize_skill_term` keeps a `+`/`#` attached to the end
+       of a word, so C, C++, C# and F# get distinct keys. A free-standing one
+       ("React + Redux") is still a separator. `normalize_text`, which locality
+       lookup uses, is unchanged.
+     - **Migration `0012_skill_language_symbols`:** re-normalizes existing skills
+       and unmatched terms whose text carries the symbol (a skill whose new key
+       is taken keeps its old one, and the migration reports it). It then seeds
+       C, C++, C# and F# with aliases `cpp`, `c plus plus`, `csharp`, `c sharp`,
+       `fsharp` and `f sharp`. Downgrade removes only unreferenced seeded skills.
+     - **Guards:**
+       - `test_skill_taxonomy.py`: distinct keys, a free-standing symbol still
+         separates, idempotence, localities unchanged;
+       - `test_skill_taxonomy_seed.py`: seed literals, aliases, no clash with
+         `0011`, and the migration's copy of the normaliser matching the real one;
+       - `tests/integration/test_c_family_skills.py`: four canonical skills,
+         aliases resolve to them.
+     - **Dev database:** upgraded, downgraded and re-upgraded cleanly.
+     - **Suites:** unit 395/395, integration 53/53.
+   - **Guard:** `tests/unit/test_skill_taxonomy_seed.py`.
+   - **The journeys now enter seeded skills** (`SQL`, `QA Automation`), and the
+     `profile` journey passes.
+   - ~~**Option (b) is still open** for a team decision: an unknown skill still
+     vanishes from the profile.~~ **DONE 2026-10-09** (decision: option b; a
+     pending skill does not count toward AC6 until an Admin maps it):
+     - **Schema (`0013_candidate_pending_skills`):** `candidate_skills.skill_id` is
+       nullable, plus a new `unmatched_term_id` FK and a check that exactly one of
+       the two is set. Downgrade deletes pending rows, whose terms stay in the
+       review queue.
+     - **Resolver:** `record_unmatched_term` (was `add_unmatched_term`) returns the
+       review-queue row and reuses a pending row with the same normalized term.
+       Every save used to add another copy of each unknown skill to the queue.
+     - **Service:** an exact or alias match is a confirmed skill. Anything else is
+       pending, **including a fuzzy match**: "kubernets" used to be saved as
+       Kubernetes without anyone deciding so. Completeness counts confirmed
+       skills only. The response's `SkillEntryDTO` has a nullable `skill_id` and
+       `pending`, and a pending entry's `name` is the term as entered.
+     - **Frontend:** the editor keeps the term and notes it is pending review
+       (cleared when the term is edited). The Admin view marks it.
+       `profiles:entry.skillPending` / `skillPendingShort` are added in
+       en/ar/he, and `schema.d.ts` is regenerated.
+     - **Guards:**
+       - `tests/integration/test_pending_skills.py`: kept beside a confirmed
+         skill, re-save does not duplicate the queue entry, pending only means
+         Draft, fuzzy means pending. It failed before the change.
+       - `CandidateProfileScreen.test.tsx`: the editor note, its clearing, and
+         the Admin mark.
+     - **Suites:** unit 395/395, integration 56/56, vitest 1275/1277 (the 2
+       known `JobNewScreen` timeouts), E2E 79/79, a11y 40/40, verify:api,
+       build, Semgrep and mypy (74) unchanged.
+     - **Still open:**
+       - There is no Admin action that maps a pending term to a skill. The review
+         view is read-only, so pending skills stay pending until one is added.
+       - Senior expertise and JD skills still drop unknown terms.
+       - ~~Confirmed skills display their `normalized_name` (e.g. `postgresql`),
+         not the taxonomy's display name.~~ **FIXED 2026-10-24.**
+         `_load_skill_names` returns the taxonomy's English name (`PostgreSQL`),
+         but only when it normalizes back to the same key, so the name the editor
+         sends back on the next save still resolves. Candidate skills and senior
+         expertise both use it. Guard:
+         `test_pending_skills.py::test_a_confirmed_skill_shows_its_taxonomy_display_name`.
+         Arabic and Hebrew names are not shown: the resolver matches only the
+         English key and aliases, so a saved localized name would turn pending.
+
+   The original analysis: The dev database's `skills` table is **empty**, and nothing in
+   the repo seeds it. Every entered skill is therefore unmatched. `SkillResolver`
+   records it in `unmatched_skill_terms` for Admin review (R4 AC3), but
+   `CandidateProfileService.update` keeps only terms that resolve to a
+   `skill_id`, and `candidate_skills.skill_id` is `NOT NULL`. So the candidate's
+   profile has no skills and can never be `Complete` (R4 AC6 needs ≥ 1 skill).
+   The options are:
+   - **(a) Seed a starter Skill_Taxonomy** (a migration or seed script). This
+     unblocks the common skills, but an unknown skill still vanishes from the
+     profile.
+   - **(b) Keep pending skills on the profile:** a nullable `skill_id` plus a link
+     to the unmatched term, and decide whether a pending skill counts toward AC6.
+     This is a schema change and a spec-interpretation call for R4 AC3/AC6.
+5. **Fixed (backend): every apply returned 500.** `ApplicationService` was
+   written against a provisional dict contract (`jd_data.get("status")`,
+   `.get("external_careers_url")`). `JobsApi.get_jd` returns a Pydantic
+   `JobDescriptionDTO`, so every apply raised `AttributeError`.
+   - **Fix:** the service now uses the DTO's attributes (`status`,
+     `application_channel`, `external_url`, `title`, `company`,
+     `creator_account_id`). The module is mypy-clean.
+   - **Guard:** `tests/unit/test_application_jd_contract.py`.
+   - **Result:** the apply journeys now reach `POST /apply` and get a correct
+     `422 application_not_ready` with `missing_fields: ["cv"]`.
+   - **Still blocked by MinIO:** a CV version needs MinIO, which can't run in
+     this environment. With a CV, these journeys are expected to pass.
+
+### Related: field-level errors never reach the client — **FIXED 2026-10-05**
+
+**Resolution.** Both halves were fixed, as decided (backend and frontend together):
+
+- **Backend.** `app/main.py::_register_exception_handlers` now calls
+  `register_error_handlers(app)`, then re-registers the more specific
+  `AuthorizationDenied` / `AuthenticationRequired` handlers, keeping the
+  fixed-latency denial. Every error now renders as
+  `{error, message (localized), fields?, details?, request_id, retryable}`.
+  - **Guard:** `tests/unit/test_error_envelope_wiring.py`, which fails 4/4
+    before the fix and passes 4/4 after. It covers:
+    - handler identity;
+    - a domain 422's `fields` and `request_id`;
+    - the request-body 422 (`validation_failed` with `fields`);
+    - a 404 envelope.
+- **Frontend.** `api/errors.ts::toFieldViolations` also reads the `fields` list
+  of *any* 422 (Req 22 AC9). It never reads a domain error's `details`, which
+  carries unrelated context.
+  - **Guard:** a new case in `api/errors.test.ts`.
+- **Verified live:** `POST /auth/login {}` → 422 `validation_failed` with
+  `fields` for `email`, `password` and `role`, and a localized message.
+  - **Profile e2e:** the "422 placed on the offending input" case passes.
+- **Follow-up:** the backend `.po` catalogs lack entries for many domain error
+  keys. `translate` falls back to the key itself, so those messages are still
+  raw keys.
+
+The original analysis:
+
+Found while diagnosing layer 2: the 422 said `profile_validation_failed` with
+`details: null`, so nothing could name the invalid field. Two causes:
+
+- **Backend.** `app/main.py` registers its own `PlatformError` /
+  `RequestValidationError` / `Exception` handlers. These drop
+  `PlatformError.fields` and send the raw `message_key` instead of a localized
+  message. The platform's real envelope, `platform/errors/handlers.py::register_error_handlers`,
+  renders `fields` and localizes `message`, but **it is never called**. This
+  breaks R4 AC11 ("a field-level error naming each invalid field") and, likely,
+  every other domain 422 that carries fields.
+- **Frontend.** `api/errors.ts::toFieldViolations` extracts violations only for
+  the `validation_error` / `validation_failed` keys. Even with the backend fixed,
+  a domain key such as `profile_validation_failed` would place nothing on its
+  inputs.
+
+Wiring the platform handlers changes the error body for the whole API, including
+the `RequestValidationError` shape: `fields` replaces FastAPI's raw `details`
+list. So it is left for a team decision rather than folded into a test fix.
+
+## Bug 11 — the review journeys raced their own navigation — **FIXED 2026-10-05 (tests)**
+
+This bug is behind the 5 "review timeline" failures (`reviews` ×2, `tri-locale`
+review ×3). The app was correct: `POST /candidates/{id}/reviews` returned 201
+every time. The failure page snapshot showed "My reviews" with an **empty**
+Candidate field and its "Name a candidate account" prompt, and no timeline
+`GET` was ever issued.
+
+There were two races in the specs:
+
+1. **Filling the wrong input.**
+   - `/senior/reviews/new` and `/senior/reviews` both render a `CandidateSelector`
+     with the same `review-candidate-input` test id.
+   - The spec filled it straight after `navigateInApp`, so the fill could land
+     on the *outgoing* screen.
+   - The new screen then mounted with an empty draft, and "Show reviews"
+     submitted `''`.
+2. **Navigating before the submit finished.** The spec left for the timeline the
+   moment the submit button was clicked, so the timeline read could precede the
+   `POST`.
+
+**Fix:**
+- The specs now wait for `senior-reviews-screen` / `senior-review-new-screen`
+  before filling.
+- They submit through `e2e/support/reviews.ts::submitReview`, which waits for the
+  `POST` and asserts 201.
+
+**Verification:** 5/5, then 10/10 with `--repeat-each=2`.
+
+## Bug 12 — every `*.created` audit entry has `entity_id = 'unknown'` — **FIXED 2026-10-05**
+
+Found while attributing the `audit` journey failure, and checked directly on the
+dev database.
+
+**Scale:** all 2,633 `.created` entries, across 13 entity types, recorded
+`entity_id = 'unknown'`. So:
+- a creation could not be found by entity identifier (R8 AC4);
+- an entity's history could not be replayed from its first entry (R8 AC6).
+
+**Cause (`platform/audit/hook.py`).** The hook runs in `before_flush`, and two
+things failed there:
+- **The id was read from `InstanceState.identity`.** The flush establishes the
+  identity, so it is `None` for every pending object. That is true even when the
+  id was assigned explicitly.
+- **The generated id didn't exist yet.** `UuidPkMixin`'s Python-side
+  `default=uuid.uuid4` is applied only during the flush, after the hook has run.
+
+**Fix:**
+- `_entity_id` reads the primary-key attributes.
+- A new `_assign_pending_primary_key` applies a pending row's Python-side PK
+  default before the `.created` entry is built. The INSERT then uses that same
+  value.
+
+**Guard:** `tests/integration/test_audit_created_entity_id.py` covers a
+generated id and an explicit id. Both cases **fail before the fix** with
+`'unknown'`.
+
+**Verified:**
+- Backend unit and integration suites pass.
+- Live: new `Account.created`, `EmailVerification.created`, and similar entries
+  now carry real ids.
+
+**Not backfilled.** The 2,633 existing entries keep `'unknown'`. The log is
+append-only and hash-chained, so they can't be rewritten without breaking it.
+They don't break the chain, because `'unknown'` was hashed as stored. Bug 5's
+decision (2026-10-06) covers them: pre-fix rows are left as written.
+
+### The `audit` journey failure itself was a test defect
+
+The spec expected the approval entry's action to match `/approve/i`. The
+backend names modifications `<Entity>.updated`, and R8 AC2 asks for the action
+plus the before/after values, not a verb. The entry was correct: `Account.updated`
+with `status: PendingApproval → Approved`.
+
+The spec now asserts `Account.updated`, opens the comparison, and checks that
+the `status` row shows `PendingApproval` and `Approved`. It passes 2/2.
+
+### `admin-accounts` suspend — test defect, fixed 2026-10-05
+
+The journey walks the oldest-first account list page by page until its seeded
+account appears.
+- **Cause:** each page change renders the pending state, which unmounts the list
+  and its next control. The loop read the next control mid-load, saw it as
+  hidden, and ended the walk early.
+- **Fix:** a step now waits until the first card has changed, and the walk ends
+  only when the settled page has no next control.
+- **Limit:** the walk grows with the dev database. The 50-page cap covers about
+  1,000 Approved candidates.
+- **Verified:** passes 2/2.
+
+### `jobs-applications` closed role — a spec conflict, resolved in the test, 2026-10-05
+
+The journey looked for a Closed role in the **Candidate**'s browse list. The
+backend can never show it there:
+- browse returns only `Open` postings (backend R6 AC9, `list_open_jds`);
+- `GET /jobs/{id}` refuses a non-Open role to a Candidate.
+
+So frontend Req 12 AC7 ("WHERE a loaded Job_Description holds `Closed`") is not
+reachable for a Candidate on a backend that meets its spec. Two surfaces can
+load a Closed role:
+- the Admin all-status list (Req 13 AC17);
+- the creating Senior's detail view.
+
+The journey now asserts AC7 on both:
+- the closed badge on `/admin/jobs?status=Closed`;
+- the closed notice and badge, and a disabled `job-apply`, on `/jobs/{id}` as
+  the creator.
+
+It also now checks that the `:close` call succeeded, which it previously ignored.
+The Admin UI sign-in moved to `e2e/support/adminLogin.ts`, shared with
+`admin-accounts.spec.ts`. The test passes.
+
+**For the spec owners:** AC7's apply-control clause only matters to a Candidate
+who loaded a role before it closed and still has the stale cache. Decide whether
+it should stay in Req 12.
+
+## Bug 13 — a not-yet-approved account never reaches the Status_Notice — **FIXED 2026-10-05 (frontend)**
+
+This is behind the `registration` gating failure. A `PendingApproval` account
+that signs in should land on `/status` (Req 7 AC1, AC2). Instead, the login
+screen showed the generic rejection.
+
+**Cause: the frontend and backend contracts never meet.**
+- **Backend:** login issues **no tokens** to an account that isn't `Approved`.
+  It answers 403 `account_not_approved` with `details.status` and
+  `details.next_step`. The design describes this envelope as carrying "the
+  current status and next step for the onboarding screens". It is raised only
+  after the password has been verified.
+- **Frontend:** the onboarding flow expected a session and a `GET /me/status`
+  read. It also folded every login 403 into the memberless rejection
+  (Req 4 AC12).
+
+**Decision (2026-10-05): the frontend reads the refusal.** Req 7 AC6 already says
+"IF **any** request returns … `account_not_approved`, THEN replace the retained
+status … and redirect to the Status_Notice". The login request is one of those
+requests. The changes:
+- **`loginOutcome.ts`:** `classifyLoginFailure` distinguishes a 403
+  `account_not_approved` that names a declared status as `not-approved`. Every
+  other 401/403, including an `account_not_approved` whose status isn't readable,
+  is still the memberless rejection.
+- **`LoginScreen.tsx`:** reports the refusal to the existing AC6 store and goes
+  to `/status`. Every attempt, and every mount of the screen, first clears any
+  earlier report. That way a refusal can't outlive its login or reach a session
+  a later login establishes.
+- **`access.ts::decideRouteAccess`:** takes an optional refused status,
+  consulted only while no session is held. Onboarding_Screens are admitted and
+  every other route redirects to the Status_Notice (AC2). Its behaviour with two
+  arguments is unchanged, so the existing property tests still hold.
+- **`RouteGuard.tsx`:** passes the refused status in via the new
+  `useReportedAccountNotApproved`.
+- **`StatusNoticeScreen.tsx`:** falls back to the reported status. Without a
+  session it offers "Back to sign in" (`onboarding:backToSignIn`, in all three
+  locales) instead of the sign-out text, because there is nothing to sign out of.
+
+**Guards:**
+- New cases in `loginOutcome.test.ts` and `access.test.ts`.
+- Three new `LoginScreen.test.tsx` cases:
+  - the session-less Status_Notice and the way back;
+  - the AC2 redirect from a feature route;
+  - no carry-over into a later successful login.
+- The two AC12 screen tests now compare a 401 with another 403.
+
+**Verified:**
+- The `registration` spec passes 3/3.
+- The full vitest, a11y (40/40), build, typecheck and lint gates pass.
+
+**For the spec owners.** Req 4 AC12, read literally ("a 401 or 403 … without
+disclosing whether the address belongs to an account"), conflicts with Req 7 AC6
+for the login request. Non-disclosure is preserved, because the backend sends
+`account_not_approved` only to a caller who supplied the correct password. Even
+so, AC12 should name AC6 (and Req 5 AC1's `mfa_required`) as its exceptions.
+
+---
+
+## Bug 14 — the CV buckets are never created: `ensure_cv_buckets` has no caller — **FIXED 2026-10-06**
+
+`platform/storage/minio_store.py::ensure_cv_buckets` creates `cvs` and
+`cvs-quarantine` with object lock (COMPLIANCE) and versioning, and refuses an
+existing bucket without object lock (R5 AC4). It was implemented and unit-tested,
+but nothing called it, so a fresh MinIO had no buckets and every upload would
+have failed with NoSuchBucket.
+
+- **Fix:** `app/main.py::_setup_object_store` runs it at startup, as its
+  docstring always said. A misconfigured bucket now fails boot.
+- **Guard:** `tests/unit/test_object_store_startup.py` covers creation and the
+  refusal of an unlocked bucket.
+- **Note:** the API now needs MinIO reachable to boot.
+
+## Bug 15 — every CV upload fails in Chromium over HTTP/1.1: the body is a request stream — **FIXED 2026-10-06 (frontend)**
+
+For R11 AC10's byte progress, `features/cvs/versionUpload.ts` sends the body as a
+`ReadableStream` (`duplex: 'half'`). Chromium only sends a request stream over
+HTTP/2 or later, and fails it before a byte leaves over HTTP/1.1
+(`ERR_H2_OR_QUIC_REQUIRED`). The feature check (`'duplex' in Request.prototype`)
+tests the API, not the connection, so every Chromium upload failed with "The
+server sent a response the application could not read". The server logged only
+the preflight.
+
+- **Decision (Karim, 2026-10-06):** stream only on a proven HTTP/2+ connection.
+- **Fix:** `apiConnectionCarriesStreams` reads `nextHopProtocol` from the
+  resource timing of the Api_Client's latest `fetch`. It streams on `h2` or
+  `h3`, and sends `FormData` otherwise, including when the protocol is unknown.
+  It makes no extra request. On HTTP/1.1 progress reports 0% then 100%.
+- **Backend:** in development, responses carry `Timing-Allow-Origin: *`,
+  mirroring the CORS policy. Without it a cross-origin page sees an empty
+  protocol. Production allows no cross-origin callers, so there the Web_Client
+  is same-origin and needs no header.
+- **Guards:** `versionUpload.test.ts` (an HTTP/1.1 upload sends `FormData` even
+  where streams are supported; h2 streams), `CvVersionPanel.test.tsx` (the
+  progress test now states its h2 connection) and
+  `tests/unit/test_timing_allow_origin.py`.
+
+## Bug 16 — the API freezes on the first CV upload on Windows: python-magic loads an MSYS DLL — **FIXED 2026-10-06 (dev environment)**
+
+Content-based MIME detection does a lazy `import magic` inside the async upload
+handler. On Windows, python-magic's loader tries `msys-magic-1.dll`, which Git
+Bash puts on PATH, and loading that DLL into a native Python hangs. The whole
+event loop froze (py-spy: `magic/loader.py` inside `ctypes.CDLL`). Started from
+PowerShell, the import fails instead and every upload is refused. Either way, no
+Windows developer could upload a CV.
+
+- **Decision (Karim, 2026-10-06):** a Windows-only dependency.
+- **Fix:** `pyproject.toml` uses `python-magic==0.4.27` off Windows and
+  `python-magic-bin==0.4.14` on Windows (same `magic` API, bundled libmagic and
+  database). Linux, CI and production are unchanged.
+
+## Bug 17 — CV uploads 500 and exports never start: producers get the raw ARQ pool — **FIXED 2026-10-06**
+
+`CvUploadService` and `ExportService` call `TaskQueue.enqueue`, but
+`_setup_services` passed them the `ArqRedis` pool, which only has
+`enqueue_job`. Every upload that passed validation stored the file, then raised
+`AttributeError` and answered 500. Every export stayed pending forever, because
+`ExportService` logs and swallows the failure. mypy had flagged it
+(`main.py:208`).
+
+- **Fix:** `app/main.py::_setup_task_queue` wraps the pool in `ArqTaskQueue`, used
+  by both. The pool stays on `app.state` for shutdown.
+- **Guard:** `tests/unit/test_task_queue_wiring.py`.
+
+## Bug 18 — every CV scan job crashes: `cvs/tasks.py` builds the object store wrongly — **FIXED 2026-10-06**
+
+`scan_cv` and `verify_cv_checksums` built `MinioSettings` without its required
+`buckets`, and `MinioObjectStore` without its settings. Both raised `TypeError`
+before doing any work. Scans were dead-lettered after 3 tries, and every version
+stayed PendingScan. `scan_cv` also passed the raw redis pool as its queue
+(Bug 17 again).
+
+- **Fix:** `_object_store(settings)` uses `minio_settings_from_config`, like the
+  web process, and the queue is `ArqTaskQueue(ctx["redis"])`.
+- **Guard:** `tests/unit/test_cv_tasks_object_store.py`.
+
+## Bug 19 — no CV was ever virus-scanned: a missing client meant "clean" — **FIXED 2026-10-06**
+
+`scan_cv` imported `pyclamd`, which is not a dependency. Its `except ImportError`
+branch marked the version clean (logging "dev mode"), so every CV became
+Available unscanned, in every environment. ClamAV ran in compose, but nothing
+called it (R5 AC3).
+
+- **Decision (Karim, 2026-10-06):** a native client that fails closed.
+- **Fix:** `app/platform/security/clamav.py::scan_bytes` speaks clamd's INSTREAM
+  protocol on asyncio streams, with no dependency. Anything other than OK or
+  FOUND (unreachable, timeout, ERROR) raises `UpstreamUnavailable`. The job then
+  retries and dead-letters, and the version stays PendingScan. The ImportError
+  fallback is gone.
+- **Guards:** `tests/unit/test_security/test_clamav.py` (fake clamd: the framing,
+  OK, FOUND, ERROR and unreachable).
+- **Live:** clean data answers OK, and EICAR answers `Eicar-Test-Signature`, from
+  the compose ClamAV. In e2e, every scan logs `status: clean`.
+- **Consequence:** devs need ClamAV running (about 1.5 GB) for CVs to become
+  Available.
+
+## Bug 20 — downloads of Available CVs fail: promotion keeps the quarantine copy's version id — **FIXED 2026-10-06**
+
+A clean scan copies the file to the available bucket, and the copy gets its own
+store-assigned version id. `complete_scan` discarded the `PutResult` and
+`promote_version` never updated `object_version_id`, so every download asked
+the available bucket for a version that only exists in quarantine
+(`NoSuchVersion`). The client reported "The download did not finish".
+
+- **Fix:** `promote_version` takes and stores the copy's `object_version_id`.
+- **Guard:** `tests/unit/test_cv_scan_promotion.py`.
+
+### The CV journeys' own test defects — **FIXED 2026-10-06 (tests)**
+
+- `#cv-version-file` never existed. Mantine's FileInput puts that test id on its
+  button, so files now go to the hidden `input[type="file"]`
+  (`e2e/support/cvs.ts::cvFileInput`).
+- The fixtures were bytes that start with `%PDF`, and pikepdf rejects them.
+  `minimalPdf(marker)` builds a valid one-page PDF with a correct xref table.
+- The apply journeys created an empty variant. Applying needs an *Available*
+  version, so `createVariantWithAvailableCv` uploads one and waits for the scan,
+  and those tests take a longer timeout.
+- That wait first matched the English "Available". It now waits for the download
+  control to be enabled (AC13), which works in every locale.
+
+---
+
+## Bug 21 — closing a Job_Description never closes its applications (R7 AC11) — **FIXED 2026-10-08**
+
+Found by the first working run of the module-boundary rules (see the semgrep
+follow-up at the top).
+
+### What was wrong
+- `JobDescriptionService.close` is what `POST /jobs/{id}/close` calls, and it
+  only set the JD's status. Its docstring left the cascade to the caller.
+- The cascade lived in `DefaultJobsApi.close_jd_cascade_applications`, which
+  nothing called. It also imported `applications.repository` inside a
+  `try/except ImportError`, which the boundary rule flagged.
+- Two more cascade copies existed:
+  - `ApplicationService.cascade_close_for_jd`, also unused.
+  - `DefaultApplicationsApi.cascade_close_for_jd`, which:
+    - ran in its own UoW, so it wasn't atomic with the JD close;
+    - recorded `from_status=None`;
+    - wrote transitions for *every* Closed application, including ones closed
+      earlier.
+- All of them used a bulk `UPDATE`, which the audit `before_flush` hook does
+  not see.
+- So every Submitted or Under Review application on a closed role stayed open.
+
+### What was changed
+- **`ApplicationsApi.cascade_close_for_jd(session, jd_id, *, actor_id)`** runs
+  on the caller's session, so the cascade commits or rolls back with the JD
+  close. `audit/api.py` already set the precedent for passing a session.
+- **`repository.close_applications_for_jd`** locks the non-terminal rows
+  (`FOR UPDATE`) and closes each one through the ORM, so every change is
+  audited. It returns each `(id, previous status)` so the history rows carry the
+  real `from_status`.
+- **`JobDescriptionService`** takes a required `applications_api` and cascades
+  inside `close()`. `app/main.py` builds `DefaultApplicationsApi` first. It
+  depends only on `IdentityApi`, so there is no cycle.
+- **The three unused or incorrect copies are removed.**
+
+### Verification
+- **Guard:** `tests/integration/test_jd_close_cascade.py` closes a JD with one
+  application in each status. Submitted and Under Review close, with history
+  rows giving their real previous status and the actor; Forwarded and Closed are
+  untouched. Removing the cascade call makes it fail.
+- **Backend:** unit 360/360. Integration 18/18, with `test_audit` still
+  excluded.
+- **E2E:** 79/79.
+
+## Bug 22 — authorization denials were never audited: the denial path passed a masked password — **FIXED 2026-10-08**
+
+The Bug 6 defect, on the denial path (R3 AC9, R8 AC5).
+- **Cause:** `guards.py::_schedule_denial_audit` passed `str(get_engine().url)`
+  to the failure-entry writer. `URL.__str__` masks the password as `***`, so
+  the separate connection failed authentication, and the best-effort write
+  swallowed the error.
+- **Evidence:** the dev database held 8,214 audit entries and **no**
+  `auth.denied` entry.
+- **Fix:** `render_as_string(hide_password=False)`. The guard now calls
+  `platform.audit.chain.append_failure_entry` directly.
+- **Guard:** `tests/unit/test_denial_audit_url.py`, which fails with
+  `'***' == 's3cret-pw'` when the old line is restored.
+- **Live:** an Admin `GET /jobs/{unknown id}` returned 403 and wrote
+  `auth.denied | Route | GET:/api/v1/jobs/<id> | AuthorizationDenied`, with the
+  response's `X-Request-ID`.
+
+## Bug 23 — every audit entry was attributed to `system`, with no request ID — **FIXED 2026-10-08**
+
+R8 AC2 requires the actor on every entry.
+- **Before the fix (dev database):** all 8,214 entries had
+  `actor_identity_id = 00000000-…` and a NULL `request_id`, and
+  `audit_actor_identities` held only the system sentinel.
+
+### What was wrong
+The platform has two request-context layers, and the audit writers read the
+one nothing set:
+- **`platform/middleware/context.py` + `RequestContextMiddleware`:** pure ASGI,
+  so its context variables reach the endpoint. It was never installed.
+  `app/main.py` used a `@app.middleware("http")` function instead, which runs
+  in a separate task, so variables set there never reach the endpoint. Nothing
+  called `set_actor`. The job runner did bind `system` and the job ID here.
+- **The audit context variables:** actor, reason and request ID, which the
+  hook and the UoW read. Nothing ever called `.set()` on them.
+- **The actor identity row itself** needs the account's email from `identity`,
+  which `platform` may not import.
+
+### What was changed
+- **`app/main.py` installs `RequestContextMiddleware`**, outermost. It sets
+  `request.state` (request ID, denial-floor start time, locale), echoes
+  `X-Request-ID` and now also `Content-Language`, and binds the context. The
+  old metadata middleware is reduced to the dev-only `Timing-Allow-Origin`
+  header.
+- **New `platform/audit/actor.py`:** `bind_principal_actor` and an injectable
+  `ActorIdentityResolver`.
+  - `guards.current_principal` calls it before `require()` checks roles, so
+    denials are attributed too.
+  - It sets the platform `Actor` and the audit identity ID.
+  - A missing or failing resolver leaves `system`. Auditing never fails the
+    request it describes.
+- **`modules/audit/service.py::AuditActorResolver`:**
+  - takes the email from `IdentityApi.get_account`;
+  - upserts one identity per (account, role), labelled `<email> (<Role>)`;
+  - caches the ID per process (the row never moves; anonymisation scrubs it in
+    place);
+  - is registered in `_setup_services`.
+- **One context source:** the hook and the UoW failure path read the request ID
+  and reason from `platform.middleware.context`. The duplicate
+  `audit_reason_var` and `audit_request_id_var` are removed.
+  `audit_actor_id_var` stays: it holds an audit-table ID, a different concept.
+
+### Verification
+- **Guards:**
+  - `tests/integration/test_audit_actor_attribution.py`: a hook entry and a
+    rollback failure entry both name the principal, role, label and request ID.
+    Both fail against the old wiring.
+  - `tests/unit/test_audit_actor_binding.py`: binding, no resolver, a failing
+    resolver, and the resolver's label and cache.
+- **Suites:** unit 361/361, integration 20/20, E2E 79/79. mypy unchanged (74).
+  semgrep 0 findings.
+- **Live, one E2E run:**
+  - 134 entries attributed to Admin identities, 64 to Candidate and 23 to
+    Senior;
+  - **every** new entry carries a request ID;
+  - responses carry `X-Request-ID` and `Content-Language`.
+
+### Still open
+- ~~**Pre-authentication flows are attributed to `system`.**~~ **FIXED
+  2026-10-09** (decision: name the account where it is known to be acting):
+  - **Registration:** every entry after the account row exists names the
+    registrant. `Account.created` itself is flushed before there is an identity,
+    so it stays `system`.
+  - **Verification:** the entries from a correct code name the account. The
+    counted attempt (written before the code is checked), wrong codes and
+    resends stay `system`, because anyone can submit them for any account ID.
+  - **Mechanism:** `platform/audit/actor.py::acting_as_account(session, ...)`.
+    - It writes the identity row in the operation's own transaction (a
+      registrant isn't committed yet), in a savepoint, through a new
+      `resolve_in_session` on the registered resolver (`AuditActorResolver`).
+    - It flushes the block's changes while the account is the actor.
+    - It always restores the previous actor before the UnitOfWork commits or
+      writes a failure entry. `audit_log` has a foreign key to the identity
+      table, so a failure entry naming a rolled-back identity would be refused,
+      and the failure would go unrecorded (R8 AC5).
+  - **Guard:** `tests/integration/test_preauth_audit_actor.py`. It failed with
+    every entry `system` before the change.
+  - **Residency failures at registration** stay `system`: no account exists yet.
+  - **Suites:** unit 395/395, integration 59/59, E2E 79/79, Semgrep 0,
+    mypy 74.
+- ~~**No service sets a reason.**~~ **FIXED 2026-10-08.** R8 AC2 wants the
+  reason on entries for actions that require one.
+  - **Fix:** every UoW that records a status transition with a reason is
+    wrapped in `use_reason(...)`: `AccountLifecycleService._transition`
+    (suspend, reactivate, reopen, meeting), `approve`, `reject`, `deactivate`,
+    and `ApplicationStatusService.update_status`.
+  - **The scope is the whole UoW block,** because the hook runs when the UoW
+    flushes on exit. It is reset afterwards, so it cannot leak into later
+    writes.
+  - **Guard:** `tests/integration/test_audit_reason.py`. A rejection's
+    `Account.updated` and `AccountStatusTransition.created` entries carry the
+    reason. It fails on the old code with `None == '<reason>'`.
+  - **Live:** after one E2E run, the admin journey's suspension reason and the
+    approvals' reasons are on their audit entries. Unit 361/361, integration
+    21/21, E2E 79/79.
+- ~~**Residency failures at registration are not audited (R8 AC1).**~~
+  **FIXED 2026-10-09.** `RegistrationService` raised `ResidencyValidationFailed`
+  before opening a transaction, so no UoW ran and nothing was recorded.
+  - **Fix:** `register` writes one failure entry first:
+    `registration.residency_failed`, entity `ResidencyProof` / the proof type,
+    `error_type` `ResidencyValidationFailed`, plus the request ID. It goes to the
+    database the service's UoW is bound to, through the new
+    `unit_of_work.failure_entry_engine_url`, which `UnitOfWork` now uses as well
+    (no repeat of Bug 25). A failure to record is logged and never masks the
+    refusal.
+  - **No reason text, by design.** The validator's reasons can carry parts of
+    the proof (a mobile prefix, a city name, the parser's message). The proof is
+    encrypted at rest, so none of it is copied into the append-only log.
+  - **Guard:** `tests/integration/test_residency_failure_audit.py` requires
+    exactly that one entry with nothing from the proof in it. It found no entry
+    before the fix.
+  - **"On later edits"** has no code path yet: registration is the only place a
+    residency proof is validated.
+  - **Suites:** unit 365/365, integration 48/48, Semgrep 0 findings, mypy 74.
+
+## Bug 24 — 27 domain errors reach users as raw message keys — **FIXED 2026-10-09**
+
+The envelope's `message` is `translate(error.message_key, locale)`, which falls
+back to English and then to the key itself. Only the 11 platform errors had
+catalog entries. Every domain error in the modules' `errors.py` (27 keys:
+`error.mfa_required`, `error.application_not_ready`, `error.duplicate_email`,
+...) was missing from all three catalogs, so the API answered with the raw key
+in every locale. The API log showed `Missing message key` on each one.
+
+- **Fix:** a "Domain errors" block in `en.po`, `ar.po` and `he.po` with one
+  message per key, worded from each class's docstring. None of them says more
+  than the error key already reveals.
+- **Guard:** `tests/unit/test_i18n_error_catalogs.py` discovers every
+  `PlatformError` subclass and fails if any locale lacks its key. It failed on
+  27 keys per locale before the fix.
+- **Review:** the Arabic and Hebrew wording should get a native speaker's read.
+- **Not live-verified:** the compose stack was stopped. `translate()` returns
+  the new messages in all three locales (and for `he-IL`), and unit is 365/365.
+
+---
+
+## Bug 25 — a UnitOfWork records its failure entry in the wrong database — **FIXED 2026-10-09**
+
+Found by re-enabling `tests/integration/test_audit`, which had never run.
+
+### Re-enabling the suite (test defects)
+
+- **The ScopeMismatch:** a module-scoped autouse fixture requested the
+  function-scoped `pg_engine` only to "document" that migrations run. Its
+  docstring called it a no-op placeholder. Removed.
+- **Two stale calls:** the anonymisation tests omitted `upsert_actor_identity`'s
+  `email` and `append_audit_entry`'s `before`/`after`, which are required now.
+- **The tamper test never tested detection.** It tried a plain `UPDATE`, which
+  the append-only trigger refuses at execute time, outside its `try`, so it
+  errored. Even when it caught the refusal it passed without checking
+  Property 45. It is now two tests:
+  - `test_append_only_rejects_update_and_delete` (Property 42; the module
+    docstring cited `test_append_only_*`, but none existed);
+  - `test_verifier_detects_tampered_entry_hash`: rewrites an entry with
+    `session_replication_role = replica` (the superuser path the trigger cannot
+    stop), and requires `verify_chain_window` to return `(False, <that id>)`.
+- **Property 44 was half-asserted.** `test_rollback_leaves_no_success_entries`
+  computed `before_count` and never used it: nothing checked that the rollback
+  writes exactly one failure entry. It now does, and that assertion found the
+  bug.
+
+### What was wrong
+
+`UnitOfWork._write_failure_entry` connected with `get_engine()`, the
+process-wide engine from `DATABASE_URL`, not the engine its own session is bound
+to. The sessionmaker is injectable precisely so a UoW can run against another
+database, and the failure path ignored that. In production there is one engine,
+so this did not show. But every integration-test rollback wrote its
+`operation.failed` entry into the **dev** database when that was running, and
+lost it silently when it was not. The test database never got one.
+
+### What was changed
+
+- `_write_failure_entry` uses `session.bind` (the connection's engine when bound
+  to a connection), falling back to `get_engine()` only when the session has no
+  bind.
+- **Guard:** the strengthened Property 44 test. It failed with no failure entry
+  (`NoResultFound`) and passes after.
+- **Suites:** unit 365/365, integration 47/47 (21 + the 26 audit tests), mypy
+  unchanged (74).
+- **Dev data:** `operation.failed` entries from past integration runs are in
+  the dev audit log. They are append-only and stay, like the Bug 5 history.
+
+---
+
+## Bug 26 — twelve repository writes never reach the audit trail: bulk DML — **FIXED 2026-10-09**
+
+The audit trail is a `before_flush` hook over the session's new, dirty and
+deleted objects. A bulk `update()`/`delete()` run through the session never
+enters those sets, and SQLAlchemy synchronizes in-session objects as already
+committed. So even the "keep the object consistent" assignments some functions
+made afterwards recorded nothing. Twelve statements did this:
+
+| Module | Function | What went unaudited |
+|---|---|---|
+| cvs | `set_primary_variant` (×2) | active-version designation (named in R8 AC1) |
+| cvs | `update_version_scan`, `promote_version`, `quarantine_version` | scan result, promotion, quarantine (named in R8 AC1) |
+| profiles | `replace_education`, `_work_experience`, `_skills`, `_languages`, `_senior_expertise_skills` | every removed row on each save |
+| jobs | `set_jd_required_skills`, `delete_stale_drafts` | removed JD skills, purged drafts |
+
+The profile and JD replacements audited the new rows but not the removed ones.
+Replaying an entity's diffs could therefore not rebuild it (R8 AC6).
+
+### What was changed
+
+- **`app/platform/db/mutations.py::delete_each`** loads the matching rows,
+  `session.delete()`s each, and flushes. The flush lets a replacement reuse a
+  unique key in the same transaction. The profile and jobs replacements use it.
+- **The CV functions assign ORM attributes and flush.** `set_primary_variant`
+  clears the old flag and flushes before setting the new one, because of the
+  one-primary-per-account partial unique index.
+- **Guard:** `tests/integration/test_bulk_dml_audited.py` covers CV
+  designation, scan, promotion and quarantine, candidate and senior skill
+  replacement, JD skill replacement and the draft purge. All 4 tests failed
+  for the missing entries before the fix.
+- **Regression guard:** `semgrep/audit-trail.yml` rejects
+  `sqlalchemy.update/delete` under `app/modules`. Run against the old
+  repositories it reports exactly these 12; against the new ones, 0.
+  `notifications` keeps its bulk updates: the hook excludes that table on
+  purpose, and it lives in `platform`.
+- **Suites:** unit 365/365, integration 52/52, Semgrep 0 findings, mypy 74.
+
+---
+
+## Bug 27 — wrong verification codes were never counted, so code entry never locked — **FIXED 2026-10-09**
+
+**Security.** R2 AC8: after 5 consecutive incorrect Verification_Code attempts,
+code entry locks. `VerificationService.verify_code` incremented
+`attempt_count`, then raised `InvalidVerificationCode` inside the same
+UnitOfWork, which rolls back on any exception. So the increment was never
+stored: a wrong code left no trace, the lockout could never engage, and the
+six-digit code could be guessed without limit (only whatever rate limiting
+sits in front of the route stood in the way). Found while working on
+pre-authentication audit attribution. There were no tests of `verify_code` at
+all.
+
+- **Fix:** the check decides an outcome inside the transaction, the UnitOfWork
+  commits the counted attempt, and the refusal (`InvalidVerificationCode` or
+  `CodeEntryLocked`) is raised after it closes. The success path moved,
+  unchanged, into `_complete_verification`.
+- **Guard:** `tests/integration/test_verification_lockout.py` (marked
+  `security`). Five wrong codes are counted one by one and the right code is
+  then refused, and a right code after fewer wrong ones still verifies. The
+  count stayed 0 before the fix.
+- **Suites:** unit 395/395, integration 58/58, mypy 74.
+
+---
+
+## Failure attribution
+
+### Original run — 34 failures
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 29 | Bug 2 | `POST /verify/code -> 500` raised from `registerVerifiedApprovedAccount` |
+| 2 | Bug 2 (via UI) | `registration.spec.ts` — expected `/login`, got `/verify`; the verification submit 500s |
+| 2 | Bug 4 | `admin-accounts.spec.ts` #1 → stuck on `/login`; `audit.spec.ts` chain-verify → `audit-chain-verify` not found |
+| 1 | Bug 4, then Bug 3 | `reports.spec.ts` — `reports-screen` not found (still on `/login`); once login works, `GET /admin/reports/activity` 500s |
+
+### Re-run after the Bug 1 and Bug 2 fixes — 31 failures
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| ~20 | Bug 4 | Timeouts waiting for an element on an authenticated screen, or a destination assertion that resolves to `/login`. `profile`, `cv`, `reviews`, `auth-session`, `registration` (gating), `admin-accounts`, `audit`, and most `tri-locale` variants |
+| 9 | Bug 7 | `POST /jobs -> 500` raised from `createOpenJob` — `jobs-applications.spec.ts` and the job-browsing / application-submission / review `tri-locale` variants |
+| 1 | Bug 4, then Bug 3 | `reports.spec.ts` — still `reports-screen` not found; `GET /admin/reports/activity` 500s behind it |
+| 0 | Bug 2 | **`POST /verify/code` appears in no failure.** `verify/code -> 200` throughout the uvicorn access log for the run |
+
+Playwright artifacts (screenshots, page snapshots, per-failure
+`error-context.md`) are left in `frontend/test-results/` as evidence; the
+directory now holds the re-run's artifacts, not the original's.
+
+The counts in the second table are read off the failure list and the backend log
+rather than tallied per-assertion, so treat ~20 / 9 as the shape of the remaining
+work rather than an exact split.
+
+### Re-run 2026-10-05 after the Bug 7, 8 and 9 fixes — 61 passed, 18 failed
+
+MinIO is not running in this environment; its public image is no longer available.
+There were no 5xx responses in the whole run. Each failure is attributed from its
+`error-context.md` page snapshot.
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Bug 4, now just the admin MFA step | `admin-accounts` ×2, `audit` ×2, `reports`: still on "Sign in" after the MFA code. Candidate and senior sign-in works. |
+| 6 | Unattributed: candidate profile save | `profile`, `jobs-applications` (via `completeMinimalProfile`), `tri-locale` application ×3 and profile ×1. A click on the "My profile" screen times out. |
+| 4 | Unattributed: review timeline | `reviews`, `tri-locale` review ×3. No `review-card-*` appears on "My reviews" after submitting. |
+| 2 | Environment: MinIO | `cv` ×2. `setInputFiles` times out on the CV screen. |
+| 1 | Unattributed | `jobs-applications` closed role: the closed job's card is not visible in the list. |
+| 1 | Unattributed | `registration` gating: signing in as a not-yet-approved account is refused (`POST /auth/login` → 403) instead of landing on `/status`. |
+
+### Re-run 2026-10-05 after the Bug 4 fix — 62 passed, 17 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Unattributed: review timeline | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
+| 5 | Unattributed: candidate profile save | `profile`, `jobs-applications` apply, `tri-locale` application ×3. A click on "My profile" times out. |
+| 2 | Environment: MinIO | `cv` ×2 |
+| 1 | Bug 3 (since fixed; `reports` passes) | `reports`: `GET /admin/reports/activity` and `/candidate-progress` → 500 with Bug 3's exact signatures |
+| 1 | Unattributed: audit action naming | `audit`: the entry's action is `Account.updated`; the test expects `/approve/i`. |
+| 1 | Unattributed | `admin-accounts` suspend: the account's card is not in the filtered list. |
+| 1 | Unattributed | `jobs-applications` closed role: the card is not visible. |
+| 1 | Unattributed | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
+
+Bug 4 accounts for none of these: every admin journey now passes the MFA step.
+`reviews.spec.ts:63` passed in the previous run and failed in this one. Treat the
+review group as possibly flaky until it is investigated.
+
+### Re-run 2026-10-05 after Bug 10, the taxonomy seed, the apply fix and the envelope fix — 64 passed, 15 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 5 | Bug 11 (since fixed: the specs raced their own navigation) | `reviews` ×2, `tri-locale` review ×3. No `review-card-*` on "My reviews". |
+| 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3: `422 application_not_ready`, `missing_fields: ["cv"]` |
+| 2 | Environment: MinIO | `cv` ×2 |
+| 1 | Test defect (since fixed; see Bug 12's section) | `audit`: action is `Account.updated`; the test expected `/approve/i`. |
+| 1 | Test defect (since fixed) | `admin-accounts` suspend: the account's card is not in the filtered list. |
+| 1 | Spec conflict (since resolved in the test) | `jobs-applications` closed role: the card is not visible. |
+| 1 | Bug 13 (since fixed) | `registration` gating: `POST /auth/login` → 403 for a not-yet-approved account. |
+
+`profile` and `reports` now pass.
+
+### Re-run 2026-10-05 after Bugs 6, 11, 12 and 13 and the test fixes — 73 passed, 6 failed
+
+| Count | Blocker | Evidence |
+| --- | --- | --- |
+| 4 | Environment: MinIO (an apply needs a CV) | `jobs-applications` apply, `tri-locale` application ×3 |
+| 2 | Environment: MinIO | `cv` ×2 |
+
+**Every remaining e2e failure is MinIO**, whose public image is no longer
+available. There are no code defects among them.
+
+The other gates:
+- **a11y:** 40/40.
+- **Build:** passes.
+- **`verify:api`:** passes.
+- **Frontend vitest:** 1269/1271. The 2 failures are the known `JobNewScreen`
+  load timeouts.
+- **Backend:** unit and integration pass, with `test_audit` still excluded.
+
+The other suites:
+- **Backend:** unit and integration pass. `test_audit` is excluded because of its
+  fixture ScopeMismatch.
+- **`verify:api` fails on Windows with `core.autocrlf=true`, but the contract
+  has not drifted.**
+  - The checkout writes `schema.d.ts` with CRLF line endings while `gen:api`
+    emits LF, so the byte comparison fails at line 1.
+  - The regenerated file is identical once CRLF is ignored.
+  - **FIXED 2026-10-05:** `scripts/contract.ts::diffDeclarations` now compares
+    with CRLF folded to LF.
+    - **Guard:** `scripts/contract.test.ts`, which fails before the fix.
+    - **Live:** `verify:api` now reports a match.
+- **Frontend vitest:** 1148/1152 in the full run. The 4 failures are the known
+  `JobNewScreen.test.tsx` timeouts under load; that file passes 5/5 on its own.
+
+## Suggested order of attack
+
+1. ~~Bug 1 — add `app/modules/audit/tasks.py`, plus handlers for the orphaned
+   schedules.~~ **Done.** The worker boots and serves 10 functions.
+2. ~~Bug 2 — migration to align the enum columns with the models, plus a guard so
+   the two representations cannot drift again silently.~~ **Done.** Migration
+   `0010`, two `role[]` cast fixes, and
+   `tests/integration/test_schema_enum_alignment.py`.
+3. ~~Bug 7 — exclude `search_tsv` from ORM persistence and type it `TSVECTOR`. Small,
+   and it is the whole blocker for 9 tests, none of which depend on Bug 4.~~
+   **Done** (2026-10-05). `FetchedValue` + deferred `TSVECTOR` mapping, direct
+   `@@` match in `list_open_jds`, plus unit and integration guards. Verified e2e.
+4. ~~Bug 4~~ **Done** (2026-10-05): the helper's `isVisible()` race; see its
+   section. Previously: 5 failures, all on the admin MFA step (most of the original ~20 were
+   Bugs 8 and 9, both done). Start with the one-line journey-helper fix, then look
+   at `MfaCodeStep`. The state-reset or remount hypothesis in Bug 4's section is
+   still unconfirmed.
+5. ~~Bug 3 — cast the timestamp parameters in the activity-report queries, and fix
+   the `:jd_id::uuid` syntax error while in there.~~ **Done** (2026-10-05), along
+   with the candidate-progress `has_next` bug it was hiding. The `reports` e2e
+   journey passes.
+6. ~~Bug 6 — one line, `render_as_string(hide_password=False)`; unblocks R8 AC5
+   failure auditing.~~ **Done** (2026-10-05), with a unit guard and a live check.
+7. ~~Bug 5 — needs the history decision recorded in its section before the code
+   change is worth making.~~ **Done** (2026-10-06). Accept the break; writers
+   hash at ms precision.
+
+Then re-run, in `frontend/`: `npm run typecheck; npm run lint; npm run verify:api;
+npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
+
+## Environment left behind
+
+- 2026-10-06:
+  - **MinIO** is `hasoub-minio:RELEASE.2025-10-15T17-29-55Z`, built from source by
+    `docker compose up` / `build` (`backend/docker/minio/Dockerfile`; the first
+    build takes a few minutes). A static dev-only KMS key named
+    `hasoub-data-key` is set for SSE-KMS.
+  - **The console host port is configurable** (`MINIO_CONSOLE_PORT`, default
+    9001). Windows reserves 9001 on this machine, so the local `.env` sets 9011.
+  - **ClamAV must be running** for CVs to become Available (Bug 19 fails closed).
+  - **Restarting the worker:** the new process waits up to the lease TTL before
+    it becomes scheduler leader and drains email, so registration e2e right after
+    a restart can miss its Verification_Code.
+
+- 2026-10-05: the dev database is at **`0011_seed_skill_taxonomy` (head)**.
+  - **MinIO is not running.** Its public image is no longer pullable, so a
+    replacement needs a team decision.
+  - **OpenBao runs in dev mode and keeps nothing.** After a container restart,
+    re-create the transit key and re-enrol the e2e admin's MFA. There is no
+    bootstrap script yet.
+- Earlier: the dev database was at **`0010_enum_column_alignment` (head)**. All 19 columns
+  are their enum type and `uq_applications_candidate_jd_non_terminal` carries the
+  enum predicate. Reversible with `alembic downgrade -1`.
+- Uvicorn is running on `127.0.0.1:8000`, restarted after the migration.
+  **Restarting it was necessary, not incidental**: asyncpg caches type
+  information per connection, so a pool opened before the `ALTER` keeps serving
+  the old types. Anyone applying this migration to another environment has to
+  recycle the API and worker connections too.
+- The ARQ worker is running, also restarted, serving 10 functions and driving 7
+  schedules.
+- The worker log is quiet now apart from Bug 5's hourly false tamper report.
+  `expire_verification_codes` completes cleanly, so Bug 6 no longer appears
+  behind it — silent again rather than fixed.
+- `e2e-admin@example.com` is MFA-enrolled; the secret is not committed (re-enrol to obtain one).
+- Docker services untouched. The throwaway `hasoub_drift` database used to
+  validate the migration up/down/up has been dropped, and every probe script
+  written along the way deleted.
+- Backend files changed by the Bug 1 fix: `app/worker.py`,
+  `app/modules/audit/tasks.py` (new), `app/modules/reporting/tasks.py`,
+  `app/platform/jobs/catalog.py`, `app/platform/jobs/scheduler.py`.
+- Backend files changed by the Bug 2 fix:
+  `alembic/versions/0010_enum_column_alignment.py` (new),
+  `app/modules/identity/repository.py`, `app/platform/db/metadata.py`,
+  `tests/integration/test_schema_enum_alignment.py` (new).
+- Nothing in `frontend/` has been modified by either fix.
