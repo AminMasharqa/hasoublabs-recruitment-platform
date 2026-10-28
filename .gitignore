@@ -5,3 +5,10 @@ mfa_uri.txt
 
 # Local admin credentials and TOTP secret written by backend/scripts/seed_admin.py
 .dev-secrets/
+
+# Caches from running Python or tests from the repo root instead of backend/
+__pycache__/
+.hypothesis/
+
+# macOS Finder metadata
+.DS_Store
