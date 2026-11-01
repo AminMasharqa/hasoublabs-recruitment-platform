@@ -55,7 +55,7 @@ function errorContent(messages: readonly string[]): ReactNode | undefined {
     return undefined
   }
   return messages.map((message) => (
-    <span key={message} style={{ display: 'block' }}>
+    <span key={message} className="message-line">
       {message}
     </span>
   ))
@@ -207,7 +207,7 @@ export function JobExtractionPanel({
 
         {draft?.outcome === 'failed' ? (
           <Stack gap={4} role="status" data-testid="job-extract-failed">
-            <Text size="sm" c="red">
+            <Text size="sm" c="danger">
               {t('jobs:extract.failed')}
             </Text>
             {draft.failureMessage === null ? null : (
@@ -227,7 +227,7 @@ export function JobExtractionPanel({
 
         {draft?.outcome === 'ready' ? (
           <Stack gap={4} data-testid="job-extract-ready">
-            <Text size="sm" c="green">
+            <Text size="sm" c="success">
               {t('jobs:extract.ready')}
             </Text>
             {/* AC8: how many inputs the extraction left for manual entry. */}

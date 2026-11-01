@@ -35,9 +35,9 @@ const NAMESPACES = ['cvs', 'shell'] as const
 
 /** Badge colour per state. Colour is never the only cue — the label states it too. */
 const STATE_COLOURS: Readonly<Record<string, string>> = {
-  PendingScan: 'yellow',
-  Available: 'green',
-  Quarantined: 'red',
+  PendingScan: 'warning',
+  Available: 'success',
+  Quarantined: 'danger',
 }
 
 export interface CvVersionRowProps {
@@ -62,7 +62,7 @@ export function CvVersionRow({ variantId, version }: CvVersionRowProps) {
           </Text>
           <Group gap="xs">
             <Badge
-              color={STATE_COLOURS[version.state] ?? 'gray'}
+              color={STATE_COLOURS[version.state] ?? 'neutral'}
               variant="light"
               data-testid={`cv-version-state-${version.version_number}`}
             >
@@ -71,7 +71,7 @@ export function CvVersionRow({ variantId, version }: CvVersionRowProps) {
             {/* AC14: the quarantine is named in words, not only in a colour. */}
             {isQuarantined(version) ? (
               <Badge
-                color="red"
+                color="danger"
                 data-testid={`cv-version-quarantined-${version.version_number}`}
               >
                 {t('cvs:versions.quarantined')}

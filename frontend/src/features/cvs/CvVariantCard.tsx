@@ -55,12 +55,12 @@ export function CvVariantCard({ variant, variants, withDetailLink = true }: CvVa
           </Title>
           <Group gap="xs">
             {primary ? (
-              <Badge color="blue" data-testid={`variant-primary-badge-${variant.id}`}>
+              <Badge color="info" data-testid={`variant-primary-badge-${variant.id}`}>
                 {t('cvs:primary.badge')}
               </Badge>
             ) : null}
             {variant.is_archived ? (
-              <Badge color="gray" variant="light" data-testid={`variant-archived-badge-${variant.id}`}>
+              <Badge color="neutral" variant="light" data-testid={`variant-archived-badge-${variant.id}`}>
                 {t('cvs:archived.badge')}
               </Badge>
             ) : null}

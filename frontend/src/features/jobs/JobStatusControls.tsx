@@ -82,7 +82,7 @@ export function JobStatusBadge({ status }: JobStatusBadgeProps) {
 
   return (
     <Badge
-      color={closed ? 'red' : status === 'Open' ? 'green' : 'gray'}
+      color={closed ? 'danger' : status === 'Open' ? 'success' : 'neutral'}
       variant="light"
       data-testid={closed ? 'job-status-closed' : 'job-status'}
       data-status={status}

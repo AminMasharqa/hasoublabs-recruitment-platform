@@ -113,7 +113,7 @@ export function MyApplicationsScreen() {
               component="ul"
               aria-label={t('applications:mine.listLabel')}
               data-testid="applications-list"
-              style={{ listStyle: 'none', margin: 0, padding: 0 }}
+              className="list-reset"
             >
               <Stack gap="md">
                 {items.map((application) => (

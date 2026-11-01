@@ -82,7 +82,7 @@ export function CandidateProfileView({ profile }: CandidateProfileViewProps) {
         </Text>
         <Badge
           variant="light"
-          color={complete ? 'green' : 'yellow'}
+          color={complete ? 'success' : 'warning'}
           data-testid="profile-state"
           data-profile-state={state}
         >

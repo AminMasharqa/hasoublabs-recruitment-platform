@@ -205,7 +205,7 @@ function MfaVerifyForm({ accountId, onVerified }: MfaVerifyFormProps) {
           <Alert
             role="status"
             variant="light"
-            color="green"
+            color="success"
             withCloseButton={false}
             data-testid="mfa-verified"
           >
@@ -217,7 +217,7 @@ function MfaVerifyForm({ accountId, onVerified }: MfaVerifyFormProps) {
           <Alert
             role="alert"
             variant="light"
-            color="red"
+            color="danger"
             withCloseButton={false}
             data-testid="mfa-unverified"
           >
@@ -229,7 +229,7 @@ function MfaVerifyForm({ accountId, onVerified }: MfaVerifyFormProps) {
           <Alert
             role="alert"
             variant="light"
-            color="red"
+            color="danger"
             withCloseButton={false}
             data-testid="mfa-verify-refused"
           >

@@ -78,7 +78,7 @@ function SkillTermRow({
         ? {}
         : {
             error: messages.map((message) => (
-              <span key={message} style={{ display: 'block' }}>
+              <span key={message} className="message-line">
                 {message}
               </span>
             )),
@@ -149,7 +149,7 @@ export function JobSkillTermsField({
 
         {/* AC11: an unresolved required skill makes the list unsafe to replace. */}
         {unresolvedSkillIds.length === 0 ? null : (
-          <Text id={reasonId} size="sm" c="red" role="status" data-testid="job-skill-terms-locked">
+          <Text id={reasonId} size="sm" c="danger" role="status" data-testid="job-skill-terms-locked">
             {t('jobs:form.skillsLocked', { ids: unresolvedSkillIds.join(', ') })}
           </Text>
         )}
@@ -178,7 +178,7 @@ export function JobSkillTermsField({
                   <Button
                     type="button"
                     variant="subtle"
-                    color="red"
+                    color="danger"
                     disabled={locked}
                     onClick={() => onChange(terms.filter((_, position) => position !== index))}
                     data-testid={`job-skill-remove-${index}`}

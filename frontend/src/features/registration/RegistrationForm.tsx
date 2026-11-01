@@ -365,7 +365,7 @@ export function RegistrationForm({ role, token }: RegistrationFormProps) {
         {messages.total === 0 ? null : (
           <Alert
             role="alert"
-            color="red"
+            color="danger"
             id={FORM_LEVEL_REGION_ID}
             title={t('registration:invalid.title')}
             data-testid="registration-form-violations"
@@ -387,7 +387,7 @@ export function RegistrationForm({ role, token }: RegistrationFormProps) {
          * other account detail can reach the screen.
          */}
         {failure === 'emailConflict' ? (
-          <Alert role="alert" color="red" data-testid="registration-email-conflict">
+          <Alert role="alert" color="danger" data-testid="registration-email-conflict">
             {t('registration:emailConflict')}
           </Alert>
         ) : null}

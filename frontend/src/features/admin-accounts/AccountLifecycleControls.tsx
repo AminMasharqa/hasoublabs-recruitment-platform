@@ -87,7 +87,7 @@ function errorContent(messages: readonly string[]): ReactNode | undefined {
     return undefined
   }
   return messages.map((message) => (
-    <span key={message} style={{ display: 'block' }}>
+    <span key={message} className="message-line">
       {message}
     </span>
   ))
@@ -209,7 +209,7 @@ export function AccountLifecycleControls({ account }: AccountLifecycleControlsPr
             type="button"
             size="xs"
             variant={DESTRUCTIVE_ACTIONS.includes(action) ? 'default' : 'light'}
-            color={DESTRUCTIVE_ACTIONS.includes(action) ? 'red' : undefined}
+            color={DESTRUCTIVE_ACTIONS.includes(action) ? 'danger' : undefined}
             loading={lifecycle.isPending && lifecycle.variables?.action === action}
             onClick={() => {
               if (requiresConfirmation(action)) {
@@ -260,7 +260,7 @@ export function AccountLifecycleControls({ account }: AccountLifecycleControlsPr
             {formLevelMessages.length === 0 ? null : (
               <Stack gap={2} role="alert" data-testid="account-confirm-form-violations">
                 {formLevelMessages.map((message) => (
-                  <Text key={message} size="sm" c="red">
+                  <Text key={message} size="sm" c="danger">
                     {message}
                   </Text>
                 ))}
@@ -295,7 +295,7 @@ export function AccountLifecycleControls({ account }: AccountLifecycleControlsPr
             <Group gap="sm">
               <Button
                 type="button"
-                color="red"
+                color="danger"
                 loading={lifecycle.isPending}
                 onClick={issueConfirmed}
                 data-testid="account-confirm-submit"

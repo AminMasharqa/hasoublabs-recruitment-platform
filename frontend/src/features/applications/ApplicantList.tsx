@@ -158,7 +158,7 @@ export function ApplicantList({ jdId, status, onStatusChange }: ApplicantListPro
             component="ul"
             aria-label={t('applications:applicants.listLabel')}
             data-testid="applicants-list"
-            style={{ listStyle: 'none', margin: 0, padding: 0 }}
+            className="list-reset"
           >
             <Stack gap="md">
               {items.map((card, index) => (

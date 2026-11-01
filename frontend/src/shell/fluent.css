@@ -1,0 +1,118 @@
+/*
+ * Fluent 2 refinements to Mantine's own component styles.
+ *
+ * Loaded after Mantine's stylesheet (`main.tsx`). Only what the theme object in
+ * `theme.ts` cannot express lives here, and every value is a token: a Mantine
+ * variable or an `--app-*` variable from `appCssVariablesResolver`. No rule here
+ * names a colour, a shadow or a duration directly.
+ *
+ * Targets Mantine's static class names (`.mantine-<Component>-<slot>`), which
+ * are part of its public styles API, never its hashed module classes.
+ * Directional values use logical properties (`src/i18n/direction.css`).
+ */
+
+/*
+ * The canvas. Fluent layers white surfaces (cards, header, navbar, dialogs: all
+ * `--mantine-color-body`) over a slightly darker canvas, so the page background
+ * is the one place that reads the canvas token instead.
+ */
+body {
+  background-color: var(--app-color-canvas);
+}
+
+/*
+ * Keyboard focus (Requirement 20 AC1). Fluent's focus indicator is a 2px
+ * high-contrast stroke — black in light, white in dark — rather than a brand
+ * colour, so it clears 3:1 against every surface, including a filled brand
+ * button. Replaces Mantine's `--mantine-primary-color-filled` ring.
+ */
+.mantine-focus-auto:focus-visible,
+.mantine-focus-always:focus,
+.mantine-focus-always:focus-visible {
+  outline: var(--app-stroke-width-focus) solid var(--app-color-stroke-focus);
+  outline-offset: var(--app-stroke-width-focus);
+}
+
+/*
+ * Interaction states. Fluent animates rest -> hover -> pressed colour changes
+ * over its "faster" duration on the easy-ease curve. `respectReducedMotion` and
+ * the global reduced-motion rule in `index.css` both still apply.
+ */
+.mantine-Button-root,
+.mantine-ActionIcon-root,
+.mantine-NavLink-root,
+.mantine-Anchor-root,
+.mantine-Input-input {
+  transition-duration: var(--app-duration-faster);
+  transition-timing-function: var(--app-curve-easy-ease);
+}
+
+/*
+ * Text inputs. Fluent draws a control's bottom edge in the accessible stroke
+ * (3:1 against the surface, WCAG 1.4.11) while the other edges stay subtle,
+ * and thickens the bottom edge to the brand colour on focus. Error styling is
+ * Mantine's own and is left untouched.
+ */
+.mantine-Input-input[data-variant='default']:not([data-error]):not(:focus):not(:focus-within) {
+  border-block-end-color: var(--app-color-stroke-accessible);
+}
+
+.mantine-Input-input[data-variant='default']:not([data-error]):is(:focus, :focus-within) {
+  box-shadow: inset 0 -1px 0 0 var(--input-bd-focus);
+}
+
+/* Checkboxes and radios: the unchecked boundary needs 3:1 too. */
+.mantine-Checkbox-input:not(:checked):not([data-indeterminate]):not(:disabled):not([data-error]),
+.mantine-Radio-radio:not(:checked):not(:disabled):not([data-error]) {
+  border-color: var(--app-color-stroke-accessible);
+}
+
+/*
+ * Message bars. Fluent's MessageBar outlines its tinted background in the same
+ * hue; `--alert-color` is the variant's text colour, mixed down to a border.
+ */
+.mantine-Alert-root[data-variant='light'] {
+  border: 1px solid color-mix(in srgb, var(--alert-color) 30%, transparent);
+}
+
+.mantine-Alert-title {
+  font-weight: 600;
+}
+
+/*
+ * Navigation. The active item carries Fluent's selection indicator: a short
+ * brand-coloured bar on the inline-start edge (mirrors under `rtl`), so the
+ * current location is not conveyed by background tint alone.
+ */
+.mantine-NavLink-root {
+  position: relative;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.mantine-NavLink-root[data-active]::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 25%;
+  inline-size: 3px;
+  border-radius: var(--mantine-radius-xs);
+  background-color: var(--mantine-primary-color-filled);
+}
+
+.mantine-NavLink-root[data-active] .mantine-NavLink-label {
+  font-weight: 600;
+}
+
+/* Data tables: semibold column headers on a subtle divider, Fluent DataGrid style. */
+.mantine-Table-th {
+  font-weight: 600;
+}
+
+.mantine-Table-table {
+  --table-border-color: var(--app-color-stroke-subtle);
+}
+
+/* Code and support references sit on a neutral, rounded chip. */
+.mantine-Code-root {
+  border-radius: var(--mantine-radius-xs);
+}

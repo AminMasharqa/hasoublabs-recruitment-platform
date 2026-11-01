@@ -174,7 +174,7 @@ function ContextSwitchControl({ targets }: ContextSwitchControlProps) {
 
       {message === null ? null : (
         // `role="alert"` announces the failure without moving focus (Req 20 AC7).
-        <Text role="alert" component="span" size="sm" c="red" data-testid="context-switch-error">
+        <Text role="alert" component="span" size="sm" c="danger" data-testid="context-switch-error">
           {message}
         </Text>
       )}

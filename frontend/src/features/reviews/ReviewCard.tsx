@@ -81,7 +81,7 @@ export function ReviewCard({ review, correction, onCorrect }: ReviewCardProps) {
             {correctsId === null ? null : (
               <Badge
                 variant="light"
-                color="orange"
+                color="severe"
                 data-testid={`review-correction-badge-${review.id}`}
               >
                 {t('reviews:correction.indicator')}
@@ -91,7 +91,7 @@ export function ReviewCard({ review, correction, onCorrect }: ReviewCardProps) {
             {correction.correctedBy.length === 0 ? null : (
               <Badge
                 variant="light"
-                color="gray"
+                color="neutral"
                 data-testid={`review-corrected-badge-${review.id}`}
               >
                 {t('reviews:correction.corrected')}

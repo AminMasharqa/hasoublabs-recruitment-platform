@@ -104,7 +104,7 @@ export function ReportFilterControls({ applied, onApply, onClear }: ReportFilter
           />
 
           {reversed ? (
-            <Text size="sm" c="orange" role="status" data-testid="report-filter-range-hint">
+            <Text size="sm" c="severe" role="status" data-testid="report-filter-range-hint">
               {t('reports:filters.reversedRange')}
             </Text>
           ) : null}

@@ -69,7 +69,7 @@ export function SkillCandidatePanel({
         {/* AC7: the count is stated, so the blocked submit control is explained. */}
         <Text
           size="sm"
-          c={undecided === 0 ? 'green' : 'red'}
+          c={undecided === 0 ? 'success' : 'danger'}
           role="status"
           data-testid="job-skill-candidates-undecided"
           data-undecided={undecided}
@@ -90,7 +90,7 @@ export function SkillCandidatePanel({
                 </Text>
                 <Badge
                   variant="light"
-                  color={isSkillCandidateResolved(resolution) ? 'green' : 'red'}
+                  color={isSkillCandidateResolved(resolution) ? 'success' : 'danger'}
                   data-testid={`job-skill-candidate-state-${index}`}
                   data-decision={resolution.decision}
                 >

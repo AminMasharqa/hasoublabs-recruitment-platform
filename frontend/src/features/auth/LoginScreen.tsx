@@ -161,7 +161,7 @@ function LoginRejectedNotice() {
       id={LOGIN_REJECTED_ELEMENT_ID}
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       withCloseButton={false}
       data-testid={LOGIN_REJECTED_ELEMENT_ID}
     >
@@ -379,7 +379,7 @@ export function LoginScreen() {
           <Alert
             role="status"
             variant="light"
-            color="yellow"
+            color="warning"
             withCloseButton={false}
             data-testid="login-session-expired"
           >
@@ -440,7 +440,7 @@ export function LoginScreen() {
               <Alert
                 role="alert"
                 variant="light"
-                color="red"
+                color="danger"
                 withCloseButton={false}
                 title={t('auth:login.formErrors')}
                 data-testid="login-form-violations"

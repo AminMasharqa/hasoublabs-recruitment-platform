@@ -266,7 +266,7 @@ export function VerificationScreen() {
                   <Alert
                     role="alert"
                     variant="light"
-                    color="red"
+                    color="danger"
                     withCloseButton={false}
                     id={FORM_LEVEL_REGION_ID}
                     title={t('registration:verification.invalid.title')}
@@ -347,7 +347,7 @@ export function VerificationScreen() {
               <Alert
                 role="status"
                 variant="light"
-                color="green"
+                color="success"
                 withCloseButton={false}
                 data-testid="verification-resent"
               >

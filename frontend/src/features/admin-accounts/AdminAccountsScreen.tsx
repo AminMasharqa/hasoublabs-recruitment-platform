@@ -147,7 +147,7 @@ function AccountsView() {
             component="ul"
             aria-label={t('adminAccounts:listLabel')}
             data-testid="accounts-list"
-            style={{ listStyle: 'none', margin: 0, padding: 0 }}
+            className="list-reset"
           >
             <Stack gap="md">
               {items.map((account) => (

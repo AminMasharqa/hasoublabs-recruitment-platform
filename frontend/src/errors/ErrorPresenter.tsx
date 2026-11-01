@@ -305,7 +305,7 @@ export function ErrorPresenter({ error, values, onRetry, title, children }: Erro
     <Alert
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       withCloseButton={false}
       title={title ?? t('shell:state.errorTitle')}
       data-testid="error-state"

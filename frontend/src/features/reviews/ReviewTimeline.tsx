@@ -115,7 +115,7 @@ export function ReviewTimeline({
         component="ul"
         aria-label={t('reviews:timeline.listLabel')}
         data-testid="review-timeline"
-        style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 'var(--mantine-spacing-md)' }}
+        className="list-reset list-stack"
       >
         {ordered.map((review) => (
           <ReviewCard

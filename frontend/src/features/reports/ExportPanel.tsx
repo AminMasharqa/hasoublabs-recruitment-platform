@@ -92,7 +92,7 @@ export function ExportFailureNotice({ message, supportReference }: ExportFailure
     <Alert
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       withCloseButton={false}
       title={t('reports:export.failedTitle')}
       data-testid="export-failed"
@@ -224,7 +224,7 @@ export function ExportPanel({ filters }: ExportPanelProps) {
         {/* A 202 without a usable `job_id`: nothing to poll, so say so rather than
             leaving a silent panel. */}
         {enqueue.isSuccess && jobId === null ? (
-          <Text size="sm" c="red" role="alert" data-testid="export-no-job-id">
+          <Text size="sm" c="danger" role="alert" data-testid="export-no-job-id">
             {t('reports:export.noJobId')}
           </Text>
         ) : null}

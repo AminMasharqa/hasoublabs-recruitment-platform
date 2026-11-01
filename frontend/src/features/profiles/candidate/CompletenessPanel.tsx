@@ -43,7 +43,7 @@ export function CompletenessPanel({ complete, missingFields }: CompletenessPanel
       <Alert
         role="status"
         variant="light"
-        color="green"
+        color="success"
         title={t('profiles:complete.title')}
         withCloseButton={false}
         data-testid="profile-complete-confirmation"
@@ -57,7 +57,7 @@ export function CompletenessPanel({ complete, missingFields }: CompletenessPanel
     <Alert
       role="status"
       variant="light"
-      color="yellow"
+      color="warning"
       title={t('profiles:completeness.title')}
       withCloseButton={false}
       data-testid="profile-completeness-panel"
@@ -92,7 +92,7 @@ export function ApplyBlockedNotice() {
     <Alert
       role="status"
       variant="outline"
-      color="gray"
+      color="neutral"
       title={t('profiles:apply.blockedTitle')}
       withCloseButton={false}
       data-testid="apply-blocked-notice"

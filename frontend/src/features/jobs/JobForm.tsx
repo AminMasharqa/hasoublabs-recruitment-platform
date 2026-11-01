@@ -117,7 +117,7 @@ function errorContent(messages: readonly string[]): ReactNode | undefined {
     return undefined
   }
   return messages.map((message) => (
-    <span key={message} style={{ display: 'block' }}>
+    <span key={message} className="message-line">
       {message}
     </span>
   ))
@@ -295,7 +295,7 @@ export function JobForm({
         {formLevelMessages.length === 0 ? null : (
           <Stack gap={2} role="alert" data-testid="job-form-violations">
             {formLevelMessages.map((message) => (
-              <Text key={message} size="sm" c="red">
+              <Text key={message} size="sm" c="danger">
                 {message}
               </Text>
             ))}

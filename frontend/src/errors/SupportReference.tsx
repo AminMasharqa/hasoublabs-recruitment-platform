@@ -85,7 +85,7 @@ export function SupportReference({ reference, showHint = false, className }: Sup
             }}
             aria-label={t('supportReference.copy')}
             data-testid="support-reference-copy"
-            style={{ textDecoration: 'underline' }}
+            className="text-action"
           >
             <Text component="span" size="sm">
               {clipboard.copied ? t('action.copied') : t('action.copy')}

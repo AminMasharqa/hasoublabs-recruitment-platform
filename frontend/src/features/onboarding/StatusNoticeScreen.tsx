@@ -150,7 +150,7 @@ export function StatusNoticeScreen() {
          * (the shell's sign-out) so the screen does not read as a dead end.
          */}
         {surface.terminal && !sessionless ? (
-          <Alert variant="light" color="gray" data-testid="status-notice-closed">
+          <Alert variant="light" color="neutral" data-testid="status-notice-closed">
             {t('onboarding:closedNotice')}
           </Alert>
         ) : null}

@@ -129,7 +129,7 @@ export function AdminCandidateProfileView({ profile }: AdminCandidateProfileView
         </Text>
         <Badge
           variant="light"
-          color={isProfileComplete(profile) ? 'green' : 'yellow'}
+          color={isProfileComplete(profile) ? 'success' : 'warning'}
           data-testid="admin-profile-state"
           data-profile-state={state}
         >
@@ -268,7 +268,7 @@ export function AdminCandidateProfileScreen() {
           // No account in the address: nothing was asked for, so nothing is read.
           <Alert
             role="alert"
-            color="yellow"
+            color="warning"
             variant="light"
             withCloseButton={false}
             data-testid="admin-profile-missing-account"
