@@ -192,7 +192,7 @@ export function AdminJobsScreen() {
               component="ul"
               aria-label={t('jobs:admin.resultsLabel')}
               data-testid="admin-jobs-list"
-              style={{ listStyle: 'none', margin: 0, padding: 0 }}
+              className="list-reset"
             >
               <Stack gap="md">
                 {items.map((job) => (

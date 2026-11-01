@@ -129,7 +129,7 @@ export function CvVariantActions({ variant, variants }: CvVariantActionsProps) {
             type="button"
             variant="default"
             size="xs"
-            color="red"
+            color="danger"
             disabled={blockedReason !== null}
             {...(blockedReason === null ? {} : { 'aria-describedby': archiveReasonId })}
             onClick={() => {
@@ -184,7 +184,7 @@ export function CvVariantActions({ variant, variants }: CvVariantActionsProps) {
           <Group gap="sm">
             <Button
               type="button"
-              color="red"
+              color="danger"
               loading={archive.isPending}
               onClick={() => {
                 archive.mutate(variant.id, { onSuccess: () => setConfirmingArchive(false) })

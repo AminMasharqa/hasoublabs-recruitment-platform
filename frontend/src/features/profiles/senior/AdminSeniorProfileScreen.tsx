@@ -170,7 +170,7 @@ export function AdminSeniorProfileScreen() {
           // No account in the address: nothing was asked for, so nothing is read.
           <Alert
             role="alert"
-            color="yellow"
+            color="warning"
             variant="light"
             withCloseButton={false}
             data-testid="admin-senior-profile-missing-account"

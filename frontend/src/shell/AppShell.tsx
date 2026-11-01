@@ -91,7 +91,7 @@ import { sharedAppRuntime, type AppRuntime } from './appRuntime'
 import { ContextSwitch } from './ContextSwitch'
 import { LocaleControl } from './LocaleControl'
 import { SCREEN_ELEMENTS } from './screenElements'
-import { appTheme } from './theme'
+import { appCssVariablesResolver, appTheme } from './theme'
 
 import './shell.css'
 
@@ -312,7 +312,15 @@ export function AppShell({ runtime }: AppShellProps) {
 
   return (
     <DirectionProvider>
-      <MantineProvider theme={appTheme}>
+      {/*
+       * `defaultColorScheme="auto"` follows the operating system's light/dark
+       * preference; both schemes are defined by the Fluent tokens in `theme.ts`.
+       */}
+      <MantineProvider
+        theme={appTheme}
+        cssVariablesResolver={appCssVariablesResolver}
+        defaultColorScheme="auto"
+      >
         <QueryClientProvider client={active.queryClient}>
           <SessionProvider manager={active.session}>
             <AppServicesContext.Provider value={services}>

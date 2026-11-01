@@ -123,7 +123,7 @@ export function ChainVerifyPanel() {
               <Alert
                 role="alert"
                 variant="light"
-                color="red"
+                color="danger"
                 withCloseButton={false}
                 title={t('audit:verify.tamperedTitle')}
                 data-testid="audit-chain-tampered"
@@ -140,7 +140,7 @@ export function ChainVerifyPanel() {
               <Alert
                 role="status"
                 variant="light"
-                color="teal"
+                color="success"
                 withCloseButton={false}
                 title={t('audit:verify.intactTitle')}
                 data-testid="audit-chain-intact"

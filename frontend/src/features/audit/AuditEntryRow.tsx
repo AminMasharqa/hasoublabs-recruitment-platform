@@ -41,14 +41,14 @@ const NAMESPACES = ['audit', 'shell'] as const
  * rendered in the neutral colour rather than dropped.
  */
 const OUTCOME_COLORS: Readonly<Record<string, string>> = Object.freeze({
-  SUCCESS: 'teal',
-  success: 'teal',
-  FAILURE: 'red',
-  failure: 'red',
-  DENIED: 'red',
-  denied: 'red',
-  ERROR: 'red',
-  error: 'red',
+  SUCCESS: 'success',
+  success: 'success',
+  FAILURE: 'danger',
+  failure: 'danger',
+  DENIED: 'danger',
+  denied: 'danger',
+  ERROR: 'danger',
+  error: 'danger',
 })
 
 export interface AuditEntryRowProps {
@@ -87,7 +87,7 @@ export function AuditEntryRow({ entry, selected, onToggleSelect }: AuditEntryRow
       <Table.Td>
         <Badge
           variant="light"
-          color={OUTCOME_COLORS[entry.outcome] ?? 'gray'}
+          color={OUTCOME_COLORS[entry.outcome] ?? 'neutral'}
           data-testid={`audit-entry-outcome-${entry.id}`}
         >
           <BidiText value={entry.outcome} />

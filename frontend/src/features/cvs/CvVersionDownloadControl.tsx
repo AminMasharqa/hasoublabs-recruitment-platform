@@ -61,7 +61,7 @@ export function IncompleteDownloadNotice({ supportReference }: IncompleteDownloa
     <Alert
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       withCloseButton={false}
       title={t('cvs:download.incompleteTitle')}
       data-testid="cv-version-download-incomplete"

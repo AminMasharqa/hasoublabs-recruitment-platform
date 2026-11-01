@@ -37,12 +37,12 @@ const NAMESPACES = ['adminAccounts', 'shell'] as const
 
 /** Colour per Account_Status, so the lifecycle is readable at a glance. */
 const STATUS_COLOURS: Readonly<Record<string, string>> = Object.freeze({
-  PendingVerification: 'gray',
-  PendingApproval: 'yellow',
-  ApprovedPendingMeeting: 'blue',
-  Approved: 'green',
-  Rejected: 'red',
-  Suspended: 'orange',
+  PendingVerification: 'neutral',
+  PendingApproval: 'warning',
+  ApprovedPendingMeeting: 'info',
+  Approved: 'success',
+  Rejected: 'danger',
+  Suspended: 'severe',
   Deactivated: 'dark',
 })
 
@@ -93,7 +93,7 @@ export function AccountCard({ account }: AccountCardProps) {
           <Group gap="xs" wrap="wrap">
             <Badge
               variant="light"
-              color={STATUS_COLOURS[account.status] ?? 'gray'}
+              color={STATUS_COLOURS[account.status] ?? 'neutral'}
               data-testid={`account-status-${account.id}`}
             >
               {t(`adminAccounts:status.${account.status}`)}
@@ -101,7 +101,7 @@ export function AccountCard({ account }: AccountCardProps) {
             {/* AC1: the enrolment indicator. */}
             <Badge
               variant="outline"
-              color={account.mfa_enrolled ? 'green' : 'gray'}
+              color={account.mfa_enrolled ? 'success' : 'neutral'}
               data-testid={`account-mfa-${account.id}`}
               data-mfa-enrolled={account.mfa_enrolled ? 'true' : 'false'}
             >

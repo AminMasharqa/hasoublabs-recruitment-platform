@@ -147,7 +147,7 @@ export function RegistrationLinkPanel() {
 
         {issued === null ? null : (
           <Alert
-            color="green"
+            color="success"
             variant="light"
             withCloseButton={false}
             title={t('adminAccounts:link.issuedTitle')}

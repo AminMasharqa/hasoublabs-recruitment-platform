@@ -160,7 +160,7 @@ function EntryFrame({ collection, index, label, onRemove, children }: EntryFrame
           <Button
             type="button"
             variant="subtle"
-            color="red"
+            color="danger"
             onClick={onRemove}
             data-testid={`profile-remove-${collection}-${index}`}
           >

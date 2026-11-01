@@ -40,10 +40,10 @@ const NAMESPACES = ['audit', 'shell'] as const
 
 /** Badge colour per change kind. Colour is decoration; the badge text carries the meaning. */
 const CHANGE_COLORS: Readonly<Record<FieldChangeKind, string>> = Object.freeze({
-  added: 'teal',
-  removed: 'red',
-  changed: 'yellow',
-  unchanged: 'gray',
+  added: 'success',
+  removed: 'danger',
+  changed: 'warning',
+  unchanged: 'neutral',
 })
 
 interface SnapshotCellProps {

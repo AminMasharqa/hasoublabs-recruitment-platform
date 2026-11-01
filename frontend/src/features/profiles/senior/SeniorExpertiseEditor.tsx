@@ -108,7 +108,7 @@ export function SeniorExpertiseEditor({
                   <Button
                     type="button"
                     variant="subtle"
-                    color="red"
+                    color="danger"
                     onClick={() => onRemove(index)}
                     data-testid={`senior-expertise-remove-${index}`}
                   >

@@ -84,7 +84,7 @@ function RecordedNotice({ application }: RecordedNoticeProps) {
     <Alert
       role="status"
       variant="light"
-      color="green"
+      color="success"
       title={t('applications:apply.recorded.title')}
       withCloseButton={false}
       data-testid="apply-recorded"
@@ -132,7 +132,7 @@ function ExternalNotice({ redirectUrl }: ExternalNoticeProps) {
     <Alert
       role="status"
       variant="light"
-      color="blue"
+      color="info"
       title={t('applications:apply.external.title')}
       withCloseButton={false}
       data-testid="apply-external"
@@ -183,7 +183,7 @@ function RefusalNotice({ error }: RefusalNoticeProps) {
       <Alert
         role="alert"
         variant="light"
-        color="orange"
+        color="severe"
         title={t('applications:apply.unmet.title')}
         withCloseButton={false}
         data-testid="apply-precondition-unmet"
@@ -209,7 +209,7 @@ function RefusalNotice({ error }: RefusalNoticeProps) {
       <Alert
         role="alert"
         variant="light"
-        color="orange"
+        color="severe"
         withCloseButton={false}
         data-testid="apply-conflicting-state"
       >
@@ -226,7 +226,7 @@ function RefusalNotice({ error }: RefusalNoticeProps) {
       <Alert
         role="alert"
         variant="light"
-        color="orange"
+        color="severe"
         withCloseButton={false}
         data-testid="apply-rate-limited"
       >
@@ -358,7 +358,7 @@ export function ApplyDialog({ jdId, title, opened, onClose }: ApplyDialogProps) 
               <Alert
                 role="alert"
                 variant="light"
-                color="yellow"
+                color="warning"
                 withCloseButton={false}
                 data-testid="apply-unreadable"
               >

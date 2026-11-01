@@ -238,7 +238,7 @@ export function MfaCodeStep({ credentials, onAuthenticated, onRejected }: MfaCod
             <Alert
               role="alert"
               variant="light"
-              color="red"
+              color="danger"
               withCloseButton={false}
               title={t('auth:mfa.formErrors')}
               data-testid="mfa-code-form-violations"
@@ -268,7 +268,7 @@ export function MfaCodeStep({ credentials, onAuthenticated, onRejected }: MfaCod
             <Alert
               role="alert"
               variant="light"
-              color="red"
+              color="danger"
               withCloseButton={false}
               data-testid="mfa-code-refused"
             >

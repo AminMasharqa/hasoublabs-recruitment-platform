@@ -111,7 +111,7 @@ export function ChatPlaceholder() {
     <Alert
       role="status"
       variant="light"
-      color="gray"
+      color="neutral"
       withCloseButton={false}
       data-testid="senior-chat-unavailable"
     >

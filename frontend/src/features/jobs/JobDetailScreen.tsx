@@ -112,7 +112,7 @@ function JobDetail({ job }: JobDetailProps) {
 
       {/* AC7: stated in words beside the badge, not conveyed by colour alone. */}
       {isClosed(job.status) ? (
-        <Text c="red" role="status" data-testid="job-detail-closed-notice">
+        <Text c="danger" role="status" data-testid="job-detail-closed-notice">
           {t('jobs:status.closedNotice')}
         </Text>
       ) : null}

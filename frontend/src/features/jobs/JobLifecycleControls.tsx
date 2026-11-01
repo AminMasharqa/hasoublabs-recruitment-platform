@@ -152,7 +152,7 @@ export function JobLifecycleControls({ job }: JobLifecycleControlsProps) {
           <Button
             type="button"
             variant="default"
-            color="red"
+            color="danger"
             disabled={busy}
             onClick={() => {
               close.reset()
@@ -167,7 +167,7 @@ export function JobLifecycleControls({ job }: JobLifecycleControlsProps) {
 
       {/* AC13: the reason the publish control is disabled, wired to it. */}
       {publishBlockerMessage === null || !showPublish ? null : (
-        <Text id={publishBlockedId} size="sm" c="red" data-testid="job-publish-blocked">
+        <Text id={publishBlockedId} size="sm" c="danger" data-testid="job-publish-blocked">
           {t('jobs:lifecycle.publishNeedsUrl')} {publishBlockerMessage}
         </Text>
       )}
@@ -222,14 +222,14 @@ export function JobLifecycleControls({ job }: JobLifecycleControlsProps) {
       >
         <Stack gap="sm" data-testid="job-close-confirm">
           <Text>{t('jobs:lifecycle.confirmCloseBody')}</Text>
-          <Text fw={500} c="red">
+          <Text fw={500} c="danger">
             {t('jobs:lifecycle.confirmCloseIrreversible')}
           </Text>
           {close.error == null ? null : <ErrorPresenter error={close.error} />}
           <Group gap="sm">
             <Button
               type="button"
-              color="red"
+              color="danger"
               loading={close.isPending}
               onClick={() => {
                 close.mutate(job.id, { onSuccess: () => setConfirmingClose(false) })

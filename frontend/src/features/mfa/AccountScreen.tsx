@@ -86,7 +86,7 @@ function MfaEnrolmentIndicator({ account }: MfaEnrolmentIndicatorProps) {
   return (
     <Badge
       variant="outline"
-      color={account.mfa_enrolled ? 'green' : 'gray'}
+      color={account.mfa_enrolled ? 'success' : 'neutral'}
       data-testid="account-mfa-enrolled"
       data-mfa-enrolled={account.mfa_enrolled ? 'true' : 'false'}
     >

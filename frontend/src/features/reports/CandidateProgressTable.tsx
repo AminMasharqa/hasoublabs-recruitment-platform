@@ -63,7 +63,7 @@ function ApplicationStatuses({ row }: { readonly row: CandidateProgressRow }) {
     <Stack
       component="ul"
       gap="xs"
-      style={{ listStyle: 'none', margin: 0, padding: 0 }}
+      className="list-reset"
       data-testid={`progress-applications-${row.account_id}`}
     >
       {row.applications.map((application) => (

@@ -64,7 +64,7 @@ export function IllegalTransitionNotice({ jdId, error }: IllegalTransitionNotice
   const unknown = t('jobs:lifecycle.unknownState')
 
   return (
-    <Text size="sm" c="red" role="alert" data-testid="job-illegal-transition">
+    <Text size="sm" c="danger" role="alert" data-testid="job-illegal-transition">
       {t('jobs:lifecycle.illegalTransition', { from: from ?? unknown, to: to ?? unknown })}
     </Text>
   )

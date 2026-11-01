@@ -104,7 +104,7 @@ function errorContent(messages: readonly string[]): ReactNode | undefined {
     return undefined
   }
   return messages.map((message) => (
-    <span key={message} style={{ display: 'block' }}>
+    <span key={message} className="message-line">
       {message}
     </span>
   ))
@@ -263,7 +263,7 @@ export function ReviewForm({
             data-testid={`${idPrefix}-form-violations`}
           >
             {formLevelMessages.map((message) => (
-              <Text key={message} size="sm" c="red">
+              <Text key={message} size="sm" c="danger">
                 {message}
               </Text>
             ))}

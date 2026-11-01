@@ -150,7 +150,7 @@ export function JobsBrowseScreen() {
               component="ul"
               aria-label={t('jobs:browse.resultsLabel')}
               data-testid="jobs-list"
-              style={{ listStyle: 'none', margin: 0, padding: 0 }}
+              className="list-reset"
             >
               <Stack gap="md">
                 {items.map((job) => (

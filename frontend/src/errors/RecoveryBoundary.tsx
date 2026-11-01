@@ -88,7 +88,7 @@ export function RecoveryNotice({ onReload }: RecoveryNoticeProps) {
     <Alert
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       withCloseButton={false}
       title={t('shell:recovery.title')}
       data-testid="recovery-boundary"

@@ -136,7 +136,7 @@ export function ContactableSeniors({ jdId }: ContactableSeniorsProps) {
           component="ul"
           aria-label={t('jobs:contacts.title')}
           data-testid="contactable-seniors-list"
-          style={{ listStyle: 'none', margin: 0, padding: 0 }}
+          className="list-reset"
         >
           <Stack gap="sm">
             {seniors.map((senior) => (

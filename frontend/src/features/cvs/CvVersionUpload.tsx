@@ -129,7 +129,7 @@ export function CvVersionUpload({ variantId }: CvVersionUploadProps) {
         <Alert
           role="status"
           variant="light"
-          color="blue"
+          color="info"
           withCloseButton={false}
           title={t('cvs:upload.acceptedTitle')}
           data-testid="cv-version-upload-accepted"

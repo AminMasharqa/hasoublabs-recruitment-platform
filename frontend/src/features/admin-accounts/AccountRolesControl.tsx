@@ -78,7 +78,7 @@ export function AccountRolesControl({ account }: AccountRolesControlProps) {
 
       {/* AC14: the rule is stated, not merely enacted. */}
       {statedRefusal === null ? null : (
-        <Text id={reasonId} size="sm" c="red" data-testid={`account-roles-refusal-${account.id}`}>
+        <Text id={reasonId} size="sm" c="danger" data-testid={`account-roles-refusal-${account.id}`}>
           {t(`adminAccounts:roles.refusal.${statedRefusal}`)}
         </Text>
       )}

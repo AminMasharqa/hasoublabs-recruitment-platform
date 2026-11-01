@@ -24,8 +24,9 @@
   inset-block-start: 0;
   inset-inline-start: 0;
   z-index: 1000;
-  padding: 0.5rem 0.75rem;
-  border-end-end-radius: 0.25rem;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-end-end-radius: var(--mantine-radius-sm);
+  box-shadow: var(--mantine-shadow-md);
   background: var(--mantine-color-body);
   color: var(--mantine-color-text);
   font: inherit;
@@ -37,8 +38,8 @@
 .shell-skip-link:focus,
 .shell-skip-link:focus-visible {
   transform: translateY(0);
-  outline: 2px solid var(--mantine-color-anchor);
-  outline-offset: 2px;
+  outline: var(--app-stroke-width-focus) solid var(--app-color-stroke-focus);
+  outline-offset: var(--app-stroke-width-focus);
 }
 
 /* Requirement 20 AC12: no transition to suppress, but be explicit about it. */

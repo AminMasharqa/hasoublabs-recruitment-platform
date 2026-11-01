@@ -47,7 +47,7 @@ export function FieldMessages({ messages }: FieldMessagesProps) {
   return (
     <>
       {messages.map((message, index) => (
-        <span key={`${index}-${message}`} style={{ display: 'block' }}>
+        <span key={`${index}-${message}`} className="message-line">
           {message}
         </span>
       ))}
@@ -73,7 +73,7 @@ export function FormLevelMessages({ title, messages, id }: FormLevelMessagesProp
     <Alert
       role="alert"
       variant="light"
-      color="red"
+      color="danger"
       title={title}
       withCloseButton={false}
       data-testid="form-level-messages"
