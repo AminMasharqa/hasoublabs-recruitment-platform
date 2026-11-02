@@ -1856,6 +1856,66 @@ all.
 
 ---
 
+## Bug 28 — restarting OpenBao loses the transit key, so admin login and residency proofs break — **OPEN** (found 2026-11-02)
+
+**Symptom.** After booting the stack, the admin enters a correct OTP and gets
+"This could not be loaded. The server sent a response the application could not
+read." (the message itself is Bug 29). `POST /auth/login` returns 500 with
+`OpenBaoUnavailable: ... 400 Bad Request ... transit/decrypt/hasoub-data-key`.
+
+**Root cause.** Compose runs OpenBao with `server -dev`, which keeps nothing
+across a container restart. `dev.sh` then creates a new transit key under the
+same name and only prints a warning. Everything wrapped by the old key can no
+longer be decrypted. Measured on 2026-11-02: the admin's MFA was enrolled on
+2026-10-28 and the transit key was created on 2026-11-02 at 07:38 UTC.
+
+**Blast radius, measured in the dev database on 2026-11-02:**
+- 1 of 10 accounts has MFA enrolled (the admin).
+- All 9 `residency_proofs` rows were written under the lost key and are
+  unrecoverable. Reading one is expected to fail the same way; not tried.
+
+**Workaround.** `seed_admin.py` (or `./dev.sh --seed-admin`) re-enrols the admin,
+and the authenticator must be set up again from
+`.dev-secrets/admin-mfa-uri.txt`. Applied on 2026-11-02; a scripted login then
+returned 200. This does not restore residency proofs: that needs
+`backend/scripts/wipe_dev_db.sh --yes` and a reseed, which deletes the rest of
+the dev data. Not run.
+
+**Fix options (not decided).**
+- Give OpenBao persistent storage in `docker-compose.yml` (recommended). It also
+  protects residency proofs, but drops dev mode, so `dev.sh` must handle
+  first-time init and unsealing.
+- Have `dev.sh` re-enrol the admin when it creates a new key. This is smaller, but
+  the authenticator must still be set up again and proofs are still lost.
+
+Also, `crypto.py` reports this refusal as "OpenBao unreachable", though OpenBao
+was reachable and answered 400.
+
+---
+
+## Bug 29 — an unhandled 500 has no CORS header, so the real error shows as "could not read" — **OPEN** (found 2026-11-02)
+
+**Symptom.** A server crash reaches the user as `errors:unexpected_response` ("The
+server sent a response the application could not read") rather than
+`errors:internal_server_error` ("Something went wrong"). It also hides the
+`X-Request-ID` support reference. Found through Bug 28.
+
+**Evidence.** With an `Origin: http://localhost:5173` request header, the 500 from
+`POST /auth/login` has a JSON envelope but no `access-control-allow-origin`; a 401
+from the same route has `access-control-allow-origin: *`. A browser refuses a
+cross-origin response without that header, and `frontend/src/api/client.ts` maps
+any transport failure to `unexpected_response`. Measured with a scripted request
+and read from the code; not yet observed in a browser.
+
+**Likely cause, unverified.** The 500 is produced outside the CORS middleware.
+Check the middleware order in `backend/app/main.py` first.
+
+**Fix direction.** Make unhandled 500s carry the CORS headers, with a regression
+test that sends an `Origin` header to a route that raises. The frontend's handling
+of a genuine transport failure is correct and should not change.
+
+---
+
 ## Failure attribution
 
 ### Original run — 34 failures
@@ -1989,6 +2049,9 @@ The other suites:
 7. ~~Bug 5 — needs the history decision recorded in its section before the code
    change is worth making.~~ **Done** (2026-10-06). Accept the break; writers
    hash at ms precision.
+8. Bug 29 — add CORS headers to unhandled 500s, with a regression test. Small,
+   and every later server crash then shows its real message.
+9. Bug 28 — needs a decision on persistent OpenBao storage first; see its section.
 
 Then re-run, in `frontend/`: `npm run typecheck; npm run lint; npm run verify:api;
 npm run test; npm run build; npm run test:a11y; npm run test:e2e`.
