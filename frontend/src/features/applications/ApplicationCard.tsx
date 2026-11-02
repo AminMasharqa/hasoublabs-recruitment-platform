@@ -19,7 +19,7 @@
  * Requirements: 14.9, 14.11, 19.2, 19.10, 19.12, 20.8.
  */
 
-import { Anchor, Group, Paper, Stack, Text, Title } from '@mantine/core'
+import { Anchor, Badge, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -43,13 +43,24 @@ export interface ApplicationFieldProps {
 /** One labelled field of an Application. */
 export function ApplicationField({ label, children, testId }: ApplicationFieldProps) {
   return (
-    <Stack gap={0} data-testid={testId}>
-      <Text size="xs" c="dimmed">
+    <Stack gap={2} data-testid={testId}>
+      <Text size="xs" c="dimmed" tt="uppercase" fw={500} style={{ letterSpacing: '0.04em' }}>
         {label}
       </Text>
-      <Text size="sm">{children}</Text>
+      <Text size="sm" fw={500}>{children}</Text>
     </Stack>
   )
+}
+
+/** Badge color per application status value. Unknown statuses fall back to gray. */
+function statusColor(status: string): string {
+  switch (status) {
+    case 'Submitted': return 'blue'
+    case 'Under Review': return 'yellow'
+    case 'Forwarded to Recruiter': return 'indigo'
+    case 'Closed': return 'gray'
+    default: return 'gray'
+  }
 }
 
 export interface ApplicationCardProps {
@@ -63,13 +74,29 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
   const notStated = t('applications:card.notStated')
 
   return (
-    <Paper withBorder p="md" component="li" data-testid={`application-card-${application.id}`}>
-      <Stack gap="xs">
-        <Title order={3} size="h5" data-testid={`application-title-${application.id}`}>
-          {application.jd_title === '' ? notStated : <BidiText value={application.jd_title} />}
-        </Title>
+    <Paper
+      shadow="xs"
+      p="lg"
+      component="li"
+      className="card-interactive"
+      data-testid={`application-card-${application.id}`}
+    >
+      <Stack gap="sm">
+        <Group justify="space-between" wrap="wrap" gap="xs">
+          <Title order={3} size="h4" fw={700} data-testid={`application-title-${application.id}`}>
+            {application.jd_title === '' ? notStated : <BidiText value={application.jd_title} />}
+          </Title>
+          <Badge
+            color={statusColor(application.status)}
+            variant="light"
+            size="md"
+            data-testid={`application-status-${application.id}`}
+          >
+            {applicationStatusLabel(i18n, application.status)}
+          </Badge>
+        </Group>
 
-        <Group gap="lg" wrap="wrap">
+        <Group gap="xl" wrap="wrap">
           <ApplicationField
             label={t('applications:card.company')}
             testId={`application-company-${application.id}`}
@@ -79,12 +106,6 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
             ) : (
               <BidiText value={application.jd_company} />
             )}
-          </ApplicationField>
-          <ApplicationField
-            label={t('applications:card.status')}
-            testId={`application-status-${application.id}`}
-          >
-            {applicationStatusLabel(i18n, application.status)}
           </ApplicationField>
           <ApplicationField
             label={t('applications:card.submittedAt')}
@@ -98,12 +119,13 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
           component={Link}
           to={candidateApplicationPath(application.id)}
           size="sm"
+          fw={500}
           aria-label={t('applications:card.viewFor', {
             title: application.jd_title === '' ? application.id : application.jd_title,
           })}
           data-testid={`application-detail-link-${application.id}`}
         >
-          {t('applications:card.view')}
+          {t('applications:card.view')} →
         </Anchor>
       </Stack>
     </Paper>

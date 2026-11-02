@@ -41,10 +41,10 @@ export function SeniorJobsScreen() {
     <Container size="md" py="md" data-testid="senior-jobs-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('jobs:senior.title')}
           </Title>
-          <Text c="dimmed">{t('jobs:senior.description')}</Text>
+          <Text c="dimmed" size="md">{t('jobs:senior.description')}</Text>
         </Stack>
 
         <Group gap="sm">

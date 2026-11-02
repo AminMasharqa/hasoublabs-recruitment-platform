@@ -51,11 +51,11 @@ export interface JobFieldProps {
  */
 export function JobField({ label, children, testId }: JobFieldProps) {
   return (
-    <Stack gap={0} data-testid={testId}>
-      <Text size="xs" c="dimmed">
+    <Stack gap={2} data-testid={testId}>
+      <Text size="xs" c="dimmed" tt="uppercase" fw={500} style={{ letterSpacing: '0.04em' }}>
         {label}
       </Text>
-      <Text size="sm">{children}</Text>
+      <Text size="sm" fw={500}>{children}</Text>
     </Stack>
   )
 }
@@ -71,19 +71,26 @@ export function JobCard({ job }: JobCardProps) {
   const notStated = t('jobs:card.notStated')
 
   return (
-    <Paper withBorder p="md" component="li" data-testid={`job-card-${job.id}`}>
-      <Stack gap="xs">
+    <Paper
+      shadow="xs"
+      p="lg"
+      component="li"
+      className="card-interactive"
+      data-testid={`job-card-${job.id}`}
+    >
+      <Stack gap="sm">
         <Group gap="xs" justify="space-between" wrap="wrap">
-          <Title order={3} size="h5" data-testid={`job-title-${job.id}`}>
+          <Title order={3} size="h4" fw={700} data-testid={`job-title-${job.id}`}>
             <BidiText value={job.title} />
           </Title>
           <JobStatusBadge status={job.status} />
         </Group>
 
-        <Group gap="lg" wrap="wrap">
-          <JobField label={t('jobs:card.company')} testId={`job-company-${job.id}`}>
-            <BidiText value={job.company} />
-          </JobField>
+        <Text size="sm" c="dimmed" fw={500} data-testid={`job-company-${job.id}`}>
+          <BidiText value={job.company} />
+        </Text>
+
+        <Group gap="xl" wrap="wrap" mt={4}>
           <JobField label={t('jobs:card.location')} testId={`job-location-${job.id}`}>
             {job.location === null || job.location === '' ? (
               notStated
@@ -114,15 +121,16 @@ export function JobCard({ job }: JobCardProps) {
           </JobField>
         </Group>
 
-        <Group gap="md" wrap="wrap">
+        <Group gap="md" wrap="wrap" mt={4}>
           <Anchor
             component={Link}
             to={jobDetailPath(job.id)}
             size="sm"
+            fw={600}
             aria-label={t('jobs:card.viewFor', { title: job.title })}
             data-testid={`job-detail-link-${job.id}`}
           >
-            {t('jobs:card.view')}
+            {t('jobs:card.view')} →
           </Anchor>
           {/*
             AC7: the same verdict as the detail view, from the same component. The

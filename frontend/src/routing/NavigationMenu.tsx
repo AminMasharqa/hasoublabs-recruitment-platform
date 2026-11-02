@@ -33,8 +33,22 @@
  * Requirements: 8.5, 8.6, 8.7, 8.8.
  */
 
-import { NavLink as MantineNavLink, Stack } from '@mantine/core'
-import { useMemo } from 'react'
+import { Divider, NavLink as MantineNavLink, Stack, Text } from '@mantine/core'
+import {
+  IconBriefcase,
+  IconChartBar,
+  IconClipboardList,
+  IconDownload,
+  IconFile,
+  IconHeartRateMonitor,
+  IconSearch,
+  IconSettings,
+  IconShield,
+  IconStar,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react'
+import { useMemo, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -49,6 +63,31 @@ import {
 
 /** Namespace the labels resolve against. */
 const NAMESPACES = ['shell'] as const
+
+/** Icon per destination id. Unmapped destinations render without an icon. */
+const DESTINATION_ICONS: Readonly<Record<string, ComponentType<{ size?: number; stroke?: number }>>> = {
+  'candidate-profile': IconUser,
+  'candidate-cvs': IconFile,
+  'candidate-applications': IconClipboardList,
+  'senior-profile': IconUser,
+  'senior-jobs': IconBriefcase,
+  'senior-applicants': IconUsers,
+  'senior-reviews': IconStar,
+  jobs: IconSearch,
+  'admin-accounts': IconUsers,
+  'admin-candidates': IconUser,
+  'admin-jobs': IconBriefcase,
+  'admin-applications': IconClipboardList,
+  'admin-reviews': IconStar,
+  'admin-audit': IconShield,
+  'admin-reports': IconChartBar,
+  'admin-exports': IconDownload,
+  account: IconSettings,
+  diagnostics: IconHeartRateMonitor,
+}
+
+/** Destination ids that are shared across all contexts (shown after a divider). */
+const SHARED_DESTINATION_IDS = new Set(['account', 'diagnostics'])
 
 export interface NavigationMenuProps {
   /**
@@ -88,25 +127,50 @@ export function NavigationMenu({
     return null
   }
 
+  const contextItems = visible.filter((d) => !SHARED_DESTINATION_IDS.has(d.id))
+  const sharedItems = visible.filter((d) => SHARED_DESTINATION_IDS.has(d.id))
+
+  const renderItem = (destination: AppDestination) => {
+    const current = isCurrentDestination(pathname, destination)
+    const Icon = DESTINATION_ICONS[destination.id]
+    return (
+      <li key={destination.id}>
+        <MantineNavLink
+          component={Link}
+          to={destination.path}
+          label={
+            <Text size="sm" fw={current ? 600 : 400} inherit>
+              {t(destination.labelKey)}
+            </Text>
+          }
+          leftSection={Icon ? <Icon size={17} stroke={1.6} /> : undefined}
+          active={current}
+          aria-current={current ? 'page' : undefined}
+          onClick={onNavigate}
+          data-destination={destination.id}
+          styles={{
+            root: { borderRadius: 'var(--mantine-radius-md)' },
+          }}
+        />
+      </li>
+    )
+  }
+
   return (
     <nav aria-label={t('shell:nav.label')} data-testid="navigation-menu">
-      <Stack component="ul" gap={2} styles={{ root: { listStyle: 'none', margin: 0, padding: 0 } }}>
-        {visible.map((destination) => {
-          const current = isCurrentDestination(pathname, destination)
-          return (
-            <li key={destination.id}>
-              <MantineNavLink
-                component={Link}
-                to={destination.path}
-                label={t(destination.labelKey)}
-                active={current}
-                aria-current={current ? 'page' : undefined}
-                onClick={onNavigate}
-                data-destination={destination.id}
-              />
-            </li>
-          )
-        })}
+      <Stack gap={4}>
+        <Stack component="ul" gap={2} styles={{ root: { listStyle: 'none', margin: 0, padding: 0 } }}>
+          {contextItems.map(renderItem)}
+        </Stack>
+
+        {sharedItems.length > 0 && (
+          <>
+            <Divider my={4} />
+            <Stack component="ul" gap={2} styles={{ root: { listStyle: 'none', margin: 0, padding: 0 } }}>
+              {sharedItems.map(renderItem)}
+            </Stack>
+          </>
+        )}
       </Stack>
     </nav>
   )

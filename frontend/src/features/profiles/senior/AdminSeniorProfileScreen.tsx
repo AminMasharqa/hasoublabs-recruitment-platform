@@ -76,7 +76,7 @@ export function AdminSeniorProfileView({ profile }: AdminSeniorProfileViewProps)
   return (
     <Stack gap="lg" data-testid="admin-senior-profile">
       <Stack gap="xs">
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('profiles:section.core')}
         </Title>
         <ReadOnlyValue label={t('profiles:field.fullName')} value={profile.full_name} />
@@ -88,7 +88,7 @@ export function AdminSeniorProfileView({ profile }: AdminSeniorProfileViewProps)
       </Stack>
 
       <Stack gap="xs">
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('profiles:senior.contactSection')}
         </Title>
         <Group gap="xs" align="center">
@@ -126,7 +126,7 @@ export function AdminSeniorProfileView({ profile }: AdminSeniorProfileViewProps)
       </Stack>
 
       <Stack gap="xs">
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('profiles:senior.expertiseSection')}
         </Title>
         {profile.expertise_skills.length === 0 ? (
@@ -155,7 +155,7 @@ export function AdminSeniorProfileScreen() {
     <Container size="md" py="md" data-testid="admin-senior-profile-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('profiles:senior.adminTitle')}
           </Title>
           <Text c="dimmed">{t('profiles:senior.adminDescription')}</Text>

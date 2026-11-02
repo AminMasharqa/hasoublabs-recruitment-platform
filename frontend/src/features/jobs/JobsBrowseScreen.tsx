@@ -95,11 +95,11 @@ export function JobsBrowseScreen() {
   return (
     <Container size="lg" py="md" data-testid="jobs-browse-screen">
       <Stack gap="md">
-        <Stack gap={4}>
-          <Title order={1} size="h3">
+        <Stack gap={6}>
+          <Title order={1} size="h2" fw={800}>
             {t('jobs:browse.title')}
           </Title>
-          <Text c="dimmed">{t('jobs:browse.description')}</Text>
+          <Text c="dimmed" size="md">{t('jobs:browse.description')}</Text>
         </Stack>
 
         {/*
@@ -119,7 +119,7 @@ export function JobsBrowseScreen() {
         </Text>
 
         {browse.isPending ? (
-          <LoadingState label={t('jobs:browse.loading')} />
+          <LoadingState label={t('jobs:browse.loading')} skeleton={4} />
         ) : browse.isError ? (
           <>
             <ErrorState

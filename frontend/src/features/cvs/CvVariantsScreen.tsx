@@ -145,7 +145,7 @@ export function CvVariantsScreen() {
     <Container size="md" py="md" data-testid="cv-variants-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('cvs:title')}
           </Title>
           <Text c="dimmed">{t('cvs:intro', { max: MAX_ACTIVE_VARIANTS })}</Text>

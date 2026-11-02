@@ -51,7 +51,7 @@ export function ReviewSubmissionPanel({
   return (
     <Paper withBorder p="md" data-testid="review-submission-panel">
       <Stack gap="sm">
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {correcting === null ? t('reviews:form.title') : t('reviews:correction.title')}
         </Title>
         <Divider />

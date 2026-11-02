@@ -160,7 +160,7 @@ export function DiagnosticsScreen() {
     <Container size="sm" py="md" data-testid="diagnostics-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('shell:diagnostics.title')}
           </Title>
           <Text c="dimmed">{t('shell:diagnostics.description')}</Text>

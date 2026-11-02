@@ -40,7 +40,7 @@ export function PendingSkillsPanel() {
   return (
     <Stack gap="md" data-testid="pending-skills-panel">
       <Stack gap={2}>
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('adminAccounts:pendingSkills.title')}
         </Title>
         <Text size="sm" c="dimmed">

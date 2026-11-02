@@ -297,7 +297,7 @@ export function MfaEnrolmentPanel({ accountId, onVerified }: MfaEnrolmentPanelPr
     <Paper withBorder p="md" data-testid="mfa-enrolment-panel">
       <Stack gap="sm">
         <Stack gap={2}>
-          <Title order={2} size="h5">
+          <Title order={2} size="h4" fw={700}>
             {t('auth:mfa.enrolTitle')}
           </Title>
           <Text size="sm" c="dimmed">

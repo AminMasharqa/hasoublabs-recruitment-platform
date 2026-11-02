@@ -76,10 +76,10 @@ export function SeniorProfileScreen() {
     <Container size="md" py="md" data-testid="senior-profile-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('profiles:senior.title')}
           </Title>
-          <Text c="dimmed">{t('profiles:senior.description')}</Text>
+          <Text c="dimmed" size="md">{t('profiles:senior.description')}</Text>
         </Stack>
 
         {profile.isPending ? (

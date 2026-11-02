@@ -114,7 +114,7 @@ function AdminMfaSection({ accountId }: AdminMfaSectionProps) {
     <Stack gap="md">
       <Paper withBorder p="md" data-testid="account-mfa-state">
         <Stack gap="xs">
-          <Title order={2} size="h5">
+          <Title order={2} size="h4" fw={700}>
             {t('auth:mfa.stateTitle')}
           </Title>
           {own.isPending ? (
@@ -166,10 +166,10 @@ export function AccountScreen() {
     <Container size="sm" py="md" data-testid="account-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('shell:nav.account')}
           </Title>
-          <Text c="dimmed">{t('auth:account.description')}</Text>
+          <Text c="dimmed" size="md">{t('auth:account.description')}</Text>
         </Stack>
 
         {principal === null ? (

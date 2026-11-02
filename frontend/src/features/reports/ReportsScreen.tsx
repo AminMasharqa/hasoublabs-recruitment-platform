@@ -101,10 +101,10 @@ export function ReportsScreen() {
     <Container size="lg" py="md" data-testid="reports-screen">
       <Stack gap="lg">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('reports:title')}
           </Title>
-          <Text c="dimmed">{t('reports:description')}</Text>
+          <Text c="dimmed" size="md">{t('reports:description')}</Text>
         </Stack>
 
         {/*
@@ -123,7 +123,7 @@ export function ReportsScreen() {
         <ExportPanel filters={filters} />
 
         <Stack gap="sm">
-          <Title order={2} size="h4">
+          <Title order={2} size="h4" fw={700}>
             {t('reports:activity.title')}
           </Title>
           {activity.isPending ? (
@@ -147,7 +147,7 @@ export function ReportsScreen() {
         </Stack>
 
         <Stack gap="sm">
-          <Title order={2} size="h4">
+          <Title order={2} size="h4" fw={700}>
             {t('reports:progress.title')}
           </Title>
           <Text size="sm" c="dimmed" data-testid="progress-page-size">

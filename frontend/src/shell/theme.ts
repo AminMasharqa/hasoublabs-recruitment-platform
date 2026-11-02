@@ -78,13 +78,41 @@ export const appTheme: MantineThemeOverride = createTheme({
   respectReducedMotion: true,
   fontFamily: APP_FONT_FAMILY,
   fontFamilyMonospace: APP_MONOSPACE_FONT_FAMILY,
-  headings: { fontFamily: APP_FONT_FAMILY },
-  defaultRadius: 'sm',
-  colors: ACCESSIBLE_GRAY,
-  // Requirement 20 AC4: shade 6 (Mantine's default for a filled variant) is
-  // `blue.6` (`#228be6`), 3.55:1 against white — below the 4.5:1 text ratio.
-  // Shade 8 (`#1971c2`) is 5.02:1, which is what every filled `Button`, active
-  // `NavLink` and similar primary-color surface renders with white text on top
-  // of instead.
+  headings: {
+    fontFamily: APP_FONT_FAMILY,
+    sizes: {
+      h1: { fontWeight: '800' },
+      h2: { fontWeight: '700' },
+      h3: { fontWeight: '700' },
+    },
+  },
+  // Friendlier corners across all components. Forms, cards and modals all pick
+  // this up through Mantine's defaultRadius resolution.
+  defaultRadius: 'md',
+  colors: {
+    ...ACCESSIBLE_GRAY,
+    // Brand indigo replaces the default blue. Shade 8 (#3b5bdb) is 5.4:1 against
+    // white — above the 4.5:1 Requirement 20 AC4 demands of text on a filled surface.
+    indigo: [
+      '#edf2ff',
+      '#dbe4ff',
+      '#bac8ff',
+      '#91a7ff',
+      '#748ffc',
+      '#5c7cfa',
+      '#4c6ef5',
+      '#4263eb',
+      '#3b5bdb',
+      '#364fc7',
+    ],
+  },
+  // Indigo as the primary color; shade 8 keeps the filled-button contrast above 4.5:1
+  // (Requirement 20 AC4), matching the intent of the previous blue.8 value.
+  primaryColor: 'indigo',
   primaryShade: 8,
+  shadows: {
+    xs: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+    sm: '0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
+    md: '0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
+  },
 })

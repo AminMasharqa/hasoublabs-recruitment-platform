@@ -41,7 +41,7 @@ export function SeniorReviewNewScreen() {
     <Container size="md" py="md" data-testid="senior-review-new-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('reviews:form.title')}
           </Title>
           <Text c="dimmed">{t('reviews:form.description')}</Text>

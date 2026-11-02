@@ -90,6 +90,7 @@ services:
   # ── ClamAV — CV malware scanning (Wave B) ──────────────────────────────────
   clamav:
     image: clamav/clamav:latest
+    platform: linux/amd64  # no ARM64 manifest; Rosetta emulation on Apple Silicon
     container_name: hasoub-clamav
     ports:
       - "3310:3310"

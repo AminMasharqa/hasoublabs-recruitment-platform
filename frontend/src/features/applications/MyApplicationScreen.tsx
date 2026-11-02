@@ -47,7 +47,7 @@ function ApplicationDetail({ application }: ApplicationDetailProps) {
 
   return (
     <Stack gap="md" data-testid={`application-detail-${application.id}`}>
-      <Title order={1} size="h3" data-testid="application-detail-title">
+      <Title order={1} size="h2" fw={800} data-testid="application-detail-title">
         {application.jd_title === '' ? notStated : <BidiText value={application.jd_title} />}
       </Title>
 

@@ -64,7 +64,7 @@ export function CvVariantScreen() {
           />
         ) : variant === null ? (
           <Stack gap={4} role="status" data-testid="cv-variant-not-found">
-            <Title order={1} size="h3">
+            <Title order={1} size="h2" fw={800}>
               {t('cvs:detail.notFoundTitle')}
             </Title>
             <Text c="dimmed">{t('cvs:detail.notFound')}</Text>

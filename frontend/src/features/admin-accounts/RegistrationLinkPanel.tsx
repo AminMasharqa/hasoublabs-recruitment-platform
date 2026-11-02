@@ -115,7 +115,7 @@ export function RegistrationLinkPanel() {
     <Paper withBorder p="md" data-testid="registration-link-panel">
       <Stack gap="sm">
         <Stack gap={2}>
-          <Title order={2} size="h5">
+          <Title order={2} size="h4" fw={700}>
             {t('adminAccounts:link.title')}
           </Title>
           <Text size="sm" c="dimmed">

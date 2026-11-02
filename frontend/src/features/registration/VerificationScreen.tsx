@@ -229,10 +229,10 @@ export function VerificationScreen() {
     <Container size="xs" py="md" data-testid="verification-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('registration:verification.title')}
           </Title>
-          <Text c="dimmed">{t('registration:verification.description')}</Text>
+          <Text c="dimmed" size="md">{t('registration:verification.description')}</Text>
         </Stack>
 
         {accountId === null ? (

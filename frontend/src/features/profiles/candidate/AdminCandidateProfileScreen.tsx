@@ -86,7 +86,7 @@ interface SectionProps {
 function ReadOnlySection({ title, emptyLabel, count, children }: SectionProps) {
   return (
     <Stack gap="xs">
-      <Title order={2} size="h5">
+      <Title order={2} size="h4" fw={700}>
         {title}
       </Title>
       {count === 0 ? (
@@ -138,7 +138,7 @@ export function AdminCandidateProfileView({ profile }: AdminCandidateProfileView
       </Group>
 
       <Stack gap="xs">
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('profiles:section.core')}
         </Title>
         <ReadOnlyValue label={t('profiles:field.fullName')} value={profile.full_name} />
@@ -253,7 +253,7 @@ export function AdminCandidateProfileScreen() {
     <Container size="md" py="md" data-testid="admin-candidate-profile-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('profiles:admin.title')}
           </Title>
           <Text c="dimmed">{t('profiles:admin.description')}</Text>

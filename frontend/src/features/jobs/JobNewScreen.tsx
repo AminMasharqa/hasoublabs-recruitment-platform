@@ -161,7 +161,7 @@ export function JobNewScreen() {
         </Anchor>
 
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('jobs:authoring.newTitle')}
           </Title>
           <Text c="dimmed">{t('jobs:authoring.newDescription')}</Text>

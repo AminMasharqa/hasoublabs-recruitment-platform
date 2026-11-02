@@ -86,7 +86,7 @@ export function RegistrationScreen() {
     <Container size="sm" py="md" data-testid="registration-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('registration:title')}
           </Title>
           {role === null ? null : <Text c="dimmed">{t('registration:intro')}</Text>}

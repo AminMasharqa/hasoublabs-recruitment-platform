@@ -66,10 +66,10 @@ export function AdminReviewsScreen() {
     <Container size="md" py="md" data-testid="admin-reviews-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('reviews:admin.title')}
           </Title>
-          <Text c="dimmed">{t('reviews:admin.description')}</Text>
+          <Text c="dimmed" size="md">{t('reviews:admin.description')}</Text>
         </Stack>
 
         <Paper withBorder p="md">

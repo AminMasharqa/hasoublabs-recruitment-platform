@@ -130,10 +130,10 @@ export function AuditScreen() {
     <Container size="xl" py="md" data-testid="audit-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('audit:title')}
           </Title>
-          <Text c="dimmed">{t('audit:description')}</Text>
+          <Text c="dimmed" size="md">{t('audit:description')}</Text>
           {/* AC8, stated where a reader of the screen will see it. */}
           <Text size="sm" c="dimmed" data-testid="audit-read-only-notice">
             {t('audit:readOnly')}

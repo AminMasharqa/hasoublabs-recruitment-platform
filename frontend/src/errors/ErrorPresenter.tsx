@@ -42,7 +42,8 @@
  * produce byte-identical markup and AC4 is checkable by comparing it.
  */
 
-import { Alert, Button, Group, Loader, Paper, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { Alert, Box, Button, Group, Loader, Paper, Skeleton, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { IconInbox, IconSearch } from '@tabler/icons-react'
 import type { TOptions } from 'i18next'
 import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -98,6 +99,11 @@ export interface LoadingStateProps {
   readonly label?: string
   /** Render the label as visible text beside the indicator. */
   readonly showLabel?: boolean
+  /**
+   * Render skeleton card placeholders instead of a spinner. Use on list screens
+   * where the card shape is known, so the layout does not shift when data lands.
+   */
+  readonly skeleton?: number
 }
 
 /**
@@ -108,10 +114,41 @@ export interface LoadingStateProps {
  * accessibility tree otherwise — because the spinner itself conveys nothing
  * (Requirement 20 AC8). Motion is Mantine's `Loader`, which honours the
  * reduced-motion preference through the shared theme (Req 20 AC12).
+ *
+ * When `skeleton` is set, renders that many card-shaped skeleton placeholders
+ * instead of a spinner, which prevents layout shift when results land.
  */
-export function LoadingState({ label, showLabel = false }: LoadingStateProps) {
+export function LoadingState({ label, showLabel = false, skeleton }: LoadingStateProps) {
   const { t } = useTranslation(NAMESPACES)
   const text = label ?? t('shell:state.loading')
+
+  if (skeleton !== undefined && skeleton > 0) {
+    return (
+      <Stack
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        gap="md"
+        data-testid="loading-state"
+      >
+        <VisuallyHidden>{text}</VisuallyHidden>
+        {Array.from({ length: skeleton }, (_, i) => (
+          <Paper key={i} shadow="xs" p="lg" aria-hidden="true">
+            <Stack gap="sm">
+              <Skeleton height={22} width="55%" radius="sm" />
+              <Skeleton height={14} width="30%" radius="sm" />
+              <Group gap="xl">
+                <Skeleton height={40} width={90} radius="sm" />
+                <Skeleton height={40} width={90} radius="sm" />
+                <Skeleton height={40} width={90} radius="sm" />
+              </Group>
+              <Skeleton height={14} width={60} radius="sm" />
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+    )
+  }
 
   return (
     <Group
@@ -120,6 +157,7 @@ export function LoadingState({ label, showLabel = false }: LoadingStateProps) {
       aria-busy="true"
       gap="xs"
       justify="center"
+      py="xl"
       data-testid="loading-state"
     >
       <Loader size="sm" aria-hidden="true" />
@@ -179,15 +217,24 @@ export function EmptyState(props: EmptyStateProps) {
     : t('shell:state.empty', { destination })
 
   return (
-    <Stack gap="xs" role="status" aria-live="polite" data-testid="empty-state">
-      <Text>{message}</Text>
-      {description === undefined ? null : (
-        <Text size="sm" c="dimmed">
-          {description}
-        </Text>
-      )}
+    <Stack gap="md" align="center" ta="center" py="xl" role="status" aria-live="polite" data-testid="empty-state">
+      <Box c="gray.4">
+        {filtered ? (
+          <IconSearch size={48} stroke={1.2} aria-hidden />
+        ) : (
+          <IconInbox size={48} stroke={1.2} aria-hidden />
+        )}
+      </Box>
+      <Stack gap={4}>
+        <Text fw={500}>{message}</Text>
+        {description === undefined ? null : (
+          <Text size="sm" c="dimmed">
+            {description}
+          </Text>
+        )}
+      </Stack>
       {filtered === true || children !== undefined ? (
-        <Group gap="sm">
+        <Group gap="sm" justify="center">
           {filtered === true ? (
             <Button
               type="button"

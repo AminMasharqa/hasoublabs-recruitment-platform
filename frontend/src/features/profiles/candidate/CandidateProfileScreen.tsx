@@ -113,10 +113,10 @@ export function CandidateProfileScreen() {
     <Container size="md" py="md" data-testid="candidate-profile-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('profiles:candidate.title')}
           </Title>
-          <Text c="dimmed">{t('profiles:candidate.description')}</Text>
+          <Text c="dimmed" size="md">{t('profiles:candidate.description')}</Text>
         </Stack>
 
         {profile.isPending ? (

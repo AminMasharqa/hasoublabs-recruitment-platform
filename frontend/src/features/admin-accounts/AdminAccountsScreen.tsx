@@ -117,7 +117,7 @@ function AccountsView() {
       </Text>
 
       {accounts.isPending ? (
-        <LoadingState label={t('adminAccounts:title')} />
+        <LoadingState label={t('adminAccounts:title')} skeleton={4} />
       ) : accounts.isError ? (
         <>
           <ErrorState
@@ -197,10 +197,10 @@ export function AdminAccountsScreen() {
     <Container size="lg" py="md" data-testid="admin-accounts-screen" data-view={view}>
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('adminAccounts:title')}
           </Title>
-          <Text c="dimmed">{t('adminAccounts:description')}</Text>
+          <Text c="dimmed" size="md">{t('adminAccounts:description')}</Text>
         </Stack>
 
         {/*

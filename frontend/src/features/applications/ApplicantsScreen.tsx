@@ -49,10 +49,10 @@ export function ApplicantsScreen() {
     <Container size="md" py="md" data-testid="applicants-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('applications:applicants.title')}
           </Title>
-          <Text c="dimmed">{t('applications:applicants.description')}</Text>
+          <Text c="dimmed" size="md">{t('applications:applicants.description')}</Text>
         </Stack>
 
         {/* The selector belongs to the menu destination only; the per-role address

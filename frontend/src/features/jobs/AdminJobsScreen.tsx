@@ -58,10 +58,10 @@ function AdminJobRow({ job }: AdminJobRowProps) {
   const notStated = t('jobs:card.notStated')
 
   return (
-    <Paper withBorder p="md" component="li" data-testid={`admin-job-${job.id}`}>
+    <Paper shadow="xs" p="lg" component="li" className="card-interactive" data-testid={`admin-job-${job.id}`}>
       <Stack gap="xs">
         <Group gap="xs" justify="space-between" wrap="wrap">
-          <Title order={3} size="h5">
+          <Title order={3} size="h4" fw={700}>
             <BidiText value={job.title} />
           </Title>
           <JobStatusBadge status={job.status} />
@@ -126,10 +126,10 @@ export function AdminJobsScreen() {
     <Container size="lg" py="md" data-testid="admin-jobs-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('jobs:admin.title')}
           </Title>
-          <Text c="dimmed">{t('jobs:admin.description')}</Text>
+          <Text c="dimmed" size="md">{t('jobs:admin.description')}</Text>
         </Stack>
 
         <Group gap="sm" align="flex-end" wrap="wrap">
@@ -162,7 +162,7 @@ export function AdminJobsScreen() {
         </Text>
 
         {listing.isPending ? (
-          <LoadingState label={t('jobs:browse.loading')} />
+          <LoadingState label={t('jobs:browse.loading')} skeleton={4} />
         ) : listing.isError ? (
           <>
             <ErrorState

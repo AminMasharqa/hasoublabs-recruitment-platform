@@ -109,16 +109,16 @@ export function AdminApplicationsScreen() {
     <Container size="md" py="md" data-testid="admin-applications-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('applications:admin.title')}
           </Title>
-          <Text c="dimmed">{t('applications:admin.description')}</Text>
+          <Text c="dimmed" size="md">{t('applications:admin.description')}</Text>
         </Stack>
 
         {/* AC13: the Application the status control acts on. */}
         <Paper withBorder p="md">
           <Stack gap="sm">
-            <Title order={2} size="h5">
+            <Title order={2} size="h4" fw={700}>
               {t('applications:admin.statusSection')}
             </Title>
             <ApplicationSelector
@@ -145,7 +145,7 @@ export function AdminApplicationsScreen() {
         {/* AC12: the applicant list of a named Job_Description. */}
         <Paper withBorder p="md">
           <Stack gap="sm">
-            <Title order={2} size="h5">
+            <Title order={2} size="h4" fw={700}>
               {t('applications:admin.applicantsSection')}
             </Title>
             <JobSelector

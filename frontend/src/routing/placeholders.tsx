@@ -14,7 +14,8 @@
  * Backend_Api expectation.
  */
 
-import { Container, Stack, Text, Title } from '@mantine/core'
+import { Box, Container, Stack, Text, Title } from '@mantine/core'
+import { IconMapPinOff, IconTools } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 
@@ -41,12 +42,17 @@ export function PlaceholderScreen({ labelKey }: PlaceholderScreenProps) {
   const { t } = useTranslation(NAMESPACES)
 
   return (
-    <Container size="sm" py="md" data-testid="placeholder-screen">
-      <Stack gap="xs">
-        <Title order={1} size="h3">
-          {labelKey === undefined ? t('shell:route.placeholder.title') : t(labelKey)}
-        </Title>
-        <Text c="dimmed">{t('shell:route.placeholder.body')}</Text>
+    <Container size="sm" py="xl" data-testid="placeholder-screen">
+      <Stack gap="md" align="center" ta="center">
+        <Box c="dimmed">
+          <IconTools size={48} stroke={1.2} aria-hidden />
+        </Box>
+        <Stack gap={6}>
+          <Title order={1} size="h2" fw={700}>
+            {labelKey === undefined ? t('shell:route.placeholder.title') : t(labelKey)}
+          </Title>
+          <Text c="dimmed" size="md">{t('shell:route.placeholder.body')}</Text>
+        </Stack>
       </Stack>
     </Container>
   )
@@ -64,12 +70,17 @@ export function NotFoundScreen() {
   const { t } = useTranslation(NAMESPACES)
 
   return (
-    <Container size="sm" py="md" data-testid="not-found-screen">
-      <Stack gap="xs">
-        <Title order={1} size="h3">
-          {t('shell:route.notFound.title')}
-        </Title>
-        <Text c="dimmed">{t('shell:route.notFound.body')}</Text>
+    <Container size="sm" py="xl" data-testid="not-found-screen">
+      <Stack gap="md" align="center" ta="center">
+        <Box c="dimmed">
+          <IconMapPinOff size={48} stroke={1.2} aria-hidden />
+        </Box>
+        <Stack gap={6}>
+          <Title order={1} size="h2" fw={700}>
+            {t('shell:route.notFound.title')}
+          </Title>
+          <Text c="dimmed" size="md">{t('shell:route.notFound.body')}</Text>
+        </Stack>
       </Stack>
     </Container>
   )

@@ -196,7 +196,7 @@ export function MfaCodeStep({ credentials, onAuthenticated, onRejected }: MfaCod
       <form onSubmit={(event) => void submit(event)} noValidate data-testid="mfa-code-form">
         <Stack gap="sm">
           <Stack gap={2}>
-            <Title order={2} size="h5">
+            <Title order={2} size="h4" fw={700}>
               {t('auth:mfa.title')}
             </Title>
             <Text size="sm" c="dimmed">

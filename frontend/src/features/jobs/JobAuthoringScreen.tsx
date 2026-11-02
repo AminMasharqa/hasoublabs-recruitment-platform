@@ -106,7 +106,7 @@ function JobAuthoring({ job }: JobAuthoringProps) {
   return (
     <Stack gap="md" data-testid={`job-authoring-${job.id}`}>
       <Group gap="xs" justify="space-between" wrap="wrap">
-        <Title order={1} size="h3" data-testid="job-authoring-title">
+        <Title order={1} size="h2" fw={800} data-testid="job-authoring-title">
           <BidiText value={job.title} />
         </Title>
         <JobStatusBadge status={job.status} />
@@ -146,7 +146,7 @@ function JobAuthoring({ job }: JobAuthoringProps) {
       {/* AC11, and AC15: a `Closed` Job_Description has no edit form at all. */}
       {editable ? (
         <Stack gap="xs">
-          <Title order={2} size="h5">
+          <Title order={2} size="h4" fw={700}>
             {t('jobs:authoring.editTitle')}
           </Title>
           <IllegalTransitionNotice jdId={job.id} error={update.error} />

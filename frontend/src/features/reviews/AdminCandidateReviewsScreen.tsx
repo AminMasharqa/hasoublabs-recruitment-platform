@@ -80,7 +80,7 @@ export function AdminCandidateReviewsScreen() {
     <Container size="md" py="md" data-testid="admin-candidate-reviews-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('reviews:admin.title')}
           </Title>
           <Text c="dimmed">{t('reviews:admin.description')}</Text>

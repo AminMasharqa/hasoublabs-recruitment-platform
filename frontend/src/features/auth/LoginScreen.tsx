@@ -78,7 +78,7 @@
  * Requirements: 4.1, 4.2, 4.12, 5.1.
  */
 
-import { Alert, Button, Container, NativeSelect, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Box, Button, NativeSelect, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -365,14 +365,79 @@ export function LoginScreen() {
           : t('shell:state.errorTitle')
 
   return (
-    <Container size="xs" py="md" data-testid="login-screen">
-      <Stack gap="md">
-        <Stack gap={4}>
-          <Title order={1} size="h3">
-            {t('auth:login.title')}
-          </Title>
-          <Text c="dimmed">{t('auth:login.description')}</Text>
+    <Box
+      data-testid="login-screen"
+      style={{
+        display: 'flex',
+        minHeight: 'calc(100svh - 64px)',
+        margin: 'calc(-1 * var(--mantine-spacing-md))',
+      }}
+    >
+      {/* Brand panel — hidden on narrow viewports */}
+      <Box
+        visibleFrom="sm"
+        style={{
+          flex: '0 0 420px',
+          background: 'linear-gradient(160deg, var(--mantine-color-indigo-8) 0%, var(--mantine-color-indigo-9) 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          padding: '3rem',
+          gap: '1.5rem',
+        }}
+      >
+        <Box
+          style={{
+            width: '3.5rem',
+            height: '3.5rem',
+            borderRadius: '0.875rem',
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.25rem',
+            fontWeight: 800,
+            color: '#fff',
+            letterSpacing: '-0.02em',
+          }}
+          aria-hidden
+        >
+          HL
+        </Box>
+        <Stack gap={8}>
+          <Text fw={800} size="xl" c="white">
+            {t('shell:app.name')}
+          </Text>
+          <Text size="lg" style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+            {t('shell:app.tagline')}
+          </Text>
         </Stack>
+      </Box>
+
+      {/* Form panel */}
+      <Box
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'var(--mantine-spacing-xl)',
+          backgroundColor: 'var(--mantine-color-gray-0)',
+        }}
+      >
+        <Paper
+          shadow="sm"
+          p="xl"
+          style={{ width: '100%', maxWidth: '420px' }}
+        >
+          <Stack gap="md">
+            <Stack gap={6}>
+              <Title order={1} size="h2" fw={800}>
+                {t('auth:login.title')}
+              </Title>
+              <Text c="dimmed" size="md">{t('auth:login.description')}</Text>
+            </Stack>
 
         {/* Req 4 AC7: the session-expired notice, announced without moving focus. */}
         {sessionExpired ? (
@@ -504,7 +569,9 @@ export function LoginScreen() {
         {outcome?.kind === 'failed' ? <ErrorPresenter error={outcome.failure} /> : null}
 
         <LiveAnnouncement message={announcement} assertive={outcome !== null} />
-      </Stack>
-    </Container>
+          </Stack>
+        </Paper>
+      </Box>
+    </Box>
   )
 }

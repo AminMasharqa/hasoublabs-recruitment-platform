@@ -45,10 +45,10 @@ export function ExportsScreen() {
     <Container size="md" py="md" data-testid="exports-screen">
       <Stack gap="lg">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('reports:exports.title')}
           </Title>
-          <Text c="dimmed">{t('reports:exports.description')}</Text>
+          <Text c="dimmed" size="md">{t('reports:exports.description')}</Text>
         </Stack>
 
         <ReportFilterControls

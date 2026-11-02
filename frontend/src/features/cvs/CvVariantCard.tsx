@@ -50,7 +50,7 @@ export function CvVariantCard({ variant, variants, withDetailLink = true }: CvVa
     <Paper withBorder p="md" data-testid={`variant-card-${variant.id}`}>
       <Stack gap="xs">
         <Group gap="xs" justify="space-between" wrap="wrap">
-          <Title order={3} size="h5" data-testid={`variant-name-${variant.id}`}>
+          <Title order={3} size="h4" fw={700} data-testid={`variant-name-${variant.id}`}>
             <BidiText value={variant.name} />
           </Title>
           <Group gap="xs">

@@ -82,7 +82,7 @@ export function ChainVerifyPanel() {
     <Paper withBorder p="md" data-testid="audit-chain-verify">
       <Stack gap="sm">
         <Stack gap={4}>
-          <Title order={2} size="h5">
+          <Title order={2} size="h4" fw={700}>
             {t('audit:verify.title')}
           </Title>
           <Text size="sm" c="dimmed">

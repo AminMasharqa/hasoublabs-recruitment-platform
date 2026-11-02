@@ -55,7 +55,7 @@ function RequiredSkills({ ids }: RequiredSkillsProps) {
 
   return (
     <Stack gap={4} data-testid="job-required-skills">
-      <Title order={2} size="h5">
+      <Title order={2} size="h4" fw={700}>
         {t('jobs:detail.requiredSkills')}
       </Title>
 
@@ -104,7 +104,7 @@ function JobDetail({ job }: JobDetailProps) {
   return (
     <Stack gap="md" data-testid={`job-detail-${job.id}`}>
       <Group gap="xs" justify="space-between" wrap="wrap">
-        <Title order={1} size="h3" data-testid="job-detail-title">
+        <Title order={1} size="h2" fw={800} data-testid="job-detail-title">
           <BidiText value={job.title} />
         </Title>
         <JobStatusBadge status={job.status} />
@@ -144,7 +144,7 @@ function JobDetail({ job }: JobDetailProps) {
       </Group>
 
       <Stack gap={4}>
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('jobs:detail.description')}
         </Title>
         {job.description === null || job.description === '' ? (
@@ -163,7 +163,7 @@ function JobDetail({ job }: JobDetailProps) {
       <RequiredSkills ids={job.required_skill_ids} />
 
       <Stack gap={4}>
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('jobs:detail.applicationChannel')}
         </Title>
         <Text size="sm" data-testid="job-detail-application-channel">
@@ -185,7 +185,7 @@ function JobDetail({ job }: JobDetailProps) {
       </Stack>
 
       <Stack gap={4}>
-        <Title order={2} size="h5">
+        <Title order={2} size="h4" fw={700}>
           {t('jobs:detail.timestamps')}
         </Title>
         <Group gap="lg" wrap="wrap">

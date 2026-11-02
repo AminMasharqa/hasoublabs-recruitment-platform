@@ -112,7 +112,7 @@ export function ContactableSeniors({ jdId }: ContactableSeniorsProps) {
 
   return (
     <Stack gap="xs" data-testid="contactable-seniors">
-      <Title order={2} size="h5">
+      <Title order={2} size="h4" fw={700}>
         {t('jobs:contacts.title')}
       </Title>
 

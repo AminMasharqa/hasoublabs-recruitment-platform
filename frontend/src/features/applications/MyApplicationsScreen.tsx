@@ -63,10 +63,10 @@ export function MyApplicationsScreen() {
     <Container size="md" py="md" data-testid="my-applications-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('applications:mine.title')}
           </Title>
-          <Text c="dimmed">{t('applications:mine.description')}</Text>
+          <Text c="dimmed" size="md">{t('applications:mine.description')}</Text>
         </Stack>
 
         <Text size="sm" c="dimmed" data-testid="applications-page-size">
@@ -76,7 +76,7 @@ export function MyApplicationsScreen() {
         </Text>
 
         {applications.isPending ? (
-          <LoadingState label={t('applications:mine.loading')} />
+          <LoadingState label={t('applications:mine.loading')} skeleton={4} />
         ) : applications.isError ? (
           <>
             <ErrorState

@@ -64,8 +64,10 @@
 
 import {
   AppShell as MantineAppShell,
+  Box,
   Burger,
   Button,
+  Divider,
   Group,
   MantineProvider,
   Text,
@@ -112,7 +114,7 @@ const NAMESPACES = ['shell'] as const
 export const MAIN_CONTENT_ID = 'main-content'
 
 /** Header height in px, shared by the layout and the navbar offset. */
-const HEADER_HEIGHT = 56
+const HEADER_HEIGHT = 64
 
 /** Navbar width in px on viewports at or above the collapse breakpoint. */
 const NAVBAR_WIDTH = 260
@@ -225,8 +227,14 @@ export function AppShellLayout({
             : undefined
         }
         padding="md"
+        styles={{
+          main: { backgroundColor: 'var(--mantine-color-gray-0)' },
+          navbar: { borderInlineEnd: '1px solid var(--mantine-color-gray-2)' },
+        }}
       >
-        <MantineAppShell.Header>
+        <MantineAppShell.Header
+          style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}
+        >
           <Group h="100%" px="md" gap="sm" justify="space-between" wrap="nowrap">
             <Group gap="sm" wrap="nowrap">
               {hasMenu ? (
@@ -241,14 +249,20 @@ export function AppShellLayout({
                   data-testid="navigation-toggle"
                 />
               ) : null}
-              <Text component="span" fw={600} className="shell-brand">
-                {t('shell:app.name')}
-              </Text>
+              <Group gap="xs" wrap="nowrap">
+                <Box component="span" className="shell-logo-mark" aria-hidden>
+                  HL
+                </Box>
+                <Text component="span" fw={700} size="sm" className="shell-brand" c="dark.8">
+                  {t('shell:app.name')}
+                </Text>
+              </Group>
             </Group>
             <Group gap="xs" wrap="nowrap">
               {/* Req 19 AC5 and Req 8 AC10–AC12; both default to their own control. */}
               {localeControl}
               {contextSwitch}
+              <Divider orientation="vertical" />
               <SignOutControl />
             </Group>
           </Group>

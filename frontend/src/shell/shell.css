@@ -65,3 +65,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Brand logo mark: a rounded square with the primary color holding the initials. */
+.shell-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--mantine-color-indigo-8);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Subtle page-level background so white cards read as elevated surfaces. */
+.shell-page-bg {
+  background-color: var(--mantine-color-gray-0);
+  min-block-size: 100svh;
+}
+
+/* Hover elevation for interactive list cards (JobCard, ApplicationCard). */
+.card-interactive {
+  transition: box-shadow 150ms ease;
+}
+
+.card-interactive:hover {
+  box-shadow: var(--mantine-shadow-sm) !important;
+}

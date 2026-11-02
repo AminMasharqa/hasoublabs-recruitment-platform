@@ -88,7 +88,7 @@ export function StatusNoticeScreen() {
     <Container size="sm" py="md" data-testid="status-notice-screen">
       <Stack gap="md">
         <Stack gap={4}>
-          <Title order={1} size="h3">
+          <Title order={1} size="h2" fw={800}>
             {t('onboarding:title')}
           </Title>
           <Text c="dimmed">{t('onboarding:intro')}</Text>
