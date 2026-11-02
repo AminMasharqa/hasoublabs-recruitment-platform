@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field, PostgresDsn, RedisDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     jwt_access_token_ttl_seconds: int = 1800
     jwt_refresh_token_ttl_seconds: int = 604800
     mfa_issuer: str = "HasoubLabs"
+    # Whether sign-in asks an enrolled account for its OTP. Turned off only to ease
+    # local development and tests; `_mfa_required_outside_development` enforces that.
+    mfa_required: bool = True
     deny_floor_ms: int = 120
     password_min_length: int = 10
     password_max_length: int = 128
@@ -89,6 +92,13 @@ class Settings(BaseSettings):
             msg = "APP_SECRET_KEY must be at least 32 characters"
             raise ValueError(msg)
         return v
+
+    @model_validator(mode="after")
+    def _mfa_required_outside_development(self) -> Settings:
+        if not self.mfa_required and self.app_env != "development":
+            msg = "MFA_REQUIRED=false is only allowed when APP_ENV=development"
+            raise ValueError(msg)
+        return self
 
     @property
     def is_production(self) -> bool:
