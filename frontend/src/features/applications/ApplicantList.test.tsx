@@ -32,6 +32,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ApiClient, ApiSuccess } from '../../api/client'
 import { createI18n } from '../../i18n'
 import { AppServicesContext, type AppServices } from '../../shell/appServices'
+import { visibleBodyText } from '../../test/visibleText'
 
 import { ApplicantList } from './ApplicantList'
 import { APPLICANTS_PATH } from './applicationsApi'
@@ -183,7 +184,7 @@ describe('an Applicant_Card (Req 14 AC12)', () => {
     mount(backend(cards()).api)
 
     await screen.findByTestId('applicant-card-0')
-    const surface = document.body.textContent ?? ''
+    const surface = visibleBodyText()
 
     // Not just absent from the card: absent from the whole rendered surface, so a
     // member smuggled into a title, a label or an announcement fails too.

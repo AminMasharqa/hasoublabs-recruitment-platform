@@ -27,6 +27,7 @@ import { LANDING_PATHS, LOGIN_PATH, STATUS_NOTICE_PATH } from '../../routing/pat
 import { clearSessionEnd } from '../../session/sessionEndNotice'
 import { createAppRuntime, resetSharedAppRuntime, type AppRuntime } from '../../shell/appRuntime'
 import { AppShell, AppShellLayout } from '../../shell/AppShell'
+import { visibleBodyText } from '../../test/visibleText'
 
 import { StatusNoticeScreen } from '../onboarding/StatusNoticeScreen'
 
@@ -309,7 +310,7 @@ describe('a refused sign-in (AC12)', () => {
     await signIn()
 
     const notice = await screen.findByTestId('login-rejected')
-    const rendered = document.body.textContent ?? ''
+    const rendered = visibleBodyText()
     expect(rendered).not.toContain('pending approval')
     expect(rendered).not.toContain('PendingApproval')
     expect(rendered).not.toContain('req-abc')

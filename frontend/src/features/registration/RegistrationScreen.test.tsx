@@ -19,6 +19,7 @@ import { registrationPath, ROUTE_PATHS } from '../../routing/paths'
 import { createAppRuntime, resetSharedAppRuntime, type AppRuntime } from '../../shell/appRuntime'
 import { AppShell, AppShellLayout } from '../../shell/AppShell'
 import { SCREEN_ELEMENTS } from '../../shell/screenElements'
+import { visibleBodyText } from '../../test/visibleText'
 
 // ── The stub Backend_Api ──────────────────────────────────────────────────────
 
@@ -211,7 +212,7 @@ describe('validating the Registration_Link (AC1)', () => {
     expect(screen.queryByTestId('registration-submit')).toBeNull()
     // Nothing about the refusal is echoed back: not the wording, not the
     // Support_Reference. A bad link tells the user only what they already know.
-    const rendered = document.body.textContent ?? ''
+    const rendered = visibleBodyText()
     expect(rendered).not.toContain('server wording')
     expect(rendered).not.toContain('req-abc')
     expect(registrationRequests()).toHaveLength(0)
@@ -313,8 +314,8 @@ describe('submitting the form', () => {
     const conflict = await screen.findByTestId('registration-email-conflict')
     expect(conflict).toHaveTextContent('An account already exists for this email address.')
     // Neither the envelope message nor its details reach the screen.
-    expect(document.body.textContent).not.toContain('Approved')
-    expect(document.body.textContent).not.toContain('42')
+    expect(visibleBodyText()).not.toContain('Approved')
+    expect(visibleBodyText()).not.toContain('42')
     // The entered values are retained (AC14).
     expect(screen.getByLabelText(/^Full name/)).toHaveValue('Dana Cohen')
   })
@@ -377,7 +378,7 @@ describe('submitting the form', () => {
       // No Error_Presenter surface either: the conflict is not accompanied by the
       // envelope's message, its details or its Support_Reference.
       expect(screen.queryByTestId('error-state')).toBeNull()
-      const rendered = document.body.textContent ?? ''
+      const rendered = visibleBodyText()
       expect(rendered).not.toContain('Approved')
       expect(rendered).not.toContain('42')
       expect(rendered).not.toContain('req-abc')

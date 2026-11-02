@@ -44,6 +44,10 @@ import type { ExtractionDraftDTO } from './extraction'
 import { JobNewScreen } from './JobNewScreen'
 import type { JobDescription } from './jobsApi'
 
+// These journeys type character by character, which exceeds the 5 s default when the
+// full suite is competing for CPU. The file takes about 6 s in total on its own.
+vi.setConfig({ testTimeout: 30_000 })
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 /** Enough text to satisfy the `POST /jobs/extract:text` bounds of AC4. */

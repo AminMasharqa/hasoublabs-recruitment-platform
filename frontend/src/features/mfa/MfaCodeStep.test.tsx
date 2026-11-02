@@ -30,6 +30,7 @@ import { LANDING_PATHS, LOGIN_PATH } from '../../routing/paths'
 import { clearSessionEnd } from '../../session/sessionEndNotice'
 import { createAppRuntime, resetSharedAppRuntime, type AppRuntime } from '../../shell/appRuntime'
 import { AppShell, AppShellLayout } from '../../shell/AppShell'
+import { visibleBodyText } from '../../test/visibleText'
 import { LoginScreen } from '../auth/LoginScreen'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -238,7 +239,7 @@ describe('a code the Backend_Api does not accept (AC3)', () => {
     // wording (Requirement 19 AC5).
     expect(refused).toHaveTextContent('That authenticator code is incorrect.')
     expect(refused).toHaveAttribute('role', 'alert')
-    expect(document.body.textContent ?? '').not.toContain('server wording')
+    expect(visibleBodyText()).not.toContain('server wording')
 
     // The step is still the screen, with an empty input ready for the next code.
     expect(screen.getByTestId('mfa-code-step')).toBeInTheDocument()
