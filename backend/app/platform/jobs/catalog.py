@@ -28,6 +28,7 @@ class JobName(StrEnum):
     GENERATE_EXPORT = "generate_export"
     APPLY_RETENTION_POLICY = "apply_retention_policy"
     REFRESH_REPORT_ROLLUPS = "refresh_report_rollups"
+    COLLECT_JOBS_FOR_SOURCE = "collect_jobs_for_source"
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +106,12 @@ SCHEDULES: Final[tuple[Schedule, ...]] = (
         requirement="R28",
         cron={"minute": 20},
     ),
+    Schedule(
+        job=JobName.COLLECT_JOBS_FOR_SOURCE,
+        description="Collect jobs from a single ATS source",
+        requirement="R23",
+        interval_seconds=21600,
+    ),
 )
 
 SCHEDULES_BY_JOB: Final[dict[JobName, Schedule]] = {
@@ -132,5 +139,6 @@ SCHEDULES_BY_JOB: Final[dict[JobName, Schedule]] = {
 UNIMPLEMENTED_JOBS: Final[frozenset[JobName]] = frozenset(
     {
         JobName.APPLY_RETENTION_POLICY,
+        JobName.COLLECT_JOBS_FOR_SOURCE,
     }
 )
