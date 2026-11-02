@@ -139,6 +139,16 @@ async def create_run(
     return run
 
 
+async def get_run(
+    session: AsyncSession,
+    run_id: uuid.UUID,
+) -> JobCollectionRun | None:
+    """Fetch a single JobCollectionRun by id."""
+    stmt = select(JobCollectionRun).where(JobCollectionRun.id == run_id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def finish_run(
     session: AsyncSession,
     run: JobCollectionRun,
@@ -287,6 +297,7 @@ __all__ = [
     "external_url_exists",
     "finish_run",
     "get_flag",
+    "get_run",
     "get_source",
     "get_source_by_type_slug",
     "list_flags",
