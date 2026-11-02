@@ -2,7 +2,7 @@
  * The application's baseline stylesheet, loaded after Mantine's own.
  *
  * Intentionally minimal. Mantine owns typography, colour, spacing and every
- * component style through the shared theme (`src/shell/theme.ts`), so this file
+ * component style through the shared theme (`src/theme/theme.ts`), so this file
  * carries only what no component can express: the document- and root-level box
  * model the shell fills.
  *

@@ -38,8 +38,8 @@
 .shell-skip-link:focus,
 .shell-skip-link:focus-visible {
   transform: translateY(0);
-  outline: var(--app-stroke-width-focus) solid var(--app-color-stroke-focus);
-  outline-offset: var(--app-stroke-width-focus);
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
 }
 
 /* Requirement 20 AC12: no transition to suppress, but be explicit about it. */

@@ -1,0 +1,200 @@
+/*
+ * Component styling the theme object cannot express. Loaded after Mantine's
+ * stylesheet (`main.tsx`).
+ *
+ * Every value is a token: a Mantine variable or an `--app-*` variable from
+ * `cssVariablesResolver.ts`. Selectors use Mantine's static class names, part of
+ * its public styles API. Directional values use logical properties
+ * (`src/i18n/direction.css`).
+ */
+
+/* The page behind the surfaces; see `cssVariablesResolver.ts`. */
+body {
+  background-color: var(--app-canvas);
+}
+
+/*
+ * The primary action's glow. Other button colours stay flat. Mantine sets no
+ * `data-variant` on a button left at its default, filled variant.
+ */
+.app-button-primary:is(:not([data-variant]), [data-variant='filled']):not(:disabled):not([data-disabled]) {
+  box-shadow: var(--app-shadow-glow-primary);
+}
+
+/*
+ * Inputs: a soft fill at rest, then the surface colour and a teal ring on focus.
+ * Mantine's own error and disabled styling is left alone.
+ */
+.mantine-Input-input:not(:disabled):not([data-disabled]) {
+  background-color: var(--app-input-bg);
+}
+
+.mantine-Input-input[data-variant='default']:not([data-error]):not(:disabled):not([data-disabled]) {
+  border-color: var(--app-border-control);
+}
+
+.mantine-Input-input:not(:disabled):not([data-disabled]):is(:focus, :focus-within) {
+  background-color: var(--mantine-color-body);
+}
+
+.mantine-Input-input[data-variant='default']:not([data-error]):not(:disabled):not([data-disabled]):is(:focus, :focus-within) {
+  border-color: var(--app-input-focus-border);
+  box-shadow: var(--app-focus-ring);
+}
+
+.mantine-InputWrapper-label {
+  margin-block-end: var(--mantine-spacing-xs);
+  color: var(--app-text-muted);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 800;
+}
+
+.mantine-InputWrapper-required {
+  color: var(--mantine-color-error);
+}
+
+/* Checkboxes and radios: the empty boundary needs 3:1 too (WCAG 1.4.11). */
+.mantine-Checkbox-input:not(:checked):not([data-indeterminate]):not(:disabled):not([data-error]),
+.mantine-Radio-radio:not(:checked):not(:disabled):not([data-error]) {
+  border-color: var(--app-border-control);
+}
+
+/*
+ * The navbar. The active item carries a bar on its inline-start edge, so the current
+ * location is not conveyed by colour alone. In the admin area it also gets the
+ * teal-to-purple wash, which runs from the inline-start edge in either direction.
+ */
+.mantine-AppShell-navbar {
+  background-color: var(--app-sidebar);
+}
+
+.mantine-NavLink-root {
+  position: relative;
+}
+
+.mantine-NavLink-root[data-active]::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 25%;
+  inline-size: 3px;
+  border-radius: var(--mantine-radius-xs);
+  background-color: var(--mantine-primary-color-filled);
+}
+
+[data-mantine-color-scheme='dark'] .mantine-NavLink-root[data-active] {
+  --app-nav-wash: color-mix(in srgb, var(--mantine-color-teal-5) 15%, transparent),
+    color-mix(in srgb, var(--mantine-color-purple-5) 5%, transparent);
+
+  background: linear-gradient(to right, var(--app-nav-wash));
+  color: var(--mantine-color-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mantine-color-teal-5) 25%, transparent);
+}
+
+[dir='rtl'][data-mantine-color-scheme='dark'] .mantine-NavLink-root[data-active] {
+  background: linear-gradient(to left, var(--app-nav-wash));
+}
+
+/* Message bars outline their tint in the same hue. */
+.mantine-Alert-root[data-variant='light'] {
+  border: 1px solid color-mix(in srgb, var(--alert-color) 25%, transparent);
+}
+
+.mantine-Alert-title {
+  font-weight: 800;
+}
+
+/* Headings on the light scheme use the brand's ink rather than plain text. */
+.mantine-Title-root {
+  color: var(--app-ink);
+}
+
+/* Touch targets on phone widths (MASTER.md: 44px minimum). */
+@media (max-width: 48em) {
+  .mantine-Button-root,
+  .mantine-Input-input {
+    min-block-size: 44px;
+  }
+}
+
+/*
+ * Senior: purple in place of teal. Mantine derives every primary state from the
+ * `brand` shades, so re-pointing them recolours buttons, links, selection and the focus
+ * ring together, including inside dialogs. Shade 7 is brand purple, the shade that
+ * carries white text. The extra attribute outranks Mantine's own root variables.
+ */
+:root[data-app-context='senior'][data-mantine-color-scheme] {
+  --mantine-color-brand-0: var(--mantine-color-purple-0);
+  --mantine-color-brand-1: var(--mantine-color-purple-1);
+  --mantine-color-brand-2: var(--mantine-color-purple-2);
+  --mantine-color-brand-3: var(--mantine-color-purple-3);
+  --mantine-color-brand-4: var(--mantine-color-purple-4);
+  --mantine-color-brand-5: var(--mantine-color-purple-5);
+  --mantine-color-brand-6: var(--mantine-color-purple-5);
+  --mantine-color-brand-7: var(--mantine-color-purple-6);
+  --mantine-color-brand-8: var(--mantine-color-purple-7);
+  --mantine-color-brand-9: var(--mantine-color-purple-8);
+  --mantine-color-brand-outline-hover: color-mix(in srgb, var(--mantine-color-purple-6) 5%, transparent);
+  --mantine-color-anchor: var(--mantine-color-purple-6);
+  --app-input-focus-border: var(--mantine-color-purple-6);
+  --app-focus-ring: 0 0 0 4px color-mix(in srgb, var(--mantine-color-purple-6) 12%, transparent);
+  --app-shadow-glow-primary: 0 6px 14px color-mix(in srgb, var(--mantine-color-purple-6) 35%, transparent);
+}
+
+/* Candidate: buttons stay teal, and amber marks where you are in the menu. */
+[data-app-context='candidate'] .mantine-NavLink-root[data-active],
+[data-app-context='candidate'] .mantine-NavLink-root[data-active]:hover {
+  background-color: var(--mantine-color-amber-1);
+  color: var(--mantine-color-amber-8);
+}
+
+[data-app-context='candidate'] .mantine-NavLink-root[data-active]::before {
+  background-color: var(--mantine-color-amber-7);
+}
+
+/*
+ * The role's header band. The controls on it stay readable through scoped variables:
+ * status text, error text and the focus ring turn white, a subtle button darkens the
+ * band on hover rather than lightening it, and the language menu keeps its light fill.
+ */
+[data-app-context='senior'] .mantine-AppShell-header {
+  --app-band: var(--app-gradient-senior);
+}
+
+[data-app-context='candidate'] .mantine-AppShell-header {
+  --app-band: var(--app-gradient-candidate);
+}
+
+:is([data-app-context='senior'], [data-app-context='candidate']) .mantine-AppShell-header {
+  --mantine-color-dimmed: var(--mantine-color-white);
+  --mantine-color-danger-text: var(--mantine-color-white);
+  --mantine-primary-color-filled: var(--mantine-color-white);
+
+  background: var(--app-band);
+  border-block-end-color: transparent;
+  color: var(--mantine-color-white);
+}
+
+/* Mantine sets the icon's colour on the icon itself, so it has to be overridden there. */
+:is([data-app-context='senior'], [data-app-context='candidate'])
+  .mantine-AppShell-header
+  .mantine-Burger-root {
+  --burger-color: var(--mantine-color-white);
+}
+
+:is([data-app-context='senior'], [data-app-context='candidate'])
+  .mantine-AppShell-header
+  .mantine-Button-root[data-variant='subtle'] {
+  color: var(--mantine-color-white);
+}
+
+:is([data-app-context='senior'], [data-app-context='candidate'])
+  .mantine-AppShell-header
+  .mantine-Button-root[data-variant='subtle']:hover {
+  background-color: color-mix(in srgb, var(--mantine-color-black) 20%, transparent);
+}
+
+/* Tables: subtle row dividers in both schemes. */
+.mantine-Table-table {
+  --table-border-color: var(--app-border);
+}
