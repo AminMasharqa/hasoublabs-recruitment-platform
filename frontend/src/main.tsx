@@ -2,7 +2,7 @@
  * The DOM entry point.
  *
  * Style import order is load-bearing: Mantine's own stylesheet first, then the
- * application's baseline, then the Fluent 2 component refinements, so an
+ * application's baseline, then the theme's component styling, so an
  * application rule always wins over the library default it overrides
  * (Requirement 1 AC2).
  *
@@ -11,9 +11,11 @@
  * uninitialized instance regardless of which entry point mounted it.
  */
 
+import '@fontsource-variable/cairo'
+import '@fontsource-variable/noto-sans-hebrew'
 import '@mantine/core/styles.css'
 import './index.css'
-import './shell/fluent.css'
+import './theme/theme.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

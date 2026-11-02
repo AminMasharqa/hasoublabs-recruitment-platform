@@ -91,7 +91,9 @@ import { sharedAppRuntime, type AppRuntime } from './appRuntime'
 import { ContextSwitch } from './ContextSwitch'
 import { LocaleControl } from './LocaleControl'
 import { SCREEN_ELEMENTS } from './screenElements'
-import { appCssVariablesResolver, appTheme } from './theme'
+import { contextSchemeManager, useContextAppearance } from '../theme/colorScheme'
+import { appCssVariablesResolver } from '../theme/cssVariablesResolver'
+import { appTheme } from '../theme/theme'
 
 import './shell.css'
 
@@ -192,6 +194,7 @@ export function AppShellLayout({
 }: AppShellLayoutProps) {
   const location = useLocation()
   const subject = useAccessSubject()
+  useContextAppearance(subject?.act ?? null)
   const { t } = useTranslation(NAMESPACES)
   const [navOpened, { toggle: toggleNav, close: closeNav }] = useDisclosure(false)
 
@@ -312,14 +315,11 @@ export function AppShell({ runtime }: AppShellProps) {
 
   return (
     <DirectionProvider>
-      {/*
-       * `defaultColorScheme="auto"` follows the operating system's light/dark
-       * preference; both schemes are defined by the Fluent tokens in `theme.ts`.
-       */}
       <MantineProvider
         theme={appTheme}
         cssVariablesResolver={appCssVariablesResolver}
-        defaultColorScheme="auto"
+        colorSchemeManager={contextSchemeManager}
+        defaultColorScheme="light"
       >
         <QueryClientProvider client={active.queryClient}>
           <SessionProvider manager={active.session}>

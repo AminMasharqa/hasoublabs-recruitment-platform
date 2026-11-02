@@ -33,7 +33,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ApiClient, ApiSuccess } from '../../api/client'
 import { createI18n } from '../../i18n'
 import { AppServicesContext, type AppServices } from '../../shell/appServices'
-import { appTheme } from '../../shell/theme'
+import { appTheme } from '../../theme/theme'
 
 import { CvVariantActions } from './CvVariantActions'
 import type { CvVariant } from './variantRules'

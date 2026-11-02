@@ -17,7 +17,7 @@
  *   is what the ContextSwitch control of Requirement 8 AC11 will use.
  */
 
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -148,6 +148,116 @@ describe('AppShell chrome', () => {
     expect(within(menu).queryByText('Accounts')).not.toBeInTheDocument()
     expect(screen.getByTestId('sign-out')).toBeInTheDocument()
     expect(screen.getByTestId('navigation-toggle')).toBeInTheDocument()
+  })
+})
+
+// ── The colour scheme ─────────────────────────────────────────────────────────
+
+describe('the colour scheme', () => {
+  function currentScheme(): string | null {
+    return document.documentElement.getAttribute('data-mantine-color-scheme')
+  }
+
+  it.each(['/admin/accounts', '/account', '/diagnostics'])(
+    'renders %s dark for an Administrator, inside the admin area or not',
+    async (path) => {
+      window.history.replaceState(null, '', path)
+      const runtime = buildRuntime()
+      runtime.session.login({
+        accessToken: accessToken({ roles: ['ADMIN'], act: 'ADMIN' }),
+        refreshToken: 'refresh-1',
+      })
+
+      render(<AppShell runtime={runtime} />)
+
+      await screen.findByTestId('sign-out')
+      await waitFor(() => {
+        expect(currentScheme()).toBe('dark')
+      })
+    },
+  )
+
+  it.each(['/account', '/jobs'])('renders %s light for a Candidate', async (path) => {
+    window.history.replaceState(null, '', path)
+    const runtime = buildRuntime()
+    signIn(runtime)
+
+    render(<AppShell runtime={runtime} />)
+
+    await screen.findByTestId('sign-out')
+    await waitFor(() => {
+      expect(currentScheme()).toBe('light')
+    })
+  })
+
+  it.each([
+    ['ADMIN', 'admin'],
+    ['CANDIDATE', 'candidate'],
+    ['SENIOR', 'senior'],
+  ])('marks the document for the %s styles', async (role, marker) => {
+    const runtime = buildRuntime()
+    runtime.session.login({
+      accessToken: accessToken({ roles: [role], act: role }),
+      refreshToken: 'refresh-1',
+    })
+
+    render(<AppShell runtime={runtime} />)
+
+    await waitFor(() => {
+      expect(document.documentElement.getAttribute('data-app-context')).toBe(marker)
+    })
+  })
+
+  it('follows a context switch, for an account holding two roles', async () => {
+    const runtime = buildRuntime()
+    runtime.session.login({
+      accessToken: accessToken({ roles: ['CANDIDATE', 'SENIOR'], act: 'CANDIDATE' }),
+      refreshToken: 'refresh-1',
+    })
+    render(<AppShell runtime={runtime} />)
+    await waitFor(() => {
+      expect(document.documentElement.getAttribute('data-app-context')).toBe('candidate')
+    })
+
+    act(() => {
+      runtime.session.login({
+        accessToken: accessToken({ roles: ['CANDIDATE', 'SENIOR'], act: 'SENIOR' }),
+        refreshToken: 'refresh-2',
+      })
+    })
+
+    await waitFor(() => {
+      expect(document.documentElement.getAttribute('data-app-context')).toBe('senior')
+    })
+  })
+
+  it('drops the role styles when nobody is signed in', async () => {
+    window.history.replaceState(null, '', '/login')
+    render(<AppShell runtime={buildRuntime()} />)
+
+    await screen.findByTestId('skip-to-content')
+    await waitFor(() => {
+      expect(document.documentElement.hasAttribute('data-app-context')).toBe(false)
+    })
+  })
+
+  it('returns to light when an Administrator signs out', async () => {
+    window.history.replaceState(null, '', '/account')
+    const runtime = buildRuntime()
+    runtime.session.login({
+      accessToken: accessToken({ roles: ['ADMIN'], act: 'ADMIN' }),
+      refreshToken: 'refresh-1',
+    })
+    render(<AppShell runtime={runtime} />)
+    await waitFor(() => {
+      expect(currentScheme()).toBe('dark')
+    })
+
+    await userEvent.click(await screen.findByTestId('sign-out'))
+
+    await waitFor(() => {
+      expect(currentScheme()).toBe('light')
+    })
   })
 })
 
