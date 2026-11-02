@@ -8,7 +8,12 @@ and the e2e suite was re-run. Bugs 3 and 4 are open. Three further backend
 defects — Bugs 5, 6 and 7 — were found *because* those two fixes unblocked the
 code paths that reach them; all three are recorded below.
 
-Update 2026-10-06 (latest): **E2E is 79 passed / 0 failed.** The full gate is
+Update 2026-11-02: **the `JobNewScreen` vitest baseline is FIXED; vitest is 1277/1277.**
+The file now sets a 30 s test timeout, because its typing journeys passed the 5 s
+default under full-suite load (slowest measured: 6.2 s). The other suites were not
+rerun for this update, so the E2E figure below still dates from 2026-10-06.
+
+Update 2026-10-06: **E2E is 79 passed / 0 failed.** The full gate is
 green except the known baseline: the 2 slow `JobNewScreen` vitest tests
 (1273/1275). `tests/integration/test_audit` runs again (2026-10-09).
 
