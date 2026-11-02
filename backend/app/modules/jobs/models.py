@@ -8,25 +8,29 @@ Tables:
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime
 from typing import Any
+import uuid
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.platform.db.base import Base, TimestampMixin, UuidPkMixin, UtcTimestampMs, utc_now
+from app.platform.db.base import Base, TimestampMixin, UtcTimestampMs, UuidPkMixin, utc_now
 from app.platform.db.enums import (
     ApplicationChannel,
+    CollectionRunStatus,
     EmploymentType,
     ExperienceLevel,
     JdStatus,
+    JobSourceType,
     WorkModel,
     application_channel_type,
+    collection_run_status_type,
     employment_type_type,
     experience_level_type,
     jd_status_type,
+    job_source_type,
     work_model_type,
 )
 
@@ -53,8 +57,12 @@ class JobDescription(UuidPkMixin, TimestampMixin, Base):
     )
     location: Mapped[str | None] = mapped_column(sa.String(200), nullable=True)
     work_model: Mapped[WorkModel | None] = mapped_column(work_model_type, nullable=True)
-    employment_type: Mapped[EmploymentType | None] = mapped_column(employment_type_type, nullable=True)
-    experience_level: Mapped[ExperienceLevel | None] = mapped_column(experience_level_type, nullable=True)
+    employment_type: Mapped[EmploymentType | None] = mapped_column(
+        employment_type_type, nullable=True
+    )
+    experience_level: Mapped[ExperienceLevel | None] = mapped_column(
+        experience_level_type, nullable=True
+    )
 
     description: Mapped[str | None] = mapped_column(
         sa.Text,
@@ -125,9 +133,7 @@ class JobDescription(UuidPkMixin, TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:  # pragma: no cover
-        return (
-            f"<JobDescription id={self.id!s} title={self.title!r} status={self.status}>"
-        )
+        return f"<JobDescription id={self.id!s} title={self.title!r} status={self.status}>"
 
 
 class JdRequiredSkill(UuidPkMixin, Base):
@@ -221,4 +227,185 @@ class JdExtractionDraft(UuidPkMixin, Base):
         )
 
 
-__all__ = ["JdExtractionDraft", "JdRequiredSkill", "JobDescription"]
+class JobSource(UuidPkMixin, TimestampMixin, Base):
+    """Job source configuration for an ATS platform (R23 AC1).
+
+    Defines how and when to poll an ATS for jobs, with connection details
+    specific to the ATS type.
+    """
+
+    __tablename__ = "job_sources"
+
+    # ── Configuration ─────────────────────────────────────────────────────────
+    name: Mapped[str] = mapped_column(sa.String(200), nullable=False)
+    source_type: Mapped[JobSourceType] = mapped_column(
+        job_source_type,
+        nullable=False,
+    )
+    slug: Mapped[str] = mapped_column(sa.String(200), nullable=False)
+
+    # ── ATS-specific credentials ──────────────────────────────────────────────
+    workday_tenant: Mapped[str | None] = mapped_column(sa.String(200), nullable=True)
+    workday_site: Mapped[str | None] = mapped_column(sa.String(200), nullable=True)
+
+    # ── Polling configuration ─────────────────────────────────────────────────
+    poll_interval_hours: Mapped[int] = mapped_column(
+        sa.SmallInteger,
+        nullable=False,
+        default=6,
+        server_default=sa.text("6"),
+    )
+    enabled: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        default=True,
+        server_default=sa.text("true"),
+    )
+    last_polled_at: Mapped[datetime | None] = mapped_column(UtcTimestampMs, nullable=True)
+
+    __table_args__ = (
+        sa.CheckConstraint(
+            "poll_interval_hours >= 1",
+            name="poll_interval_hours",
+        ),
+        sa.UniqueConstraint("source_type", "slug"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<JobSource id={self.id!s} source_type={self.source_type} " f"slug={self.slug!r}>"
+
+
+class JobCollectionRun(UuidPkMixin, Base):
+    """A single collection run from a job source (R23 AC2).
+
+    Tracks the status and results of a background job that fetches jobs
+    from an ATS at a specific point in time.
+    """
+
+    __tablename__ = "job_collection_runs"
+
+    # ── Relationship ──────────────────────────────────────────────────────────
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("job_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # ── Timing ────────────────────────────────────────────────────────────────
+    started_at: Mapped[datetime] = mapped_column(
+        UtcTimestampMs,
+        nullable=False,
+        default=utc_now,
+        server_default=sa.func.now(),
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(UtcTimestampMs, nullable=True)
+
+    # ── Results ───────────────────────────────────────────────────────────────
+    jobs_fetched: Mapped[int] = mapped_column(
+        sa.Integer,
+        nullable=False,
+        default=0,
+        server_default=sa.text("0"),
+    )
+    jobs_created: Mapped[int] = mapped_column(
+        sa.Integer,
+        nullable=False,
+        default=0,
+        server_default=sa.text("0"),
+    )
+    jobs_skipped: Mapped[int] = mapped_column(
+        sa.Integer,
+        nullable=False,
+        default=0,
+        server_default=sa.text("0"),
+    )
+    jobs_flagged: Mapped[int] = mapped_column(
+        sa.Integer,
+        nullable=False,
+        default=0,
+        server_default=sa.text("0"),
+    )
+
+    # ── Status and diagnostics ────────────────────────────────────────────────
+    status: Mapped[CollectionRunStatus] = mapped_column(
+        collection_run_status_type,
+        nullable=False,
+        default=CollectionRunStatus.RUNNING,
+        server_default=sa.text("'running'"),
+    )
+    error_detail: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+
+    __table_args__ = (sa.Index("idx_job_collection_runs_source_id", "source_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<JobCollectionRun id={self.id!s} source_id={self.source_id!s} "
+            f"status={self.status}>"
+        )
+
+
+class JobDescriptionFlag(UuidPkMixin, Base):
+    """A flagged job description from a collection run (R23 AC3).
+
+    Records job descriptions that were fetched but could not be automatically
+    created due to missing or problematic fields. Allows manual review and
+    resolution.
+    """
+
+    __tablename__ = "job_description_flags"
+
+    # ── Relationships ─────────────────────────────────────────────────────────
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("job_sources.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("job_collection_runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("accounts.id"),
+        nullable=True,
+    )
+
+    # ── Job data ──────────────────────────────────────────────────────────────
+    external_url: Mapped[str] = mapped_column(sa.String(500), nullable=False)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+    missing_fields: Mapped[list[str]] = mapped_column(
+        ARRAY(sa.String),
+        nullable=False,
+    )
+
+    # ── Timeline ──────────────────────────────────────────────────────────────
+    flagged_at: Mapped[datetime] = mapped_column(
+        UtcTimestampMs,
+        nullable=False,
+        default=utc_now,
+        server_default=sa.func.now(),
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(UtcTimestampMs, nullable=True)
+
+    __table_args__ = (
+        sa.Index("idx_job_description_flags_source_id", "source_id"),
+        sa.Index("idx_job_description_flags_resolved_at", "resolved_at"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<JobDescriptionFlag id={self.id!s} source_id={self.source_id!s} "
+            f"run_id={self.run_id!s}>"
+        )
+
+
+__all__ = [
+    "JdExtractionDraft",
+    "JdRequiredSkill",
+    "JobCollectionRun",
+    "JobDescription",
+    "JobDescriptionFlag",
+    "JobSource",
+]
