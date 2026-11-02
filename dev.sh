@@ -82,6 +82,7 @@ cleanup() {
     for pid in "${PIDS[@]}"; do kill_tree "$pid"; done
   fi
 }
+trap '' HUP
 trap cleanup EXIT
 trap 'cleanup; exit 130' INT
 trap 'cleanup; exit 143' TERM
@@ -201,7 +202,7 @@ if [[ $WITH_FRONTEND -eq 1 ]]; then
 fi
 
 # ── Ready ─────────────────────────────────────────────────────────────────────
-CONSOLE_PORT=$(grep -E '^MINIO_CONSOLE_PORT=' "$BACKEND/.env" | cut -d= -f2- | tr -d '\r')
+CONSOLE_PORT=$(grep -E '^MINIO_CONSOLE_PORT=' "$BACKEND/.env" | cut -d= -f2- | tr -d '\r' || true)
 step "Ready"
 [[ $WITH_FRONTEND -eq 1 ]] && echo "  App            $WEB_URL"
 echo "  API docs       $API_URL/api/docs"
