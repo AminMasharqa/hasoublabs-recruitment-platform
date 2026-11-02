@@ -264,11 +264,13 @@ class JobSource(UuidPkMixin, TimestampMixin, Base):
     last_polled_at: Mapped[datetime | None] = mapped_column(UtcTimestampMs, nullable=True)
 
     __table_args__ = (
+        # The NAMING_CONVENTION pattern for "ck" is ck_%(table_name)s_%(constraint_name)s,
+        # so the short form "poll_interval_hours" expands to the canonical name.
         sa.CheckConstraint(
             "poll_interval_hours >= 1",
             name="poll_interval_hours",
         ),
-        sa.UniqueConstraint("source_type", "slug"),
+        sa.UniqueConstraint("source_type", "slug", name="uq_job_sources_source_type_slug"),
     )
 
     def __repr__(self) -> str:  # pragma: no cover
