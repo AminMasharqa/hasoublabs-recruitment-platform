@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from app.platform.errors.base import PlatformError
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # NOTE: JdNotFound is intentionally NOT defined here.
 # Per the constant-time authorization requirement (R3 AC6), the service layer
@@ -60,10 +62,37 @@ class SsrfGuardRejected(PlatformError):
     message_key = "error.ssrf_guard_rejected"
 
 
+class JobSourceNotFound(PlatformError):
+    """404 — the job source does not exist."""
+
+    error_key = "job_source_not_found"
+    status_code = 404
+    message_key = "error.job_source_not_found"
+
+
+class DuplicateSourceUrl(PlatformError):
+    """409 — a source with that type and slug already exists."""
+
+    error_key = "duplicate_source_url"
+    status_code = 409
+    message_key = "error.duplicate_source_url"
+
+
+class UnsupportedSourceType(PlatformError):
+    """422 — unsupported source type."""
+
+    error_key = "unsupported_source_type"
+    status_code = 422
+    message_key = "error.unsupported_source_type"
+
+
 __all__ = [
+    "DuplicateSourceUrl",
     "ExtractionDraftExpired",
     "JdAlreadyClosed",
     "JdEditForbiddenWhenClosed",
     "JdPublishPreconditionFailed",
+    "JobSourceNotFound",
     "SsrfGuardRejected",
+    "UnsupportedSourceType",
 ]

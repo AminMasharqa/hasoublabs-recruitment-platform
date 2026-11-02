@@ -138,6 +138,15 @@ msgstr "פרופיל יכול לכלול עד 20 כישורים."
 msgid "error.ssrf_guard_rejected"
 msgstr "לא ניתן להשתמש בכתובת האינטרנט הזו. הזן את הכתובת הציבורית של מודעת הדרושים."
 
+msgid "error.job_source_not_found"
+msgstr "Job source not found."
+
+msgid "error.duplicate_source_url"
+msgstr "A source with that type and slug already exists."
+
+msgid "error.unsupported_source_type"
+msgstr "Unsupported source type."
+
 msgid "error.unsupported_entity_type"
 msgstr "לא ניתן לייצא סוג נתונים זה."
 
