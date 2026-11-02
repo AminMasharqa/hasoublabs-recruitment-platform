@@ -10,9 +10,9 @@
 
 import { expect, test } from '@playwright/test'
 
+import { completeAdminMfaIfAsked } from '../support/adminLogin'
 import { SEED_ADMIN } from '../support/backend'
 import { navigateInApp } from '../support/navigation'
-import { currentTotpCode } from '../support/totp'
 
 test.describe('report + Excel export', () => {
   test('the activity report renders, and an export reaches a downloadable workbook', async ({
@@ -29,13 +29,7 @@ test.describe('report + Excel export', () => {
     await page.locator('#login-password').fill(SEED_ADMIN.password)
     await page.locator('#login-role').selectOption('ADMIN')
     await page.getByTestId('login-submit').click()
-    const mfaStep = page.getByTestId('mfa-code-step')
-    // The seeded Admin is MFA-enrolled, so the step always follows the credentials.
-    // Wait for it: an immediate isVisible() check races the 401 mfa_required
-    // response and silently skips the code (TASK-28 Bug 4).
-    await expect(mfaStep).toBeVisible()
-    await page.getByTestId('mfa-code-input').fill(currentTotpCode(secret))
-    await page.getByTestId('mfa-code-submit').click()
+    await completeAdminMfaIfAsked(page, secret)
 
     await navigateInApp(page, '/admin/reports')
     await expect(page.getByTestId('reports-screen')).toBeVisible()

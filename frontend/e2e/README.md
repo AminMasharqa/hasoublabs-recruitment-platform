@@ -51,6 +51,9 @@ $env:E2E_ADMIN_PASSWORD = "<the account's password>"
 $env:E2E_ADMIN_TOTP_SECRET = "<the base32 secret it was enrolled with>"
 ```
 
+The suite signs in with or without the OTP step, so it runs under either value of
+the backend's `MFA_REQUIRED` setting.
+
 `e2e/support/backend.ts` documents this precondition in full next to the code
 that depends on it.
 

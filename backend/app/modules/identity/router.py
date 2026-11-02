@@ -195,8 +195,10 @@ async def login(body: LoginRequest, request: Request) -> TokenResponse:
 
     MFA is checked in a separate step: if the account has MFA enrolled, a
     ``MfaRequired`` error is returned when ``mfa_code`` is absent. The client
-    should re-submit with ``mfa_code`` populated.
+    should re-submit with ``mfa_code`` populated. With ``MFA_REQUIRED=false``
+    (development only) the check is skipped and any submitted code is ignored.
     """
+    from app.config import get_settings  # noqa: PLC0415
     from app.platform.security.mfa import is_enrolled  # noqa: PLC0415
     from app.modules.identity.errors import InvalidMfaCode, MfaRequired  # noqa: PLC0415
 
@@ -212,7 +214,11 @@ async def login(body: LoginRequest, request: Request) -> TokenResponse:
     async with uow_factory() as uow:
         account = await repo.get_account_by_email(uow.session, body.email, role)
 
-    if account is not None and is_enrolled(account.mfa_secret_enc):
+    if (
+        get_settings().mfa_required
+        and account is not None
+        and is_enrolled(account.mfa_secret_enc)
+    ):
         if not body.mfa_code:
             # Revoke the session we just issued — the login is not complete.
             await auth_service.logout(
