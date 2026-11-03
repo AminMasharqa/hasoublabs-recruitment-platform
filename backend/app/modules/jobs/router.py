@@ -1,4 +1,4 @@
-"""FastAPI router for the jobs module (R6, Section 17).
+"""FastAPI router for the jobs module (R6, Section 17) and collection pipeline (R23).
 
 Every route has a ``Depends(require(...))`` guard — no unguarded endpoints.
 Services are read from ``request.app.state`` set by the lifespan hook in main.py.
@@ -18,6 +18,15 @@ POST   /jobs/extract:url                  → 202 JdExtractionDraftDTO (Senior c
 POST   /jobs/extract:text                 → 202 JdExtractionDraftDTO (Senior ctx OR Admin)
 GET    /jobs/extract/{draft_id}           → 200 JdExtractionDraftDTO (Senior ctx OR Admin)
 POST   /jobs/extract/{draft_id}:confirm   → 201 JobDescriptionDTO  (Senior ctx OR Admin)
+POST   /jobs/sources                      → 201 JobSourceDTO        (Admin only)
+GET    /jobs/sources                      → 200 list[JobSourceDTO]  (Admin only)
+GET    /jobs/sources/{source_id}          → 200 JobSourceDTO        (Admin only)
+PATCH  /jobs/sources/{source_id}          → 200 JobSourceDTO        (Admin only)
+DELETE /jobs/sources/{source_id}          → 204                     (Admin only)
+POST   /jobs/sources/{source_id}/collect  → 202 CollectionRunDTO   (Admin only)
+GET    /jobs/sources/{source_id}/runs     → 200 list[CollectionRunDTO] (Admin only)
+GET    /jobs/flags                        → 200 list[JobDescriptionFlagDTO] (Admin only)
+POST   /jobs/flags/{flag_id}/resolve      → 200 FlagResolveResponse (Admin only)
 """
 
 from __future__ import annotations
@@ -25,9 +34,13 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi.responses import JSONResponse
 
 from app.modules.jobs.schemas import (
+    CollectionRunDTO,
+    FlagResolveRequest,
+    FlagResolveResponse,
     JdAdminListParams,
     JdBrowsePage,
     JdBrowseParams,
@@ -37,6 +50,10 @@ from app.modules.jobs.schemas import (
     JdExtractUrlRequest,
     JdUpdateRequest,
     JobDescriptionDTO,
+    JobDescriptionFlagDTO,
+    JobSourceCreateRequest,
+    JobSourceDTO,
+    JobSourceUpdateRequest,
     SetApplicationChannelRequest,
 )
 from app.modules.profiles.schemas import SeniorContactDTO
@@ -75,6 +92,11 @@ def _extraction_service(request: Request):
 def _profiles_api(request: Request):
     """Return the ProfilesApi from app.state."""
     return request.app.state.profiles_api
+
+
+def _collection_service(request: Request):
+    """Return the JobCollectionService from app.state."""
+    return request.app.state.collection_service
 
 
 # ── Job Description CRUD ───────────────────────────────────────────────────────
@@ -162,6 +184,189 @@ async def browse_jds(
     )
     svc = _jd_service(request)
     return await svc.browse(principal, params)
+
+
+# ── Job Source CRUD (R23) — must come before /jobs/{jd_id} to avoid shadowing ─
+
+
+@router.post(
+    "/jobs/sources",
+    status_code=status.HTTP_201_CREATED,
+    response_model=JobSourceDTO,
+    summary="Admin: create a Job Source",
+)
+async def create_source(
+    request: Request,
+    body: JobSourceCreateRequest,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> JobSourceDTO:
+    """Create a new job source for the collection pipeline."""
+    svc = _collection_service(request)
+    return await svc.create_source(body)
+
+
+@router.get(
+    "/jobs/sources",
+    response_model=list[JobSourceDTO],
+    summary="Admin: list Job Sources",
+)
+async def list_sources(
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+    after_id: UUID | None = Query(None),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[JobSourceDTO]:
+    """Return a paginated list of all job sources."""
+    svc = _collection_service(request)
+    return await svc.list_sources(after_id=after_id, limit=limit)
+
+
+@router.get(
+    "/jobs/sources/{source_id}",
+    response_model=JobSourceDTO,
+    summary="Admin: get a Job Source",
+)
+async def get_source(
+    source_id: UUID,
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> JobSourceDTO:
+    """Fetch a single job source by id."""
+    svc = _collection_service(request)
+    return await svc.get_source(source_id)
+
+
+@router.patch(
+    "/jobs/sources/{source_id}",
+    response_model=JobSourceDTO,
+    summary="Admin: update a Job Source",
+)
+async def update_source(
+    source_id: UUID,
+    request: Request,
+    body: JobSourceUpdateRequest,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> JobSourceDTO:
+    """Partially update a job source."""
+    svc = _collection_service(request)
+    return await svc.update_source(source_id, body)
+
+
+@router.delete(
+    "/jobs/sources/{source_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Admin: delete a Job Source",
+)
+async def delete_source(
+    source_id: UUID,
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> Response:
+    """Delete a job source and all its associated data."""
+    svc = _collection_service(request)
+    await svc.delete_source(source_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ── Collection lifecycle (R23) ────────────────────────────────────────────────
+
+
+@router.post(
+    "/jobs/sources/{source_id}/collect",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Admin: trigger a collection run",
+)
+async def trigger_collect(
+    source_id: UUID,
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> JSONResponse:
+    """Enqueue a collection run for the given job source and return the run DTO."""
+    svc = _collection_service(request)
+    run_dto: CollectionRunDTO = await svc.trigger_collect(source_id)
+    return JSONResponse(
+        content=run_dto.model_dump(mode="json"),
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+
+
+@router.get(
+    "/jobs/sources/{source_id}/runs",
+    response_model=list[CollectionRunDTO],
+    summary="Admin: list collection runs for a source",
+)
+async def list_runs(
+    source_id: UUID,
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+    after_id: UUID | None = Query(None),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[CollectionRunDTO]:
+    """Return a paginated list of collection runs for the given source."""
+    svc = _collection_service(request)
+    return await svc.list_runs(source_id, after_id=after_id, limit=limit)
+
+
+# ── Flag review (R23) — must come before /jobs/{jd_id} to avoid shadowing ─────
+
+
+@router.get(
+    "/jobs/flags",
+    response_model=list[JobDescriptionFlagDTO],
+    summary="Admin: list flagged job descriptions",
+)
+async def list_flags(
+    request: Request,
+    principal: Annotated[
+        object,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+    after_id: UUID | None = Query(None),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[JobDescriptionFlagDTO]:
+    """Return a paginated list of unresolved flagged job descriptions."""
+    svc = _collection_service(request)
+    return await svc.list_flags(after_id=after_id, limit=limit)
+
+
+@router.post(
+    "/jobs/flags/{flag_id}/resolve",
+    response_model=FlagResolveResponse,
+    summary="Admin: resolve a flagged job description",
+)
+async def resolve_flag(
+    flag_id: UUID,
+    request: Request,
+    body: FlagResolveRequest,
+    principal: Annotated[
+        Principal,
+        Depends(require(roles=_ADMIN_ONLY)),
+    ],
+) -> FlagResolveResponse:
+    """Resolve a flagged job description — either create a Draft JD or dismiss."""
+    svc = _collection_service(request)
+    return await svc.resolve_flag(flag_id, body, resolver_account_id=principal.account_id)
 
 
 @router.get(
