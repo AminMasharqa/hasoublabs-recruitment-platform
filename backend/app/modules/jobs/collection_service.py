@@ -98,12 +98,12 @@ class JobCollectionService:
         """Fetch a job source by id.
 
         Raises:
-            AuthorizationDenied: if the source does not exist.
+            JobSourceNotFound: if the source does not exist.
         """
         async with self._uow_factory() as uow:
             source = await collection_repo.get_source(uow.session, source_id)
             if source is None:
-                raise AuthorizationDenied()
+                raise JobSourceNotFound()
             return JobSourceDTO.model_validate(source)
 
     async def list_sources(
@@ -129,12 +129,12 @@ class JobCollectionService:
         """Update a job source.
 
         Raises:
-            AuthorizationDenied: if the source does not exist.
+            JobSourceNotFound: if the source does not exist.
         """
         async with self._uow_factory() as uow:
             source = await collection_repo.get_source(uow.session, source_id)
             if source is None:
-                raise AuthorizationDenied()
+                raise JobSourceNotFound()
             updates = data.model_dump(exclude_none=True)
             if updates:
                 await collection_repo.update_source(uow.session, source, **updates)
@@ -144,12 +144,12 @@ class JobCollectionService:
         """Delete a job source.
 
         Raises:
-            AuthorizationDenied: if the source does not exist.
+            JobSourceNotFound: if the source does not exist.
         """
         async with self._uow_factory() as uow:
             source = await collection_repo.get_source(uow.session, source_id)
             if source is None:
-                raise AuthorizationDenied()
+                raise JobSourceNotFound()
             await collection_repo.delete_source(uow.session, source)
 
     # ── Collection lifecycle ──────────────────────────────────────────────────
