@@ -123,9 +123,10 @@ async def test_collect_creates_draft_jd_for_complete_listing() -> None:
         mock_jd.id = uuid.uuid4()
         mock_jobs_repo.create_jd = AsyncMock(return_value=mock_jd)
 
-        # finish UoW: get_run → finish_run
+        # finish UoW: get_run → finish_run; get_source → update last_polled_at
         mock_collection_repo.get_run = AsyncMock(return_value=uow_finish_run)
         mock_collection_repo.finish_run = AsyncMock()
+        mock_collection_repo.update_source = AsyncMock()
 
         from app.platform.db.enums import CollectionRunStatus
 
@@ -224,6 +225,7 @@ async def test_collect_creates_flag_for_incomplete_listing() -> None:
         mock_finish_run.started_at = MagicMock()
         mock_collection_repo.get_run = AsyncMock(return_value=mock_finish_run)
         mock_collection_repo.finish_run = AsyncMock()
+        mock_collection_repo.update_source = AsyncMock()
 
         svc = JobCollectionService(factory, task_queue=_make_task_queue())
         await svc.collect_source(source_id)
@@ -310,6 +312,7 @@ async def test_collect_skips_duplicate_external_url() -> None:
         mock_finish_run.started_at = MagicMock()
         mock_collection_repo.get_run = AsyncMock(return_value=mock_finish_run)
         mock_collection_repo.finish_run = AsyncMock()
+        mock_collection_repo.update_source = AsyncMock()
 
         svc = JobCollectionService(factory, task_queue=_make_task_queue())
         await svc.collect_source(source_id)
@@ -465,6 +468,7 @@ async def test_collect_source_run_counters_are_correct() -> None:
         mock_finish_run.started_at = MagicMock()
         mock_collection_repo.get_run = AsyncMock(return_value=mock_finish_run)
         mock_collection_repo.finish_run = AsyncMock()
+        mock_collection_repo.update_source = AsyncMock()
 
         svc = JobCollectionService(factory, task_queue=_make_task_queue())
         await svc.collect_source(source_id)
@@ -553,6 +557,7 @@ async def test_concurrent_collect_dedup_by_external_url() -> None:
         mock_finish_run.started_at = MagicMock()
         mock_collection_repo.get_run = AsyncMock(return_value=mock_finish_run)
         mock_collection_repo.finish_run = AsyncMock()
+        mock_collection_repo.update_source = AsyncMock()
 
         svc = JobCollectionService(factory, task_queue=_make_task_queue())
         await svc.collect_source(source_id)

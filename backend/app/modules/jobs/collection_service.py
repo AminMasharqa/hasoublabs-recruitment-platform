@@ -34,6 +34,7 @@ from app.modules.jobs.schemas import (
     JobSourceUpdateRequest,
 )
 from app.modules.jobs.source_adapters import FieldMapper, get_adapter
+from app.platform.db.base import utc_now
 from app.platform.db.constants import SYSTEM_ACCOUNT_ID
 from app.platform.db.enums import (
     CollectionRunStatus,
@@ -237,6 +238,7 @@ class JobCollectionService:
             )
             async with self._uow_factory() as fail_uow:
                 fail_run = await collection_repo.get_run(fail_uow.session, current_run_id)
+                fail_source = await collection_repo.get_source(fail_uow.session, source_id)
                 if fail_run is not None:
                     await collection_repo.finish_run(
                         fail_uow.session,
@@ -248,6 +250,11 @@ class JobCollectionService:
                         jobs_flagged=0,
                         error_detail=str(exc),
                     )
+                if fail_source is not None:
+                    await collection_repo.update_source(
+                        fail_uow.session, fail_source, last_polled_at=utc_now()
+                    )
+                if fail_run is not None:
                     return CollectionRunDTO.model_validate(fail_run)
             # If get_run also fails, re-raise to let the caller handle it.
             raise  # pragma: no cover
@@ -315,9 +322,10 @@ class JobCollectionService:
                     )
                 jobs_created += 1
 
-        # ── 4. Finish run ─────────────────────────────────────────────────────
+        # ── 4. Finish run and stamp last_polled_at ────────────────────────────────
         async with self._uow_factory() as finish_uow:
             finish_run = await collection_repo.get_run(finish_uow.session, current_run_id)
+            finish_source = await collection_repo.get_source(finish_uow.session, source_id)
             if finish_run is not None:
                 await collection_repo.finish_run(
                     finish_uow.session,
@@ -329,6 +337,11 @@ class JobCollectionService:
                     jobs_flagged=jobs_flagged,
                     error_detail=None,
                 )
+            if finish_source is not None:
+                await collection_repo.update_source(
+                    finish_uow.session, finish_source, last_polled_at=utc_now()
+                )
+            if finish_run is not None:
                 return CollectionRunDTO.model_validate(finish_run)
 
         # Defensive fallback — finish_run was not found (should not happen).

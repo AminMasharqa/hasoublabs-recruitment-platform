@@ -25,6 +25,21 @@ def test_collect_jobs_for_source_task_is_registered() -> None:
     assert spec.name == JobName.COLLECT_JOBS_FOR_SOURCE
 
 
+def test_dispatch_jobs_collection_task_is_registered() -> None:
+    """Importing collection_tasks also registers the dispatcher handler."""
+    import app.modules.jobs.collection_tasks  # noqa: F401 — trigger registration
+
+    from app.platform.jobs.registry import registered_task
+
+    spec = registered_task(JobName.DISPATCH_JOB_COLLECTION)
+    assert spec is not None
+    assert spec.name == JobName.DISPATCH_JOB_COLLECTION
+
+
+def test_dispatch_jobs_collection_is_not_unimplemented() -> None:
+    assert JobName.DISPATCH_JOB_COLLECTION not in UNIMPLEMENTED_JOBS
+
+
 @pytest.mark.asyncio
 async def test_collect_task_handles_missing_source_gracefully() -> None:
     """If collect_source raises JobSourceNotFound, the task returns source_not_found.

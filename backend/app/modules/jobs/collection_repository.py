@@ -98,6 +98,35 @@ async def list_sources(
     return list(result.scalars().all())
 
 
+async def list_sources_due_for_poll(
+    session: AsyncSession,
+    *,
+    limit: int = 100,
+) -> list[JobSource]:
+    """Return enabled sources whose next scheduled poll is due.
+
+    A source is due when ``last_polled_at IS NULL`` (never polled) or when
+    ``last_polled_at + poll_interval_hours hours <= now()``.
+    """
+    import sqlalchemy as sa  # noqa: PLC0415 — local to keep top-level imports minimal
+
+    due_filter = sa.or_(
+        JobSource.last_polled_at.is_(None),
+        JobSource.last_polled_at
+        + sa.func.make_interval(0, 0, 0, 0, JobSource.poll_interval_hours)
+        <= sa.func.now(),
+    )
+    stmt = (
+        select(JobSource)
+        .where(JobSource.enabled.is_(True))
+        .where(due_filter)
+        .order_by(JobSource.id)
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def update_source(
     session: AsyncSession,
     source: JobSource,
@@ -303,6 +332,7 @@ __all__ = [
     "list_flags",
     "list_runs",
     "list_sources",
+    "list_sources_due_for_poll",
     "resolve_flag",
     "update_source",
 ]
