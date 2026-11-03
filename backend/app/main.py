@@ -306,6 +306,12 @@ async def _setup_services(application: FastAPI) -> None:
     jobs_api = DefaultJobsApi(uow_factory)
     application.state.jobs_api = jobs_api
 
+    # ── Job collection service (R23) ──────────────────────────────────────────
+    from app.modules.jobs.collection_service import JobCollectionService  # noqa: PLC0415
+
+    collection_service = JobCollectionService(uow_factory, task_queue=task_queue)
+    application.state.collection_service = collection_service
+
     # ── Applications services ─────────────────────────────────────────────────
     from app.modules.applications.service import ApplicationService, ApplicationStatusService  # noqa: PLC0415
 
