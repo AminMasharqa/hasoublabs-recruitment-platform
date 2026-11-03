@@ -45,7 +45,7 @@ import type { JobDescription } from './jobsApi'
 import { JobStatusBadge } from './JobStatusControls'
 
 /** Namespaces this screen resolves its strings against (Req 19 AC2). */
-const NAMESPACES = ['jobs', 'shell', 'errors'] as const
+const NAMESPACES = ['jobs', 'shell', 'errors', 'jobSources'] as const
 
 interface AdminJobRowProps {
   readonly job: JobDescription
@@ -155,6 +155,25 @@ export function AdminJobsScreen() {
           >
             {t('jobs:authoring.create')}
           </Button>
+        </Group>
+
+        <Group gap="sm" mt="xs">
+          <Anchor
+            component={Link}
+            to={ROUTE_PATHS.adminJobSources}
+            size="sm"
+            data-testid="admin-jobs-manage-sources"
+          >
+            {t('jobSources:sources.manage')}
+          </Anchor>
+          <Anchor
+            component={Link}
+            to={ROUTE_PATHS.adminJobFlags}
+            size="sm"
+            data-testid="admin-jobs-view-flags"
+          >
+            {t('jobSources:flags.viewFlags')}
+          </Anchor>
         </Group>
 
         <Text size="sm" c="dimmed" data-testid="admin-jobs-page-size">
