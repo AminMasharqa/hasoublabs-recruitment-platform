@@ -139,6 +139,5 @@ SCHEDULES_BY_JOB: Final[dict[JobName, Schedule]] = {
 UNIMPLEMENTED_JOBS: Final[frozenset[JobName]] = frozenset(
     {
         JobName.APPLY_RETENTION_POLICY,
-        JobName.COLLECT_JOBS_FOR_SOURCE,
     }
 )

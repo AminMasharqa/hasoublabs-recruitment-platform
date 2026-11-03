@@ -48,6 +48,7 @@ _TASK_MODULES: Final[tuple[str, ...]] = (
     "app.modules.cvs.tasks",  # scan_cv, verify_cv_checksums
     # Wave C
     "app.modules.jobs.tasks",  # extract_jd_from_url, extract_jd_from_text
+    "app.modules.jobs.collection_tasks",  # collect_jobs_for_source
     # Wave D
     "app.modules.reporting.tasks",  # generate_export, refresh_report_rollups
 )
