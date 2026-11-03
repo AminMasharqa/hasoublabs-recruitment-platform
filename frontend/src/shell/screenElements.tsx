@@ -52,6 +52,7 @@ import {
   JobDetailScreen,
   JobNewScreen,
   JobsBrowseScreen,
+  JobSourcesScreen,
   SeniorJobsScreen,
 } from '../features/jobs'
 import { AccountScreen } from '../features/mfa'
@@ -167,7 +168,7 @@ export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
   // and the Navigation_Menu derives its entries from the same access metadata.
   adminReports: <ReportsScreen />,
   adminExports: <ExportsScreen />,
-  adminJobSources: <PlaceholderScreen labelKey="jobSources:sources.title" />,
+  adminJobSources: <JobSourcesScreen />,
   adminJobSourceNew: <PlaceholderScreen labelKey="jobSources:sources.title" />,
   adminJobSourceDetail: <PlaceholderScreen labelKey="jobSources:sources.title" />,
   adminJobFlags: <PlaceholderScreen labelKey="jobSources:flags.title" />,
