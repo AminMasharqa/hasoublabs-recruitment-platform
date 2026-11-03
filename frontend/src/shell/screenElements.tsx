@@ -55,6 +55,7 @@ import {
   JobSourcesScreen,
   JobSourceNewScreen,
   JobSourceDetailScreen,
+  JobFlagsScreen,
   SeniorJobsScreen,
 } from '../features/jobs'
 import { AccountScreen } from '../features/mfa'
@@ -73,7 +74,6 @@ import {
   SeniorReviewNewScreen,
   SeniorReviewsScreen,
 } from '../features/reviews'
-import { PlaceholderScreen } from '../routing/placeholders'
 import type { ScreenElements } from '../routing/routes'
 
 export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
@@ -173,5 +173,5 @@ export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
   adminJobSources: <JobSourcesScreen />,
   adminJobSourceNew: <JobSourceNewScreen />,
   adminJobSourceDetail: <JobSourceDetailScreen />,
-  adminJobFlags: <PlaceholderScreen labelKey="jobSources:flags.title" />,
+  adminJobFlags: <JobFlagsScreen />,
 })
