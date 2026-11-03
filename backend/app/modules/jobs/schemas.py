@@ -1,20 +1,22 @@
-"""Pydantic v2 schemas for the jobs module (R6, Section 17)."""
+"""Pydantic v2 schemas for the jobs module (R6, Section 17, R23)."""
 
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.platform.db.enums import (
     ApplicationChannel,
+    CollectionRunStatus,
     EmploymentType,
     ExperienceLevel,
     JdStatus,
+    JobSourceType,
     WorkModel,
 )
-
 
 # ── Request schemas ────────────────────────────────────────────────────────────
 
@@ -144,7 +146,7 @@ class JobDescriptionDTO(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JdBrowsePage(BaseModel):
@@ -177,15 +179,139 @@ class JdExtractionDraftDTO(BaseModel):
     source: str
     # "pending" | "ready" — workers update extracted_fields when done.
     status: str
-    extracted_fields: dict
-    skill_candidates: list
+    extracted_fields: dict[str, object]
+    skill_candidates: list[object]
     created_at: datetime
     expires_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ── Job collection schemas (R23) ───────────────────────────────────────────────
+
+
+class JobSourceCreateRequest(BaseModel):
+    """Request to create a new job source (POST /job-sources)."""
+
+    name: str = Field(..., min_length=1, max_length=200)
+    source_type: JobSourceType
+    slug: str = Field(..., min_length=1, max_length=200)
+    workday_tenant: str | None = Field(None, max_length=200)
+    workday_site: str | None = Field(None, max_length=200)
+    poll_interval_hours: int = Field(default=6, ge=1)
+
+    @model_validator(mode="after")
+    def workday_fields_required_for_workday(self) -> JobSourceCreateRequest:
+        """When source_type is WORKDAY, both workday_tenant and workday_site are required."""
+        if self.source_type == JobSourceType.WORKDAY:
+            if not self.workday_tenant:
+                raise ValueError("workday_tenant is required for WORKDAY source type")
+            if not self.workday_site:
+                raise ValueError("workday_site is required for WORKDAY source type")
+        return self
+
+
+class JobSourceUpdateRequest(BaseModel):
+    """Request to update an existing job source (PATCH /job-sources/{id})."""
+
+    name: str | None = Field(None, min_length=1, max_length=200)
+    source_type: JobSourceType | None = None
+    slug: str | None = Field(None, min_length=1, max_length=200)
+    workday_tenant: str | None = Field(None, max_length=200)
+    workday_site: str | None = Field(None, max_length=200)
+    poll_interval_hours: int | None = Field(None, ge=1)
+    enabled: bool | None = None
+
+    @model_validator(mode="after")
+    def workday_fields_required_when_updating_to_workday(
+        self,
+    ) -> JobSourceUpdateRequest:
+        """When updating source_type to WORKDAY, workday_tenant and workday_site required."""
+        if self.source_type == JobSourceType.WORKDAY:
+            if not self.workday_tenant:
+                raise ValueError("workday_tenant is required for WORKDAY source type")
+            if not self.workday_site:
+                raise ValueError("workday_site is required for WORKDAY source type")
+        return self
+
+
+class JobSourceDTO(BaseModel):
+    """Response DTO for a job source."""
+
+    id: UUID
+    name: str
+    source_type: JobSourceType
+    slug: str
+    workday_tenant: str | None
+    workday_site: str | None
+    poll_interval_hours: int
+    enabled: bool
+    last_polled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CollectionRunDTO(BaseModel):
+    """Response DTO for a job collection run."""
+
+    id: UUID
+    source_id: UUID
+    started_at: datetime
+    finished_at: datetime | None
+    jobs_fetched: int
+    jobs_created: int
+    jobs_skipped: int
+    jobs_flagged: int
+    error_detail: str | None
+    status: CollectionRunStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class JobDescriptionFlagDTO(BaseModel):
+    """Response DTO for a flagged job description."""
+
+    id: UUID
+    source_id: UUID
+    run_id: UUID
+    external_url: str
+    raw_payload: dict[str, object]
+    missing_fields: list[str]
+    flagged_at: datetime
+    resolved_at: datetime | None
+    resolved_by: UUID | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FlagResolveRequest(BaseModel):
+    """Request to resolve a flagged job description."""
+
+    action: Literal["dismiss", "create_jd"]
+    jd_data: JdCreateRequest | None = None
+
+    @model_validator(mode="after")
+    def jd_data_required_for_create_jd(self) -> FlagResolveRequest:
+        """When action is 'create_jd', jd_data must be provided."""
+        if self.action == "create_jd" and self.jd_data is None:
+            raise ValueError("jd_data is required when action is 'create_jd'")
+        return self
+
+
+class FlagResolveResponse(BaseModel):
+    """Response for resolving a flagged job description."""
+
+    flag_id: UUID
+    status: Literal["resolved"]
+    job_description_id: UUID | None
 
 
 __all__ = [
+    "CollectionRunDTO",
+    "FlagResolveRequest",
+    "FlagResolveResponse",
     "JdAdminListParams",
     "JdBrowseParams",
     "JdBrowsePage",
@@ -195,5 +321,9 @@ __all__ = [
     "JdExtractUrlRequest",
     "JdUpdateRequest",
     "JobDescriptionDTO",
+    "JobDescriptionFlagDTO",
+    "JobSourceCreateRequest",
+    "JobSourceDTO",
+    "JobSourceUpdateRequest",
     "SetApplicationChannelRequest",
 ]

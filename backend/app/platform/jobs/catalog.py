@@ -28,6 +28,8 @@ class JobName(StrEnum):
     GENERATE_EXPORT = "generate_export"
     APPLY_RETENTION_POLICY = "apply_retention_policy"
     REFRESH_REPORT_ROLLUPS = "refresh_report_rollups"
+    COLLECT_JOBS_FOR_SOURCE = "collect_jobs_for_source"
+    DISPATCH_JOB_COLLECTION = "dispatch_job_collection"
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,6 +106,12 @@ SCHEDULES: Final[tuple[Schedule, ...]] = (
         description="Refresh optional report materialized views",
         requirement="R28",
         cron={"minute": 20},
+    ),
+    Schedule(
+        job=JobName.DISPATCH_JOB_COLLECTION,
+        description="Fan out per-source collection tasks for all enabled ATS sources",
+        requirement="R23",
+        interval_seconds=21600,
     ),
 )
 

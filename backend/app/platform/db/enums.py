@@ -188,6 +188,29 @@ class ApplicationStatus(StrEnum):
     CLOSED = "Closed"
 
 
+# ── Job collection (R23) ──────────────────────────────────────────────────────
+
+
+class JobSourceType(StrEnum):
+    """The ATS platform a Job_Description is collected from (R23 AC1)."""
+
+    GREENHOUSE = "greenhouse"
+    LEVER = "lever"
+    ASHBY = "ashby"
+    WORKABLE = "workable"
+    SMARTRECRUITERS = "smartrecruiters"
+    RECRUITEE = "recruitee"
+    WORKDAY = "workday"
+
+
+class CollectionRunStatus(StrEnum):
+    """Status of a background job run that collects jobs from an ATS (R23 AC2)."""
+
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 #: The non-terminal Application statuses, defined **once** here so the same set
 #: backs the duplicate-prevention partial unique index predicate
 #: ``WHERE status IN ('Submitted','Under Review')`` (R7 AC7) and any service-layer
@@ -215,6 +238,8 @@ employment_type_type = pg_enum(EmploymentType, "employment_type")
 experience_level_type = pg_enum(ExperienceLevel, "experience_level")
 application_channel_type = pg_enum(ApplicationChannel, "application_channel")
 application_status_type = pg_enum(ApplicationStatus, "application_status")
+job_source_type = pg_enum(JobSourceType, "job_source_type")
+collection_run_status_type = pg_enum(CollectionRunStatus, "collection_run_status")
 
 
 __all__ = [
@@ -222,6 +247,7 @@ __all__ = [
     "AccountStatus",
     "ApplicationChannel",
     "ApplicationStatus",
+    "CollectionRunStatus",
     "ContactChannelPref",
     "ContactScopePref",
     "CvVersionState",
@@ -230,6 +256,7 @@ __all__ = [
     "EnrolmentStatus",
     "ExperienceLevel",
     "JdStatus",
+    "JobSourceType",
     "ProfileState",
     "ResidencyProofType",
     "Role",
@@ -237,6 +264,7 @@ __all__ = [
     "account_status_type",
     "application_channel_type",
     "application_status_type",
+    "collection_run_status_type",
     "contact_channel_pref_type",
     "contact_scope_pref_type",
     "cv_version_state_type",
@@ -245,6 +273,7 @@ __all__ = [
     "enrolment_status_type",
     "experience_level_type",
     "jd_status_type",
+    "job_source_type",
     "pg_enum",
     "profile_state_type",
     "residency_proof_type_type",
