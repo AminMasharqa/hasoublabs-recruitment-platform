@@ -1,0 +1,88 @@
+{
+  "sources": {
+    "title": "Job Sources",
+    "description": "ATS integrations that feed the automatic job collection pipeline.",
+    "add": "Add source",
+    "manage": "Manage sources",
+    "empty": "No job sources have been configured yet.",
+    "type": {
+      "greenhouse": "Greenhouse",
+      "lever": "Lever",
+      "ashby": "Ashby",
+      "workable": "Workable",
+      "smartrecruiters": "SmartRecruiters",
+      "recruitee": "Recruitee",
+      "workday": "Workday"
+    },
+    "fields": {
+      "name": "Source name",
+      "sourceType": "Source type",
+      "slug": "Slug",
+      "pollInterval": "Poll interval (hours)",
+      "enabled": "Enabled",
+      "workdayTenant": "Workday tenant",
+      "workdaySite": "Workday site",
+      "lastPolled": "Last polled",
+      "never": "Never"
+    }
+  },
+  "runs": {
+    "title": "Run history",
+    "empty": "No collection runs yet.",
+    "status": {
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "fields": {
+      "startedAt": "Started",
+      "status": "Status",
+      "fetched": "Fetched",
+      "created": "Created",
+      "skipped": "Skipped",
+      "flagged": "Flagged",
+      "error": "Error"
+    }
+  },
+  "flags": {
+    "title": "Collection flags",
+    "description": "Listings the pipeline could not map automatically. Dismiss or create a Draft JD from each.",
+    "empty": "No unresolved flags — the queue is clear.",
+    "dismiss": "Dismiss",
+    "createJd": "Create JD",
+    "viewFlags": "View flags",
+    "fields": {
+      "externalUrl": "External URL",
+      "missingFields": "Missing fields",
+      "source": "Source",
+      "flaggedAt": "Flagged at"
+    },
+    "confirmDismiss": "Dismiss this flag?",
+    "confirmDismissBody": "The listing will be marked resolved and removed from the queue.",
+    "dismissAction": "Dismiss flag"
+  },
+  "actions": {
+    "triggerCollect": "Collect now",
+    "triggerCollectSuccess": "Collection run started.",
+    "deleteSource": "Delete source",
+    "confirmDelete": "Delete this source?",
+    "confirmDeleteBody": "All associated runs and flags will also be deleted. This cannot be undone.",
+    "deleteAction": "Delete",
+    "save": "Save changes",
+    "create": "Create source",
+    "back": "Back to sources"
+  },
+  "new": {
+    "title": "New job source",
+    "description": "Connect an ATS to feed the automatic collection pipeline."
+  },
+  "edit": {
+    "title": "Edit job source",
+    "description": "Update the source configuration."
+  },
+  "createJdModal": {
+    "title": "Create JD from flag",
+    "description": "Review the details below — external URL is pre-filled from the flag. Fill in the remaining fields and submit.",
+    "submit": "Create Draft JD"
+  }
+}

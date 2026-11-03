@@ -1,0 +1,88 @@
+{
+  "sources": {
+    "title": "مصادر الوظائف",
+    "description": "تكاملات نظام تتبع المتقدمين التي تغذي خط جمع الوظائف التلقائي.",
+    "add": "إضافة مصدر",
+    "manage": "إدارة المصادر",
+    "empty": "لم يتم إعداد أي مصادر وظائف بعد.",
+    "type": {
+      "greenhouse": "Greenhouse",
+      "lever": "Lever",
+      "ashby": "Ashby",
+      "workable": "Workable",
+      "smartrecruiters": "SmartRecruiters",
+      "recruitee": "Recruitee",
+      "workday": "Workday"
+    },
+    "fields": {
+      "name": "اسم المصدر",
+      "sourceType": "نوع المصدر",
+      "slug": "المعرّف",
+      "pollInterval": "فترة الاستطلاع (بالساعات)",
+      "enabled": "مفعّل",
+      "workdayTenant": "مستأجر Workday",
+      "workdaySite": "موقع Workday",
+      "lastPolled": "آخر استطلاع",
+      "never": "أبداً"
+    }
+  },
+  "runs": {
+    "title": "سجل التشغيل",
+    "empty": "لا توجد عمليات جمع حتى الآن.",
+    "status": {
+      "running": "جارٍ",
+      "completed": "مكتمل",
+      "failed": "فشل"
+    },
+    "fields": {
+      "startedAt": "البدء",
+      "status": "الحالة",
+      "fetched": "مجلوب",
+      "created": "منشأ",
+      "skipped": "متخطى",
+      "flagged": "مُعلَّم",
+      "error": "خطأ"
+    }
+  },
+  "flags": {
+    "title": "علامات الجمع",
+    "description": "قوائم لم يستطع خط الأنابيب تعيينها تلقائياً. تجاهلها أو أنشئ وصفاً وظيفياً مسودة من كل منها.",
+    "empty": "لا توجد علامات غير محلولة — قائمة الانتظار فارغة.",
+    "dismiss": "تجاهل",
+    "createJd": "إنشاء وصف وظيفي",
+    "viewFlags": "عرض العلامات",
+    "fields": {
+      "externalUrl": "الرابط الخارجي",
+      "missingFields": "الحقول المفقودة",
+      "source": "المصدر",
+      "flaggedAt": "وُضعت العلامة في"
+    },
+    "confirmDismiss": "تجاهل هذه العلامة؟",
+    "confirmDismissBody": "سيتم تحديد القائمة كمحلولة وإزالتها من قائمة الانتظار.",
+    "dismissAction": "تجاهل العلامة"
+  },
+  "actions": {
+    "triggerCollect": "جمع الآن",
+    "triggerCollectSuccess": "بدأت عملية الجمع.",
+    "deleteSource": "حذف المصدر",
+    "confirmDelete": "حذف هذا المصدر؟",
+    "confirmDeleteBody": "ستُحذف جميع عمليات التشغيل والعلامات المرتبطة أيضاً. لا يمكن التراجع عن هذا.",
+    "deleteAction": "حذف",
+    "save": "حفظ التغييرات",
+    "create": "إنشاء مصدر",
+    "back": "العودة إلى المصادر"
+  },
+  "new": {
+    "title": "مصدر وظائف جديد",
+    "description": "اربط نظام تتبع المتقدمين لتغذية خط الجمع التلقائي."
+  },
+  "edit": {
+    "title": "تعديل مصدر الوظائف",
+    "description": "تحديث إعدادات المصدر."
+  },
+  "createJdModal": {
+    "title": "إنشاء وصف وظيفي من علامة",
+    "description": "راجع التفاصيل أدناه — الرابط الخارجي مُعبأ مسبقاً من العلامة. أكمل الحقول المتبقية وأرسل.",
+    "submit": "إنشاء وصف وظيفي مسودة"
+  }
+}

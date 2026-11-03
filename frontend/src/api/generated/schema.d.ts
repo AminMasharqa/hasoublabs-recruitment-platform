@@ -949,6 +949,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List job sources */
+        get: operations["list_sources_api_v1_jobs_sources_get"];
+        put?: never;
+        /** Create a job source */
+        post: operations["create_source_api_v1_jobs_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a job source */
+        get: operations["get_source_api_v1_jobs_sources__source_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete a job source */
+        delete: operations["delete_source_api_v1_jobs_sources__source_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update a job source */
+        patch: operations["update_source_api_v1_jobs_sources__source_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/jobs/sources/{source_id}/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trigger a collection run */
+        post: operations["trigger_collect_api_v1_jobs_sources__source_id__collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/sources/{source_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List collection runs for a source */
+        get: operations["list_runs_api_v1_jobs_sources__source_id__runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List unresolved job description flags */
+        get: operations["list_flags_api_v1_jobs_flags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/flags/{flag_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a job description flag */
+        post: operations["resolve_flag_api_v1_jobs_flags__flag_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/applications": {
         parameters: {
             query?: never;
@@ -1865,6 +1970,49 @@ export interface components {
          */
         CvVersionState: "PendingScan" | "Available" | "Quarantined";
         /**
+         * CollectionRunDTO
+         * @description Response DTO for a job collection run (R23).
+         */
+        CollectionRunDTO: {
+            /** Error Detail */
+            error_detail: string | null;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Jobs Created */
+            jobs_created: number;
+            /** Jobs Fetched */
+            jobs_fetched: number;
+            /** Jobs Flagged */
+            jobs_flagged: number;
+            /** Jobs Skipped */
+            jobs_skipped: number;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            status: components["schemas"]["CollectionRunStatus"];
+        };
+        /**
+         * CollectionRunStatus
+         * @description Status of a job collection run (R23).
+         * @enum {string}
+         */
+        CollectionRunStatus: "running" | "completed" | "failed";
+        /**
          * EducationEntryDTO
          * @description Response DTO for one education entry.
          */
@@ -1968,6 +2116,33 @@ export interface components {
              */
             job_id: string;
             status: components["schemas"]["ExportStatus"];
+        };
+        /**
+         * FlagResolveRequest
+         * @description Body for POST /jobs/flags/{flag_id}/resolve (R23).
+         */
+        FlagResolveRequest: {
+            /** Action */
+            action: "dismiss" | "create_jd";
+            jd_data?: components["schemas"]["JdCreateRequest"] | null;
+        };
+        /**
+         * FlagResolveResponse
+         * @description Response for POST /jobs/flags/{flag_id}/resolve (R23).
+         */
+        FlagResolveResponse: {
+            /**
+             * Flag Id
+             * Format: uuid
+             */
+            flag_id: string;
+            /**
+             * Job Description Id
+             * Format: uuid
+             */
+            job_description_id: string | null;
+            /** Status */
+            status: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2129,6 +2304,129 @@ export interface components {
              */
             updated_at: string;
             work_model: components["schemas"]["WorkModel"] | null;
+        };
+        /**
+         * JobDescriptionFlagDTO
+         * @description Response DTO for a job description flag (R23).
+         */
+        JobDescriptionFlagDTO: {
+            /** External Url */
+            external_url: string;
+            /**
+             * Flagged At
+             * Format: date-time
+             */
+            flagged_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Missing Fields */
+            missing_fields: string[];
+            /** Raw Payload */
+            raw_payload: Record<string, unknown>;
+            /**
+             * Resolved At
+             * Format: date-time
+             */
+            resolved_at: string | null;
+            /**
+             * Resolved By
+             * Format: uuid
+             */
+            resolved_by: string | null;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+        };
+        /**
+         * JobSourceCreateRequest
+         * @description Body for POST /jobs/sources (R23).
+         */
+        JobSourceCreateRequest: {
+            /** Name */
+            name: string;
+            /** Poll Interval Hours */
+            poll_interval_hours?: number;
+            /** Slug */
+            slug: string;
+            source_type: components["schemas"]["JobSourceType"];
+            /** Workday Site */
+            workday_site?: string | null;
+            /** Workday Tenant */
+            workday_tenant?: string | null;
+        };
+        /**
+         * JobSourceDTO
+         * @description Response DTO for an ATS job source (R23).
+         */
+        JobSourceDTO: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Last Polled At
+             * Format: date-time
+             */
+            last_polled_at: string | null;
+            /** Name */
+            name: string;
+            /** Poll Interval Hours */
+            poll_interval_hours: number;
+            /** Slug */
+            slug: string;
+            source_type: components["schemas"]["JobSourceType"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Workday Site */
+            workday_site: string | null;
+            /** Workday Tenant */
+            workday_tenant: string | null;
+        };
+        /**
+         * JobSourceType
+         * @description Supported ATS provider types (R23).
+         * @enum {string}
+         */
+        JobSourceType: "greenhouse" | "lever" | "ashby" | "workable" | "smartrecruiters" | "recruitee" | "workday";
+        /**
+         * JobSourceUpdateRequest
+         * @description Body for PATCH /jobs/sources/{source_id} (R23).
+         */
+        JobSourceUpdateRequest: {
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Poll Interval Hours */
+            poll_interval_hours?: number | null;
+            /** Slug */
+            slug?: string | null;
+            source_type?: components["schemas"]["JobSourceType"] | null;
+            /** Workday Site */
+            workday_site?: string | null;
+            /** Workday Tenant */
+            workday_tenant?: string | null;
         };
         /**
          * LanguageEntryDTO
@@ -4800,6 +5098,271 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Create a job source (R23) */
+    create_source_api_v1_jobs_sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobSourceCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["JobSourceDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** List job sources (R23) */
+    list_sources_api_v1_jobs_sources_get: {
+        parameters: {
+            query?: {
+                after_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["JobSourceDTO"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Get a job source (R23) */
+    get_source_api_v1_jobs_sources__source_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["JobSourceDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Update a job source (R23) */
+    update_source_api_v1_jobs_sources__source_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobSourceUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["JobSourceDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Delete a job source (R23) */
+    delete_source_api_v1_jobs_sources__source_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: { [name: string]: unknown };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Trigger a collection run (R23) */
+    trigger_collect_api_v1_jobs_sources__source_id__collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["CollectionRunDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** List collection runs for a source (R23) */
+    list_runs_api_v1_jobs_sources__source_id__runs_get: {
+        parameters: {
+            query?: {
+                after_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["CollectionRunDTO"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** List unresolved job description flags (R23) */
+    list_flags_api_v1_jobs_flags_get: {
+        parameters: {
+            query?: {
+                after_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["JobDescriptionFlagDTO"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    /** Resolve a job description flag (R23) */
+    resolve_flag_api_v1_jobs_flags__flag_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                flag_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlagResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["FlagResolveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: { [name: string]: unknown };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };

@@ -55,9 +55,17 @@ function placeholders(entry: string): string[] {
  * Locale control names each language in that language, so the `en` and the `ar`
  * catalogue both spell Arabic `العربية`.
  */
-const LOCALE_INDEPENDENT_KEYS = new Set(
-  SUPPORTED_LOCALES.map((locale) => `shell:locale.${locale}`),
-)
+const LOCALE_INDEPENDENT_KEYS = new Set([
+  ...SUPPORTED_LOCALES.map((locale) => `shell:locale.${locale}`),
+  // ATS provider names are proper nouns that remain unchanged across all locales.
+  'jobSources:sources.type.greenhouse',
+  'jobSources:sources.type.lever',
+  'jobSources:sources.type.ashby',
+  'jobSources:sources.type.workable',
+  'jobSources:sources.type.smartrecruiters',
+  'jobSources:sources.type.recruitee',
+  'jobSources:sources.type.workday',
+])
 
 describe('catalogue key-set parity (Requirement 19 AC1)', () => {
   it('declares the same namespaces for every supported Locale', () => {

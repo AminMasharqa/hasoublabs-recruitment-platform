@@ -43,6 +43,7 @@ import {
 } from '../lib/locale'
 
 import arApplications from './locales/ar/applications.json'
+import arJobSources from './locales/ar/jobSources.json'
 import arAudit from './locales/ar/audit.json'
 import arAdminAccounts from './locales/ar/adminAccounts.json'
 import arAuth from './locales/ar/auth.json'
@@ -57,6 +58,7 @@ import arReviews from './locales/ar/reviews.json'
 import arShell from './locales/ar/shell.json'
 import arValidation from './locales/ar/validation.json'
 import enApplications from './locales/en/applications.json'
+import enJobSources from './locales/en/jobSources.json'
 import enAudit from './locales/en/audit.json'
 import enAdminAccounts from './locales/en/adminAccounts.json'
 import enAuth from './locales/en/auth.json'
@@ -71,6 +73,7 @@ import enReviews from './locales/en/reviews.json'
 import enShell from './locales/en/shell.json'
 import enValidation from './locales/en/validation.json'
 import heApplications from './locales/he/applications.json'
+import heJobSources from './locales/he/jobSources.json'
 import heAudit from './locales/he/audit.json'
 import heAdminAccounts from './locales/he/adminAccounts.json'
 import heAuth from './locales/he/auth.json'
@@ -140,6 +143,7 @@ export const I18N_NAMESPACES = [
   'adminAccounts',
   'reports',
   'applications',
+  'jobSources',
 ] as const
 
 /** One of the baseline catalogue namespaces. */
@@ -174,6 +178,7 @@ export const RESOURCES = {
     adminAccounts: arAdminAccounts,
     reports: arReports,
     applications: arApplications,
+    jobSources: arJobSources,
   },
   he: {
     shell: heShell,
@@ -190,6 +195,7 @@ export const RESOURCES = {
     adminAccounts: heAdminAccounts,
     reports: heReports,
     applications: heApplications,
+    jobSources: heJobSources,
   },
   en: {
     shell: enShell,
@@ -206,6 +212,7 @@ export const RESOURCES = {
     adminAccounts: enAdminAccounts,
     reports: enReports,
     applications: enApplications,
+    jobSources: enJobSources,
   },
 } as const satisfies Record<Locale, Record<I18nNamespace, object>>
 

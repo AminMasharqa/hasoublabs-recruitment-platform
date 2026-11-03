@@ -1,0 +1,88 @@
+{
+  "sources": {
+    "title": "מקורות משרות",
+    "description": "אינטגרציות ATS המזינות את צינור איסוף המשרות האוטומטי.",
+    "add": "הוסף מקור",
+    "manage": "ניהול מקורות",
+    "empty": "לא הוגדרו מקורות משרות עדיין.",
+    "type": {
+      "greenhouse": "Greenhouse",
+      "lever": "Lever",
+      "ashby": "Ashby",
+      "workable": "Workable",
+      "smartrecruiters": "SmartRecruiters",
+      "recruitee": "Recruitee",
+      "workday": "Workday"
+    },
+    "fields": {
+      "name": "שם המקור",
+      "sourceType": "סוג המקור",
+      "slug": "מזהה",
+      "pollInterval": "תדירות בדיקה (שעות)",
+      "enabled": "מופעל",
+      "workdayTenant": "דייר Workday",
+      "workdaySite": "אתר Workday",
+      "lastPolled": "נבדק לאחרונה",
+      "never": "מעולם"
+    }
+  },
+  "runs": {
+    "title": "היסטוריית הרצות",
+    "empty": "אין הרצות איסוף עדיין.",
+    "status": {
+      "running": "רץ",
+      "completed": "הושלם",
+      "failed": "נכשל"
+    },
+    "fields": {
+      "startedAt": "התחיל",
+      "status": "סטטוס",
+      "fetched": "נאסף",
+      "created": "נוצר",
+      "skipped": "דולג",
+      "flagged": "מסומן",
+      "error": "שגיאה"
+    }
+  },
+  "flags": {
+    "title": "דגלי איסוף",
+    "description": "רשומות שהצינור לא הצליח למפות אוטומטית. בטל או צור JD טיוטה מכל אחת.",
+    "empty": "אין דגלים לא פתורים — התור ריק.",
+    "dismiss": "בטל",
+    "createJd": "צור JD",
+    "viewFlags": "הצג דגלים",
+    "fields": {
+      "externalUrl": "כתובת URL חיצונית",
+      "missingFields": "שדות חסרים",
+      "source": "מקור",
+      "flaggedAt": "סומן ב"
+    },
+    "confirmDismiss": "לבטל דגל זה?",
+    "confirmDismissBody": "הרשומה תסומן כפתורה ותוסר מהתור.",
+    "dismissAction": "בטל דגל"
+  },
+  "actions": {
+    "triggerCollect": "אסוף עכשיו",
+    "triggerCollectSuccess": "הרצת האיסוף התחילה.",
+    "deleteSource": "מחק מקור",
+    "confirmDelete": "למחוק מקור זה?",
+    "confirmDeleteBody": "כל ההרצות והדגלים המשויכים יימחקו גם כן. לא ניתן לבטל פעולה זו.",
+    "deleteAction": "מחק",
+    "save": "שמור שינויים",
+    "create": "צור מקור",
+    "back": "חזור למקורות"
+  },
+  "new": {
+    "title": "מקור משרות חדש",
+    "description": "חבר ATS כדי להזין את צינור האיסוף האוטומטי."
+  },
+  "edit": {
+    "title": "ערוך מקור משרות",
+    "description": "עדכן את הגדרות המקור."
+  },
+  "createJdModal": {
+    "title": "צור JD מדגל",
+    "description": "בדוק את הפרטים למטה — כתובת ה-URL החיצונית מולאה מראש מהדגל. מלא את השדות הנותרים ושלח.",
+    "submit": "צור JD טיוטה"
+  }
+}
