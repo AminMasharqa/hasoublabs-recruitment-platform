@@ -53,6 +53,7 @@ import {
   JobNewScreen,
   JobsBrowseScreen,
   JobSourcesScreen,
+  JobSourceNewScreen,
   SeniorJobsScreen,
 } from '../features/jobs'
 import { AccountScreen } from '../features/mfa'
@@ -169,7 +170,7 @@ export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
   adminReports: <ReportsScreen />,
   adminExports: <ExportsScreen />,
   adminJobSources: <JobSourcesScreen />,
-  adminJobSourceNew: <PlaceholderScreen labelKey="jobSources:sources.title" />,
+  adminJobSourceNew: <JobSourceNewScreen />,
   adminJobSourceDetail: <PlaceholderScreen labelKey="jobSources:sources.title" />,
   adminJobFlags: <PlaceholderScreen labelKey="jobSources:flags.title" />,
 })
