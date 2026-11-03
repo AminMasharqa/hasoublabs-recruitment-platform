@@ -126,6 +126,10 @@ const PLACEHOLDER_LABEL_KEYS: Partial<Readonly<Record<RoutePathId, string>>> = O
   adminAudit: 'shell:nav.audit',
   adminReports: 'shell:nav.reports',
   adminExports: 'shell:nav.exports',
+  adminJobSources: 'jobSources:sources.title',
+  adminJobSourceNew: 'jobSources:sources.title',
+  adminJobSourceDetail: 'jobSources:sources.title',
+  adminJobFlags: 'jobSources:flags.title',
 })
 
 /** Elements supplied per path, overriding the placeholder. */

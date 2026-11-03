@@ -90,6 +90,10 @@ export const ROUTE_PATHS = {
   adminAudit: '/admin/audit',
   adminReports: '/admin/reports',
   adminExports: '/admin/exports',
+  adminJobSources: '/admin/jobs/sources',
+  adminJobSourceNew: '/admin/jobs/sources/new',
+  adminJobSourceDetail: '/admin/jobs/sources/:sourceId',
+  adminJobFlags: '/admin/jobs/flags',
 } as const
 
 /** Identifier of a declared path. */
@@ -175,6 +179,11 @@ export function adminSeniorProfilePath(accountId: string): string {
 /** The Admin view of one Job_Description (Req 13 AC17). */
 export function adminJobPath(jdId: string): string {
   return fillPath(ROUTE_PATHS.adminJobDetail, { jdId })
+}
+
+/** The Admin edit / run-history screen for one job source (R23). */
+export function adminJobSourcePath(sourceId: string): string {
+  return fillPath(ROUTE_PATHS.adminJobSourceDetail, { sourceId })
 }
 
 // ── Landing destination per Active_Context (Req 8 AC11) ───────────────────────

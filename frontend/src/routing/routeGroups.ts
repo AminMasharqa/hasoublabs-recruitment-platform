@@ -130,6 +130,10 @@ export const GUARDED_ROUTE_GROUPS: readonly RouteGroup[] = Object.freeze([
       'adminAudit',
       'adminReports',
       'adminExports',
+      'adminJobSources',
+      'adminJobSourceNew',
+      'adminJobSourceDetail',
+      'adminJobFlags',
     ],
   },
 ])

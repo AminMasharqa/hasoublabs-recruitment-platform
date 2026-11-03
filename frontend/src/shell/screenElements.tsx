@@ -70,6 +70,7 @@ import {
   SeniorReviewNewScreen,
   SeniorReviewsScreen,
 } from '../features/reviews'
+import { PlaceholderScreen } from '../routing/placeholders'
 import type { ScreenElements } from '../routing/routes'
 
 export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
@@ -166,4 +167,8 @@ export const SCREEN_ELEMENTS: ScreenElements = Object.freeze({
   // and the Navigation_Menu derives its entries from the same access metadata.
   adminReports: <ReportsScreen />,
   adminExports: <ExportsScreen />,
+  adminJobSources: <PlaceholderScreen labelKey="jobSources:sources.title" />,
+  adminJobSourceNew: <PlaceholderScreen labelKey="jobSources:sources.title" />,
+  adminJobSourceDetail: <PlaceholderScreen labelKey="jobSources:sources.title" />,
+  adminJobFlags: <PlaceholderScreen labelKey="jobSources:flags.title" />,
 })
