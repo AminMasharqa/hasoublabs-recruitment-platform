@@ -17,6 +17,7 @@
 export { JobsBrowseScreen } from './JobsBrowseScreen'
 export { JobSourcesScreen } from './JobSourcesScreen'
 export { JobSourceNewScreen } from './JobSourceNewScreen'
+export { JobSourceDetailScreen } from './JobSourceDetailScreen'
 export { JobDetailScreen } from './JobDetailScreen'
 export { AdminJobsScreen } from './AdminJobsScreen'
 export { JobAuthoringScreen } from './JobAuthoringScreen'
