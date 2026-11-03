@@ -31,8 +31,11 @@ POST   /jobs/flags/{flag_id}/resolve      → 200 FlagResolveResponse (Admin onl
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 from uuid import UUID
+
+if TYPE_CHECKING:
+    from app.modules.jobs.collection_service import JobCollectionService
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -94,9 +97,9 @@ def _profiles_api(request: Request):
     return request.app.state.profiles_api
 
 
-def _collection_service(request: Request):
+def _collection_service(request: Request) -> JobCollectionService:
     """Return the JobCollectionService from app.state."""
-    return request.app.state.collection_service
+    return request.app.state.collection_service  # type: ignore[no-any-return]
 
 
 # ── Job Description CRUD ───────────────────────────────────────────────────────
