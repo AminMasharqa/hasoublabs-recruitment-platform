@@ -15,13 +15,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { EmptyState, ErrorState, LoadingState } from '../../errors/ErrorPresenter'
+import { EmptyState, ErrorPresenter, ErrorState, LoadingState } from '../../errors/ErrorPresenter'
 import { adminJobSourcePath, ROUTE_PATHS } from '../../routing/paths'
 
-import type { JobSource } from './sourcesApi'
+import { nextSourcesPage, type JobSource } from './sourcesApi'
 import { useDeleteSourceMutation, useSourcesQuery } from './sourcesQueries'
 
-const NAMESPACES = ['jobSources', 'errors', 'shell'] as const
+const NAMESPACES = ['jobSources', 'errors', 'shell', 'jobs'] as const
 
 interface SourceRowProps {
   readonly source: JobSource
@@ -67,11 +67,13 @@ function SourceRow({ source, onDelete }: SourceRowProps) {
 
 export function JobSourcesScreen() {
   const { t } = useTranslation(NAMESPACES)
-  const sourcesQuery = useSourcesQuery()
+  const [afterId, setAfterId] = useState<string | undefined>(undefined)
+  const sourcesQuery = useSourcesQuery(afterId)
   const deleteMutation = useDeleteSourceMutation()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const sources = sourcesQuery.data ?? []
+  const next = nextSourcesPage(sourcesQuery.data)
 
   const openDeleteModal = (sourceId: string): void => {
     deleteMutation.reset()
@@ -129,21 +131,44 @@ export function JobSourcesScreen() {
             <EmptyState destination={t('jobSources:sources.title')} />
           </div>
         ) : (
-          <Box
-            component="ul"
-            aria-label={t('jobSources:sources.title')}
-            className="list-reset"
-          >
-            <Stack gap="md">
-              {sources.map((source) => (
-                <SourceRow
-                  key={source.id}
-                  source={source}
-                  onDelete={() => openDeleteModal(source.id)}
-                />
-              ))}
-            </Stack>
-          </Box>
+          <>
+            <Box
+              component="ul"
+              aria-label={t('jobSources:sources.title')}
+              className="list-reset"
+            >
+              <Stack gap="md">
+                {sources.map((source) => (
+                  <SourceRow
+                    key={source.id}
+                    source={source}
+                    onDelete={() => openDeleteModal(source.id)}
+                  />
+                ))}
+              </Stack>
+            </Box>
+            <Group gap="sm">
+              {next.hasNextPage ? (
+                <Button
+                  type="button"
+                  onClick={() => setAfterId(next.nextCursor ?? undefined)}
+                  data-testid="sources-next-page"
+                >
+                  {t('jobs:pagination.next')}
+                </Button>
+              ) : null}
+              {afterId != null ? (
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => setAfterId(undefined)}
+                  data-testid="sources-first-page"
+                >
+                  {t('jobs:pagination.first')}
+                </Button>
+              ) : null}
+            </Group>
+          </>
         )}
       </Stack>
 
@@ -156,9 +181,9 @@ export function JobSourcesScreen() {
         <Stack gap="sm">
           <Text>{t('jobSources:actions.confirmDeleteBody')}</Text>
           {deleteMutation.isError && (
-            <Text c="red" size="sm" data-testid="delete-error">
-              {t('errors:fallback')}
-            </Text>
+            <div data-testid="delete-error">
+              <ErrorPresenter error={deleteMutation.error} />
+            </div>
           )}
           <Group justify="flex-end" gap="xs">
             <Button variant="default" onClick={closeDeleteModal}>

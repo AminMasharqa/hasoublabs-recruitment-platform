@@ -31,7 +31,7 @@ import {
   validateSourceForm,
   type JobSourceFormValues,
 } from './sourceRules'
-import type { CollectionRun } from './sourcesApi'
+import { nextRunsPage, type CollectionRun } from './sourcesApi'
 import {
   useDeleteSourceMutation,
   useRunsQuery,
@@ -40,7 +40,7 @@ import {
   useUpdateSourceMutation,
 } from './sourcesQueries'
 
-const NAMESPACES = ['jobSources', 'errors', 'shell'] as const
+const NAMESPACES = ['jobSources', 'errors', 'shell', 'jobs'] as const
 
 const MAX_ERROR_CHARS = 100
 
@@ -99,7 +99,8 @@ export function JobSourceDetailScreen() {
   const { sourceId = '' } = useParams<{ sourceId: string }>()
 
   const sourceQuery = useSourceQuery(sourceId)
-  const runsQuery = useRunsQuery(sourceId)
+  const [runsAfterId, setRunsAfterId] = useState<string | undefined>(undefined)
+  const runsQuery = useRunsQuery(sourceId, runsAfterId)
   const updateMutation = useUpdateSourceMutation(sourceId)
   const deleteMutation = useDeleteSourceMutation()
   const triggerMutation = useTriggerCollectMutation(sourceId)
@@ -159,6 +160,7 @@ export function JobSourceDetailScreen() {
   }
 
   const runs = runsQuery.data ?? []
+  const runsNext = nextRunsPage(runsQuery.data)
 
   if (sourceQuery.isPending) {
     return (
@@ -314,6 +316,7 @@ export function JobSourceDetailScreen() {
           ) : runs.length === 0 ? (
             <Text c="dimmed">{t('jobSources:runs.empty')}</Text>
           ) : (
+            <>
             <Table>
               <Table.Thead>
                 <Table.Tr>
@@ -332,6 +335,28 @@ export function JobSourceDetailScreen() {
                 ))}
               </Table.Tbody>
             </Table>
+            <Group gap="sm">
+              {runsNext.hasNextPage ? (
+                <Button
+                  type="button"
+                  onClick={() => setRunsAfterId(runsNext.nextCursor ?? undefined)}
+                  data-testid="runs-next-page"
+                >
+                  {t('jobs:pagination.next')}
+                </Button>
+              ) : null}
+              {runsAfterId != null ? (
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => setRunsAfterId(undefined)}
+                  data-testid="runs-first-page"
+                >
+                  {t('jobs:pagination.first')}
+                </Button>
+              ) : null}
+            </Group>
+            </>
           )}
         </Stack>
       </Stack>
@@ -345,9 +370,9 @@ export function JobSourceDetailScreen() {
         <Stack gap="sm">
           <Text>{t('jobSources:actions.confirmDeleteBody')}</Text>
           {deleteMutation.isError && (
-            <Text c="red" size="sm" data-testid="delete-error">
-              {t('errors:fallback')}
-            </Text>
+            <div data-testid="delete-error">
+              <ErrorPresenter error={deleteMutation.error} />
+            </div>
           )}
           <Group justify="flex-end" gap="xs">
             <Button variant="default" onClick={() => setConfirmingDelete(false)}>
