@@ -98,3 +98,7 @@ From the backend directory:
 cd backend
 docker compose up -d
 ```
+
+## Claude Code skills
+
+The project enables Matt Pocock's skills plugin for everyone in `.claude/settings.json`. When you open the repo in Claude Code and trust the folder, Claude Code offers to install `mattpocock-skills@claude-plugins-official`. If it doesn't, install it yourself with `claude plugin install mattpocock-skills@claude-plugins-official`. The per-repo setup (local markdown issues in `.scratch/`, triage statuses, domain docs) is already committed in `docs/agents/`, so you don't need to run `/setup-matt-pocock-skills` again.
