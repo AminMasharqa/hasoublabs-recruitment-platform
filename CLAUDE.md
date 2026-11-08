@@ -134,3 +134,19 @@ All paths in this section are relative to `frontend/src/`.
 - i18n catalogs (ar/he/en) are in `app/platform/i18n/messages/*.po`. Arabic and Hebrew are RTL, and submitted text must be stored byte-identical.
 - Domain guarantees are tested as numbered Hypothesis "Correctness Properties" from `design.md`, with the property number and requirement IDs annotated in the test.
 - Code marked `PROVISIONAL` or `MOCK` is a stand-in for another section owner's work. Keep its public surface stable.
+
+## Agent skills
+
+The team shares Matt Pocock's skills (`mattpocock-skills@claude-plugins-official`), enabled for this project in `.claude/settings.json`.
+
+### Issue tracker
+
+Issues and specs are local markdown files under `.scratch/<feature-slug>/`, committed to the repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as each issue file's `Status:` line. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root, created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
